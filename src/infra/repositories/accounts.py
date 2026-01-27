@@ -19,6 +19,9 @@ class InMemoryAccountRepository:
     async def get_by_id(self, account_id: AccountId) -> Optional[Account]:
         return self._storage.get(account_id, None)
 
+    async def delete(self, account_id: AccountId) -> None:
+        self._storage.pop(account_id)
+
 
 @lru_cache
 def get_account_repository() -> AccountRepositoryProtocol:

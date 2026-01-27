@@ -10,3 +10,6 @@ class AccountRepositoryProtocol(Protocol):
 
     async def get_by_id(self, account_id: AccountId) -> Optional[Account]:
         pass
+
+    async def delete(self, account_id: AccountId) -> None:
+        pass

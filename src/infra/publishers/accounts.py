@@ -9,8 +9,9 @@ from infra.tasks.accounts import sync_net_worth
 
 class AccountTaskiqBroker:
 
-    async def publish_balance_changed(self, event: BalanceUpdatedEvent) -> None:
-        await sync_net_worth.kiq(account_id=event.account_id)
+    @staticmethod
+    async def publish_balance_changed(event: BalanceUpdatedEvent) -> None:
+        await sync_net_worth.kiq(event=event)
         return
 
 

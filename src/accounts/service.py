@@ -2,7 +2,13 @@ import logging
 
 from infra.publishers.accounts import AccountEventPublisherDep
 from infra.repositories.accounts import AccountRepositoryDep
-from .domain import Account, AccountType, AccountId, BalanceUpdatedEvent
+from .domain import (
+    Account,
+    AccountType,
+    AccountId,
+    BalanceUpdatedEvent,
+    AccountCurrency,
+)
 from .exceptions import AccountNotFoundException
 from .publisher import AccountEventPublisherProtocol
 from .repository import AccountRepositoryProtocol
@@ -21,7 +27,11 @@ class AccountService:
         self._publisher = account_publisher
 
     async def create_account(
-        self, name: str, initial_balance: float, account_type: AccountType
+        self,
+        name: str,
+        initial_balance: float,
+        account_type: AccountType,
+        currency: AccountCurrency,
     ) -> AccountId:
         """Создаем новый счет"""
 
@@ -29,6 +39,7 @@ class AccountService:
             name=name,
             balance=initial_balance,
             account_type=account_type,
+            currency=currency,
         )
         acc_id = await self._repository.save(new_account)
         logger.info("Новый счёт #%s создан", acc_id.short)
@@ -39,12 +50,9 @@ class AccountService:
     ) -> None:
         """Обновляем баланс счета"""
 
-        account = await self._repository.get_by_id(account_id)
-        if not account:
-            logger.warning("Счёт #%s не найден", account_id.short)
-            raise AccountNotFoundException
-
+        account = await self._find_account_by_id(account_id)
         account.update_balance(actual_balance)
+
         await self._repository.save(account)
         logger.info("Баланс счета #%s обновлен", account.id.short)
 
@@ -54,6 +62,27 @@ class AccountService:
 
         account.events.clear()
         return
+
+    async def rename_account(self, account_id: AccountId, new_name: str) -> None:
+        account = await self._find_account_by_id(account_id)
+        account.rename_account(new_name)
+
+        await self._repository.save(account)
+        logger.info("Название счета #%s обновлено", account.id.short)
+        return
+
+    async def delete_account(self, account_id: AccountId) -> None:
+        account = await self._find_account_by_id(account_id)
+
+        await self._repository.delete(account.id)
+        logger.info("Счёт #%s был удален", account.id.short)
+        return
+
+    async def _find_account_by_id(self, account_id: AccountId) -> Account:
+        if not (account := await self._repository.get_by_id(account_id)):
+            logger.warning("Счёт #%s не найден", account_id.short)
+            raise AccountNotFoundException
+        return account
 
 
 def get_account_service(

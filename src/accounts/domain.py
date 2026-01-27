@@ -7,11 +7,18 @@ from core.events import DomainEvent
 
 
 class AccountType(str, Enum):
-    """Тип счета"""
+    """Тип счёта"""
 
     CARD = "Card"
     INVESTMENT = "Investment"
     CASH = "Cash"
+
+
+class AccountCurrency(str, Enum):
+    """Валюта счёта"""
+
+    RUB = "RUB"
+    USD = "USD"
 
 
 @dataclass(frozen=True)
@@ -43,6 +50,7 @@ class Account:
 
     name: str
     type: AccountType
+    currency: AccountCurrency
     balance: float = field(default=0)
 
     id: AccountId = field(default_factory=AccountId.generate)
@@ -66,11 +74,24 @@ class Account:
             )
         )
 
+    def rename_account(self, new_name: str) -> None:
+        """Обновление названия счёта"""
+        if len(new_name) > 63:
+            raise ...
+        self.name = new_name
+        return
+
     @classmethod
-    def create(cls, name: str, balance: float, account_type: AccountType) -> "Account":
+    def create(
+        cls,
+        name: str,
+        balance: float,
+        account_type: AccountType,
+        currency: AccountCurrency,
+    ) -> "Account":
         if balance < 0:
             raise ...
-        return cls(name=name, type=account_type, balance=balance)
+        return cls(name=name, type=account_type, balance=balance, currency=currency)
 
     @property
     def events(self) -> list[DomainEvent]:
