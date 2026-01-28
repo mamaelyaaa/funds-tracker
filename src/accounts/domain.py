@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 
 from core.domain import DomainEvent
+from users.values import UserId
 from .values import AccountType, AccountCurrency, AccountId
 
 
@@ -9,6 +10,7 @@ from .values import AccountType, AccountCurrency, AccountId
 class BalanceUpdatedEvent(DomainEvent):
     """Баланс счета обновлен"""
 
+    user_id: UserId
     account_id: AccountId
     old_balance: float
     new_balance: float
@@ -20,6 +22,7 @@ class BalanceUpdatedEvent(DomainEvent):
 class Account:
     """Доменная модель счета"""
 
+    user_id: UserId
     name: str
     type: AccountType
     currency: AccountCurrency
@@ -38,6 +41,7 @@ class Account:
 
         self._events.append(
             BalanceUpdatedEvent(
+                user_id=self.user_id,
                 account_id=self.id,
                 new_balance=self.balance,
                 old_balance=old_balance,
@@ -50,6 +54,7 @@ class Account:
     def rename_account(self, new_name: str) -> None:
         """Обновление названия счёта"""
         if len(new_name) > 63:
+            # TODO Сделать ошибку на TooLarge
             raise ...
         self.name = new_name
         return
@@ -57,14 +62,22 @@ class Account:
     @classmethod
     def create(
         cls,
+        user_id: UserId,
         name: str,
         balance: float,
         account_type: AccountType,
         currency: AccountCurrency,
     ) -> "Account":
         if balance < 0:
+            # TODO сделать ошибку
             raise ...
-        return cls(name=name, type=account_type, balance=balance, currency=currency)
+        return cls(
+            user_id=user_id,
+            name=name,
+            type=account_type,
+            balance=balance,
+            currency=currency,
+        )
 
     @property
     def events(self) -> list[DomainEvent]:

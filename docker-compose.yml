@@ -1,0 +1,19 @@
+services:
+  database:
+    image: postgres:17
+    hostname: postgres
+    container_name: funds-tracker-db
+    environment:
+      POSTGRES_DB: ${DB__NAME}
+      POSTGRES_USER: ${DB__USER}
+      POSTGRES_PASSWORD: ${DB__PASSWORD}
+      PGDATA: /var/lib/postgresql/data
+    env_file:
+      - .env
+    ports:
+      - "${DB__PORT}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
