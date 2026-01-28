@@ -1,11 +1,9 @@
-from accounts.domain import AccountId
-from core.exceptions import AppException
 from fastapi import status
+
+from core.exceptions import AppException
 
 
 class AccountNotFoundException(AppException):
-    """Счет не найден"""
-
     status_code: int = status.HTTP_404_NOT_FOUND
     suggestion: str = "Проверьте правильность uuid счёта"
 

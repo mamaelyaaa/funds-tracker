@@ -5,8 +5,9 @@ class BaseResponseSchema(BaseModel):
     message: str
 
 
-class BaseResponseDetailSchema[T](BaseResponseSchema):
-    detail: T
+class BaseResponseDetailSchema[D, M](BaseResponseSchema):
+    detail: D
+    metadata: M = {}
 
 
 class BaseExceptionSchema(BaseResponseSchema):

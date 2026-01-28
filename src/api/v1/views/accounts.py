@@ -13,7 +13,10 @@ router = APIRouter(prefix="/accounts", tags=["Счета🏦"])
 AccountServiceDep = Annotated[AccountService, Depends(get_account_service)]
 
 
-@router.post("", response_model=AccountIdResponse)
+@router.post(
+    "",
+    response_model=BaseResponseDetailSchema[AccountIdResponse, dict],
+)
 async def create_account(
     account_service: AccountServiceDep, schema: CreateAccountSchema
 ):
@@ -25,18 +28,24 @@ async def create_account(
         initial_balance=schema.initial_balance,
         currency=schema.currency,
     )
-    return AccountIdResponse(accountId=account_id.value)
+
+    return BaseResponseDetailSchema(
+        message=f"Счет '{schema.name}' успешно создан",
+        detail=AccountIdResponse(accountId=account_id.value),
+    )
 
 
 @router.put(
-    "/{account_id}/balance", response_model=BaseResponseDetailSchema[AccountIdResponse]
+    "/{account_id}/balance",
+    response_model=BaseResponseDetailSchema[AccountIdResponse, dict],
+    response_model_exclude_unset=True,
 )
 async def update_account_balance(
     account_service: AccountServiceDep,
     account_id: str,
     actual_balance: float = Body(embed=True),
 ):
-    """Обновляет баланс счёта"""
+    """Обновление баланса счёта и фоновое обновление полного капитала пользователя"""
 
     await account_service.set_new_balance(
         account_id=AccountId(account_id), actual_balance=actual_balance

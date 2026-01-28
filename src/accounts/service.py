@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 class AccountService:
+    """Сервис управления счетами пользователей"""
 
     def __init__(
         self,

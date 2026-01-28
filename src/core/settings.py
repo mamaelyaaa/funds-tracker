@@ -11,7 +11,7 @@ class AppConfig(BaseModel):
 
 class LogsConfig(BaseModel):
     level: Literal["DEBUG", "INFO", "WARNING"] = "INFO"
-    format: str = "[%(asctime)s] - %(name)-26s - %(levelname)-7s - %(message)s"
+    format: str = "[%(asctime)s] - %(name)-29s - %(levelname)-7s - %(message)s"
 
 
 class Settings(BaseSettings):

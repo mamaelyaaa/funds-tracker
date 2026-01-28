@@ -1,37 +1,8 @@
-import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum
 
-from core.events import DomainEvent
-
-
-class AccountType(str, Enum):
-    """Тип счёта"""
-
-    CARD = "Card"
-    INVESTMENT = "Investment"
-    CASH = "Cash"
-
-
-class AccountCurrency(str, Enum):
-    """Валюта счёта"""
-
-    RUB = "RUB"
-    USD = "USD"
-
-
-@dataclass(frozen=True)
-class AccountId:
-    value: str
-
-    @classmethod
-    def generate(cls) -> "AccountId":
-        return cls(value=str(uuid.uuid4()))
-
-    @property
-    def short(self) -> str:
-        return self.value[:8]
+from core.domain import DomainEvent
+from .values import AccountType, AccountCurrency, AccountId
 
 
 @dataclass(frozen=True)
@@ -42,6 +13,7 @@ class BalanceUpdatedEvent(DomainEvent):
     old_balance: float
     new_balance: float
     delta: float
+    currency: AccountCurrency
 
 
 @dataclass
@@ -70,6 +42,7 @@ class Account:
                 new_balance=self.balance,
                 old_balance=old_balance,
                 delta=self.balance - old_balance,
+                currency=self.currency,
                 occurred_at=datetime.now(),
             )
         )

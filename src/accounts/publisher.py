@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from accounts.domain import BalanceUpdatedEvent
+from .domain import BalanceUpdatedEvent
 
 
 class AccountEventPublisherProtocol(Protocol):
