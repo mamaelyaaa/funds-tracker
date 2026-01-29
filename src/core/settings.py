@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Literal
 
 from dotenv import load_dotenv
-from pydantic import BaseModel
+from pydantic import BaseModel, AmqpDsn
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 load_dotenv()
@@ -11,6 +11,7 @@ load_dotenv()
 class AppConfig(BaseModel):
     title: str = "Funds Tracker API"
     debug: bool = True
+    env: Literal["DEV", "TEST"] = "DEV"
 
 
 class FilesConfig(BaseModel):
@@ -44,8 +45,23 @@ class DBConfig(BaseModel):
         return f"postgresql+asyncpg://{self.user}:{self.password}@{self.host}:{self.port}/{self.name}"
 
 
+class BrokerConfig(BaseModel):
+    user: str
+    password: str
+    port: int
+    host: str
+    vhost: str = ""
+
+    @property
+    def AMQP_DSN(self) -> str:
+        return (
+            f"amqp://{self.user}:{self.password}@{self.host}:{self.port}/{self.vhost}"
+        )
+
+
 class Settings(BaseSettings):
     db: DBConfig
+    broker: BrokerConfig
     app: AppConfig = AppConfig()
     files: FilesConfig = FilesConfig()
     logs: LogsConfig = LogsConfig()

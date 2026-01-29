@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 
 import uvicorn
@@ -9,9 +10,13 @@ from api.schemas import BaseExceptionSchema
 from core.exceptions import AppException
 from core.logger import setup_logger
 from core.settings import settings
+from infra.admin import admin
 from infra.broker import broker
+from infra.database import db_helper
 
 setup_logger()
+
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
@@ -24,6 +29,8 @@ async def lifespan(_: FastAPI):
     if not broker.is_worker_process:
         await broker.shutdown()
 
+    await db_helper.dispose()
+
 
 app = FastAPI(
     title=settings.app.title,
@@ -33,6 +40,7 @@ app = FastAPI(
 )
 
 app.include_router(main_router)
+admin.mount_to(app)
 
 
 @app.exception_handler(AppException)
@@ -47,4 +55,7 @@ async def handle_app_exception(request: Request, exc: AppException):
 
 
 if __name__ == "__main__":
+    if settings.app.env == "TEST":
+        logger.warning("Запущено на тестовом окружении")
+
     uvicorn.run(app="src.main:app", reload=True)

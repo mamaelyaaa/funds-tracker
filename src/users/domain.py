@@ -8,6 +8,8 @@ from users.values import UserId
 class User:
     """Доменная модель пользователя"""
 
+    name: str
+
     MAX_ACCOUNTS: int = 3
 
     id: UserId = field(default_factory=UserId.generate)

@@ -8,7 +8,6 @@ from .domain import (
     Account,
     AccountType,
     AccountId,
-    BalanceUpdatedEvent,
     AccountCurrency,
 )
 from .exceptions import (
@@ -18,12 +17,12 @@ from .exceptions import (
 )
 from .publisher import AccountEventPublisherProtocol
 from .repository import AccountRepositoryProtocol
+from .values import Title
 
 logger = logging.getLogger(__name__)
 
 
-class AccountService:
-    """Сервис управления счетами пользователей"""
+class AccountCRUDService:
 
     def __init__(
         self,
@@ -43,23 +42,26 @@ class AccountService:
     ) -> AccountId:
         """Создаем новый счет"""
 
-        check = await self._repository.is_name_taken(
-            user_id_obj := UserId(user_id), name
-        )
+        user_id_obj = UserId(user_id)
+        acc_name = Title(name)
+
+        check = await self._repository.is_name_taken(user_id_obj, acc_name)
         if check:
-            logger.warning(f"Ошибка создания нового счёта для пользователя @{user_id}")
+            logger.warning(
+                f"Ошибка создания нового счёта для пользователя #{user_id_obj.short}"
+            )
             raise AccountAlreadyCreatedException
 
         count = await self._repository.count_by_user_id(user_id_obj)
         if count >= User.MAX_ACCOUNTS:
             logger.warning(
-                f"Пользователь @%s превысил лимит активных счётов", user_id_obj.short
+                f"Пользователь #%s превысил лимит активных счётов", user_id_obj.short
             )
             raise TooManyAccountsForUserException
 
         new_account = Account.create(
             user_id=user_id_obj,
-            name=name,
+            name=acc_name,
             balance=initial_balance,
             account_type=account_type,
             currency=currency,
@@ -68,44 +70,63 @@ class AccountService:
         logger.info("Новый счёт #%s создан", acc_id.value)
         return acc_id
 
-    async def set_new_balance(
-        self, account_id: AccountId, actual_balance: float
-    ) -> None:
-        """Обновляем баланс счета"""
+    async def find_account_by_id(self, account_id: str) -> Account:
+        account_id_obj = AccountId(account_id)
+        if not (account := await self._repository.get_by_id(account_id_obj)):
+            logger.warning("Счёт #%s не найден", account_id_obj.value)
+            raise AccountNotFoundException
+        return account
 
-        account = await self._find_account_by_id(account_id)
-        account.update_balance(actual_balance)
+    async def find_accounts_by_user_id(self, user_id: str) -> list[Account]:
+        user_id_obj = UserId(user_id)
+        accounts = await self._repository.get_by_user_id(user_id_obj)
+        return accounts
 
-        await self._repository.save(account)
-        logger.info("Баланс счета #%s обновлен", account.id.value)
-
-        for event in account.events:
-            if isinstance(event, BalanceUpdatedEvent):
-                await self._publisher.publish_balance_changed(event)
-
-        account.events.clear()
-        return
-
-    async def rename_account(self, account_id: AccountId, new_name: str) -> None:
-        account = await self._find_account_by_id(account_id)
-        account.rename_account(new_name)
-
-        await self._repository.save(account)
-        logger.info("Название счета #%s обновлено", account.id.value)
-        return
-
-    async def delete_account(self, account_id: AccountId) -> None:
-        account = await self._find_account_by_id(account_id)
+    async def delete_account(self, account_id: str) -> None:
+        account = await self.find_account_by_id(account_id)
 
         await self._repository.delete(account.id)
         logger.info("Счёт #%s был удален", account.id.value)
         return
 
-    async def _find_account_by_id(self, account_id: AccountId) -> Account:
-        if not (account := await self._repository.get_by_id(account_id)):
-            logger.warning("Счёт #%s не найден", account_id.value)
-            raise AccountNotFoundException
-        return account
+
+class AccountService(AccountCRUDService):
+    """Сервис управления счетами пользователей"""
+
+    def __init__(
+        self,
+        account_repo: AccountRepositoryProtocol,
+        account_publisher: AccountEventPublisherProtocol,
+    ):
+        super().__init__(account_repo, account_publisher)
+
+    async def set_new_balance(self, account_id: str, actual_balance: float) -> None:
+        """Обновляем баланс счета"""
+
+        account = await self.find_account_by_id(account_id)
+
+        if actual_balance == account.balance:
+            logger.info("Баланс счета #%s не изменен", account.id.value)
+            return
+
+        account.update_balance(actual_balance)
+
+        await self._repository.update(AccountId(account_id), account)
+        logger.info("Баланс счета #%s обновлен", account.id.value)
+
+        for event in account.events:
+            await self._publisher.publish(event)
+
+        account.events.clear()
+        return
+
+    async def rename_account(self, account_id: str, new_name: str) -> None:
+        account = await self.find_account_by_id(account_id)
+        account.rename_account(Title(new_name))
+
+        await self._repository.save(account)
+        logger.info("Название счета #%s обновлено", account.id.value)
+        return
 
 
 def get_account_service(

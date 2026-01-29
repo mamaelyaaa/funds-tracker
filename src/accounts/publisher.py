@@ -1,9 +1,9 @@
 from typing import Protocol
 
-from .domain import BalanceUpdatedEvent
+from core.domain import DomainEvent
 
 
 class AccountEventPublisherProtocol(Protocol):
 
-    async def publish_balance_changed(self, event: BalanceUpdatedEvent) -> None:
+    async def publish(self, event: DomainEvent) -> None:
         pass
