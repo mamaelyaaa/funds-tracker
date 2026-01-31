@@ -1,15 +1,18 @@
 import logging
 
+from infra import broker
+from infra.cache.accounts import AccountCacheDep
 from infra.publishers.accounts import AccountEventPublisherDep
 from infra.repositories.accounts import AccountRepositoryDep
 from users.domain import User
 from users.values import UserId
-from .domain import (
-    Account,
-    AccountType,
-    AccountId,
-    AccountCurrency,
+from .cache import AccountCacheProtocol
+from .comands import (
+    CreateAccountCommand,
+    UpdateAccountBalanceCommand,
+    UpdateAccountNameCommand,
 )
+from .entities import Account, AccountId
 from .exceptions import (
     AccountNotFoundException,
     TooManyAccountsForUserException,
@@ -28,53 +31,59 @@ class AccountCRUDService:
         self,
         account_repo: AccountRepositoryProtocol,
         account_publisher: AccountEventPublisherProtocol,
+        account_cache: AccountCacheProtocol,
     ):
         self._repository = account_repo
         self._publisher = account_publisher
+        self._cache = account_cache
 
-    async def create_account(
-        self,
-        user_id: str,
-        name: str,
-        initial_balance: float,
-        account_type: AccountType,
-        currency: AccountCurrency,
-    ) -> AccountId:
+    async def create_account(self, command: CreateAccountCommand) -> AccountId:
         """Создаем новый счет"""
 
-        user_id_obj = UserId(user_id)
-        acc_name = Title(name)
+        user_id = UserId(command.user_id)
+        account_name = Title(command.name)
 
-        check = await self._repository.is_name_taken(user_id_obj, acc_name)
+        check = await self._repository.is_name_taken(user_id, account_name)
         if check:
             logger.warning(
-                f"Ошибка создания нового счёта для пользователя #{user_id_obj.short}"
+                f"Ошибка создания нового счёта для пользователя #{user_id.short}"
             )
             raise AccountAlreadyCreatedException
 
-        count = await self._repository.count_by_user_id(user_id_obj)
+        count = await self._repository.count_by_user_id(user_id)
         if count >= User.MAX_ACCOUNTS:
             logger.warning(
-                f"Пользователь #%s превысил лимит активных счётов", user_id_obj.short
+                f"Пользователь #%s превысил лимит активных счётов", user_id.short
             )
             raise TooManyAccountsForUserException
 
         new_account = Account.create(
-            user_id=user_id_obj,
-            name=acc_name,
-            balance=initial_balance,
-            account_type=account_type,
-            currency=currency,
+            user_id=user_id,
+            name=account_name,
+            balance=command.balance,
+            account_type=command.account_type,
+            currency=command.currency,
         )
         acc_id = await self._repository.save(new_account)
+        await self._cache.set(account=new_account, ttl=300)
+
         logger.info("Новый счёт #%s создан", acc_id.value)
+
         return acc_id
 
     async def find_account_by_id(self, account_id: str) -> Account:
         account_id_obj = AccountId(account_id)
+
+        cached = await self._cache.get(account_id_obj)
+        if cached:
+            logger.info(f"Счёт #{account_id} взят из кеша")
+            return cached
+
         if not (account := await self._repository.get_by_id(account_id_obj)):
             logger.warning("Счёт #%s не найден", account_id_obj.value)
             raise AccountNotFoundException
+
+        logger.info(f"Счёт #{account_id} получен")
         return account
 
     async def find_accounts_by_user_id(self, user_id: str) -> list[Account]:
@@ -97,22 +106,26 @@ class AccountService(AccountCRUDService):
         self,
         account_repo: AccountRepositoryProtocol,
         account_publisher: AccountEventPublisherProtocol,
+        account_cache: AccountCacheProtocol,
     ):
-        super().__init__(account_repo, account_publisher)
+        super().__init__(account_repo, account_publisher, account_cache)
 
-    async def set_new_balance(self, account_id: str, actual_balance: float) -> None:
+    async def update_balance(self, command: UpdateAccountBalanceCommand) -> None:
         """Обновляем баланс счета"""
 
-        account = await self.find_account_by_id(account_id)
+        account = await self.find_account_by_id(command.account_id)
 
-        if actual_balance == account.balance:
+        if command.new_balance == account.balance:
             logger.info("Баланс счета #%s не изменен", account.id.value)
             return
 
-        account.update_balance(actual_balance)
+        account.update_balance(command.new_balance)
 
-        await self._repository.update(AccountId(account_id), account)
+        await self._repository.update(AccountId(command.account_id), account)
         logger.info("Баланс счета #%s обновлен", account.id.value)
+
+        if len(account.events) > 1:
+            logger.error("Лишние события в доменной модели")
 
         for event in account.events:
             await self._publisher.publish(event)
@@ -120,9 +133,9 @@ class AccountService(AccountCRUDService):
         account.events.clear()
         return
 
-    async def rename_account(self, account_id: str, new_name: str) -> None:
-        account = await self.find_account_by_id(account_id)
-        account.rename_account(Title(new_name))
+    async def rename_account(self, command: UpdateAccountNameCommand) -> None:
+        account = await self.find_account_by_id(command.account_id)
+        account.rename_account(Title(command.new_name))
 
         await self._repository.save(account)
         logger.info("Название счета #%s обновлено", account.id.value)
@@ -132,8 +145,8 @@ class AccountService(AccountCRUDService):
 def get_account_service(
     acc_repo: AccountRepositoryDep,
     acc_publisher: AccountEventPublisherDep,
+    acc_cache: AccountCacheDep,
 ) -> AccountService:
     return AccountService(
-        account_repo=acc_repo,
-        account_publisher=acc_publisher,
+        account_repo=acc_repo, account_publisher=acc_publisher, account_cache=acc_cache
     )

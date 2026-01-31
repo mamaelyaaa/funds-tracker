@@ -17,6 +17,6 @@ class UserModel(Base, DataMixin):
     accounts: Mapped[list["AccountModel"]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
-        passive_deletes=True,  # ← Использовать БД каскад
+        passive_deletes=True,
         single_parent=True,
     )

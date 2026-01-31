@@ -1,7 +1,7 @@
 from typing import Protocol, Optional
 
 from users.values import UserId
-from .domain import Account, AccountId
+from .entities import Account, AccountId
 from .values import Title
 
 

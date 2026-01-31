@@ -4,7 +4,7 @@ from fastapi import Depends
 from sqlalchemy import select, func, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from accounts.domain import AccountId, Account
+from accounts.entities import AccountId, Account
 from accounts.repository import AccountRepositoryProtocol
 from accounts.values import Title
 from infra.database import SessionDep
@@ -24,6 +24,9 @@ class InMemoryAccountRepository:
     async def get_by_id(self, account_id: AccountId) -> Optional[Account]:
         return self._storage.get(account_id, None)
 
+    async def get_by_user_id(self, user_id: UserId) -> list[Account]:
+        raise NotImplemented
+
     async def delete(self, account_id: AccountId) -> None:
         self._storage.pop(account_id)
 
@@ -32,12 +35,13 @@ class InMemoryAccountRepository:
 
     async def is_name_taken(self, user_id: UserId, name: Title) -> bool:
         return any(
-            acc.name == name.value and acc.user_id == user_id
+            acc.name == name and acc.user_id == user_id
             for acc in self._storage.values()
         )
 
     async def update(self, account_id: AccountId, new_account: Account) -> None:
-        raise NotImplemented
+        await self.save(new_account)
+        return
 
 
 class SQLAAccountRepository:
@@ -46,7 +50,7 @@ class SQLAAccountRepository:
         self.session = session
 
     async def save(self, account: Account) -> AccountId:
-        acc = AccountModel(**account.model_dump())
+        acc = AccountModel(**account.to_dict())
         self.session.add(acc)
         await self.session.commit()
         return AccountId(acc.id)
@@ -88,11 +92,10 @@ class SQLAAccountRepository:
         return bool(count)
 
     async def update(self, account_id: AccountId, new_account: Account) -> None:
-        stmt = (
-            update(AccountModel)
-            .filter_by(id=account_id.value)
-            .values(**new_account.model_dump())
-        )
+        update_data = new_account.to_dict()
+        update_data.pop("user_id", None)
+
+        stmt = update(AccountModel).filter_by(id=account_id.value).values(**update_data)
         await self.session.execute(stmt)
         await self.session.commit()
         await self.session.refresh(

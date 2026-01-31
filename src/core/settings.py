@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Literal
 
 from dotenv import load_dotenv
-from pydantic import BaseModel, AmqpDsn
+from pydantic import BaseModel, AmqpDsn, RedisDsn
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 load_dotenv()
@@ -59,9 +59,20 @@ class BrokerConfig(BaseModel):
         )
 
 
+class CacheConfig(BaseModel):
+    port: int
+    host: str
+
+    @property
+    def REDIS_DSN(self, db_index: int = 0) -> str:
+        return f"redis://{self.host}:{self.port}/{db_index}"
+
+
 class Settings(BaseSettings):
     db: DBConfig
     broker: BrokerConfig
+    cache: CacheConfig
+
     app: AppConfig = AppConfig()
     files: FilesConfig = FilesConfig()
     logs: LogsConfig = LogsConfig()

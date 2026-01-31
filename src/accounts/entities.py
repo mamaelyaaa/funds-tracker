@@ -1,39 +1,25 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
 from datetime import datetime
 from typing import Any
 
-from core.domain import DomainEvent
+from core.domain import DomainEntity
 from users.values import UserId
+from .comands import CreateAccountCommand
+from .events import BalanceUpdatedEvent
 from .exceptions import InvalidInitBalanceException
 from .values import AccountType, AccountCurrency, AccountId, Title
 
 
-@dataclass(frozen=True)
-class BalanceUpdatedEvent(DomainEvent):
-    """Баланс счета обновлен"""
-
-    user_id: UserId
-    account_id: AccountId
-    old_balance: float
-    new_balance: float
-    delta: float
-    currency: AccountCurrency
-
-
-@dataclass
-class Account:
+@dataclass(kw_only=True)
+class Account(DomainEntity):
     """Доменная модель счета"""
 
+    id: AccountId = field(default_factory=AccountId.generate)
     user_id: UserId
     name: Title
     type: AccountType
     currency: AccountCurrency
-    balance: float = field(default=0)
-
-    id: AccountId = field(default_factory=AccountId.generate)
-    created_at: datetime = field(default_factory=datetime.now)
-
-    _events: list[DomainEvent] = field(default_factory=list)
+    balance: float = field(default=0.0)
 
     @classmethod
     def create(
@@ -53,6 +39,12 @@ class Account:
             balance=balance,
             currency=currency,
         )
+
+    @classmethod
+    def create_from_command(cls, command: CreateAccountCommand) -> "Account":
+        if command.balance < 0:
+            raise InvalidInitBalanceException
+        return cls(**asdict(command))
 
     def update_balance(self, new_balance: float) -> None:
         """Обновление баланса счета"""
@@ -80,11 +72,7 @@ class Account:
         self.name = new_name
         return
 
-    @property
-    def events(self) -> list[DomainEvent]:
-        return self._events
-
-    def model_dump(self) -> dict[str, Any]:
+    def to_dict(self, all_str: bool = False) -> dict[str, Any]:
         return {
             "id": self.id.value,
             "user_id": self.user_id.value,
@@ -92,5 +80,7 @@ class Account:
             "type": self.type,
             "balance": self.balance,
             "currency": self.currency,
-            "created_at": self.created_at,
+            "created_at": (
+                self.created_at if not all_str else self.created_at.isoformat()
+            ),
         }

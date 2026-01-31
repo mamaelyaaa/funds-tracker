@@ -1,8 +1,9 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
-from fastapi import Body
+from fastapi import Body, status
 
+from accounts.comands import CreateAccountCommand, UpdateAccountBalanceCommand
 from accounts.service import AccountService, get_account_service
 from api.schemas import BaseResponseSchema, BaseResponseDetailSchema
 from api.v1.schemas.accounts import (
@@ -20,10 +21,13 @@ router = APIRouter(
 
 AccountServiceDep = Annotated[AccountService, Depends(get_account_service)]
 
+# TODO Описать все responses
+
 
 @router.post(
     "",
     response_model=BaseResponseDetailSchema[AccountIdResponse, dict],
+    status_code=status.HTTP_201_CREATED,
 )
 async def create_account(
     account_service: AccountServiceDep,
@@ -34,11 +38,13 @@ async def create_account(
     """Создание нового счёта"""
 
     account_id = await account_service.create_account(
-        account_type=schema.account_type,
-        name=schema.name,
-        initial_balance=schema.initial_balance,
-        currency=schema.currency,
-        user_id=user_id,
+        command=CreateAccountCommand(
+            account_type=schema.account_type,
+            name=schema.name,
+            balance=schema.initial_balance,
+            currency=schema.currency,
+            user_id=user_id,
+        )
     )
 
     return BaseResponseDetailSchema(
@@ -62,7 +68,7 @@ async def get_accounts(
 
     return BaseResponseDetailSchema(
         message=f"Получение счётов пользователя",
-        detail=[AccountDetailSchema.from_orm(account) for account in accounts],
+        detail=[AccountDetailSchema.from_domain(account) for account in accounts],
     )
 
 
@@ -82,7 +88,7 @@ async def get_account(
 
     return BaseResponseDetailSchema(
         message=f"Получение счёта пользователя",
-        detail=AccountDetailSchema.from_orm(account),
+        detail=AccountDetailSchema.from_domain(account),
     )
 
 
@@ -103,9 +109,11 @@ async def update_account_balance(
     Возвращает 200 статус даже если баланс не изменился
     """
 
-    await account_service.set_new_balance(
-        account_id=account_id,
-        actual_balance=actual_balance,
+    await account_service.update_balance(
+        command=UpdateAccountBalanceCommand(
+            account_id=account_id,
+            new_balance=actual_balance,
+        )
     )
 
     return BaseResponseSchema(message="Баланс счёта обновлен")

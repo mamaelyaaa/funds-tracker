@@ -3,13 +3,13 @@ from typing import Any, Self
 
 from pydantic import BaseModel, Field
 
-from accounts.domain import AccountType, AccountCurrency, Account
+from accounts.entities import AccountType, AccountCurrency, Account
 
 
 class CreateAccountSchema(BaseModel):
     name: str
-    initial_balance: float = Field(alias="initialBalance")
-    account_type: AccountType = Field(alias="accountType")
+    initial_balance: float
+    account_type: AccountType
     currency: AccountCurrency
 
 
@@ -27,7 +27,7 @@ class AccountDetailSchema(BaseModel):
     created_at: datetime
 
     @classmethod
-    def from_orm(cls, account: Account) -> "AccountDetailSchema":
+    def from_domain(cls, account: Account) -> "AccountDetailSchema":
         return AccountDetailSchema(
             id=account.id.value,
             user_id=account.user_id.value,

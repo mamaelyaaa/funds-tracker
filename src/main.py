@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.responses import ORJSONResponse
+from redis.asyncio import Redis
 
 from api import router as main_router
 from api.schemas import BaseExceptionSchema
@@ -12,15 +13,15 @@ from core.logger import setup_logger
 from core.settings import settings
 from infra.admin import admin
 from infra.broker import broker
+from infra.cache.redis import get_redis_client
 from infra.database import db_helper
 
 setup_logger()
-
 logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
-async def lifespan(_: FastAPI):
+async def lifespan(_: FastAPI, redis: Redis = get_redis_client()):
     if not broker.is_worker_process:
         await broker.startup()
 
@@ -30,6 +31,7 @@ async def lifespan(_: FastAPI):
         await broker.shutdown()
 
     await db_helper.dispose()
+    await redis.aclose()
 
 
 app = FastAPI(
@@ -56,6 +58,8 @@ async def handle_app_exception(request: Request, exc: AppException):
 
 if __name__ == "__main__":
     if settings.app.env == "TEST":
-        logger.warning("Запущено на тестовом окружении")
+        logger.warning(
+            "Запущено на тестовом окружении. Будет использован in-memory брокер"
+        )
 
     uvicorn.run(app="src.main:app", reload=True)

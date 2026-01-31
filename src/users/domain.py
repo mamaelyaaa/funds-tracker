@@ -10,7 +10,7 @@ class User:
 
     name: str
 
-    MAX_ACCOUNTS: int = 3
+    MAX_ACCOUNTS: int = 10
 
     id: UserId = field(default_factory=UserId.generate)
     created_at: datetime = field(default_factory=datetime.now)
