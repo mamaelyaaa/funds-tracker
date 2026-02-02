@@ -1,7 +1,7 @@
 from typing import Protocol, Optional
 
-from users.values import UserId
-from .entities import Account, AccountId
+from domain.users.values import UserId
+from .entity import Account, AccountId
 from .values import Title
 
 
@@ -16,7 +16,7 @@ class AccountRepositoryProtocol(Protocol):
     async def get_by_user_id(self, user_id: UserId) -> list[Account]:
         pass
 
-    async def delete(self, account_id: AccountId) -> None:
+    async def delete(self, account_id: AccountId) -> Optional[AccountId]:
         pass
 
     async def count_by_user_id(self, user_id: UserId) -> int:

@@ -4,18 +4,19 @@ from fastapi import Depends
 from sqlalchemy import select, func, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from accounts.entities import AccountId, Account
-from accounts.repository import AccountRepositoryProtocol
-from accounts.values import Title
-from infra.database import SessionDep
+from domain.accounts.entity import Account
+from domain.accounts.repository import AccountRepositoryProtocol
+from domain.accounts.values import Title, AccountId
+from domain.users.values import UserId
+from infra import SessionDep
 from infra.models import AccountModel
-from users.values import UserId
+from infra.repositories.base import BaseInMemoryRepository
 
 
-class InMemoryAccountRepository:
+class InMemoryAccountRepository(BaseInMemoryRepository[AccountId, Account]):
 
     def __init__(self):
-        self._storage: dict[AccountId, Account] = {}
+        super().__init__()
 
     async def save(self, account: Account) -> AccountId:
         self._storage[account.id] = account
@@ -25,10 +26,16 @@ class InMemoryAccountRepository:
         return self._storage.get(account_id, None)
 
     async def get_by_user_id(self, user_id: UserId) -> list[Account]:
-        raise NotImplemented
+        return [
+            account for account in self._storage.values() if account.user_id == user_id
+        ]
 
-    async def delete(self, account_id: AccountId) -> None:
+    async def delete(self, account_id: AccountId) -> Optional[AccountId]:
+        account = await self.get_by_id(account_id)
+        if not account:
+            return None
         self._storage.pop(account_id)
+        return account_id
 
     async def count_by_user_id(self, user_id: UserId) -> int:
         return sum(1 for acc in self._storage.values() if acc.user_id == user_id)
@@ -47,30 +54,30 @@ class InMemoryAccountRepository:
 class SQLAAccountRepository:
 
     def __init__(self, session: AsyncSession):
-        self.session = session
+        self._session = session
 
     async def save(self, account: Account) -> AccountId:
         acc = AccountModel(**account.to_dict())
-        self.session.add(acc)
-        await self.session.commit()
+        self._session.add(acc)
+        await self._session.commit()
         return AccountId(acc.id)
 
     async def get_by_id(self, account_id: AccountId) -> Optional[Account]:
         query = select(AccountModel).filter_by(id=account_id.value)
-        account: AccountModel = await self.session.scalar(query)
+        account: AccountModel = await self._session.scalar(query)
         if not account:
             return None
         return self._to_domain(account)
 
     async def get_by_user_id(self, user_id: UserId) -> list[Account]:
         query = select(AccountModel).filter_by(user_id=user_id.value)
-        accounts = await self.session.execute(query)
+        accounts = await self._session.execute(query)
         return [self._to_domain(account) for account in accounts.scalars().all()]
 
     async def delete(self, account_id: AccountId) -> None:
         stmt = delete(AccountModel).filter_by(id=account_id.value)
-        await self.session.execute(stmt)
-        await self.session.commit()
+        await self._session.execute(stmt)
+        await self._session.commit()
         return
 
     async def count_by_user_id(self, user_id: UserId) -> int:
@@ -79,7 +86,7 @@ class SQLAAccountRepository:
             .select_from(AccountModel)
             .filter_by(user_id=user_id.value)
         )
-        res = await self.session.scalar(query)
+        res = await self._session.scalar(query)
         return res or 0
 
     async def is_name_taken(self, user_id: UserId, name: Title) -> bool:
@@ -88,7 +95,7 @@ class SQLAAccountRepository:
             .select_from(AccountModel)
             .filter_by(user_id=user_id.value, name=name.value)
         )
-        count = await self.session.scalar(query)
+        count = await self._session.scalar(query)
         return bool(count)
 
     async def update(self, account_id: AccountId, new_account: Account) -> None:
@@ -96,10 +103,10 @@ class SQLAAccountRepository:
         update_data.pop("user_id", None)
 
         stmt = update(AccountModel).filter_by(id=account_id.value).values(**update_data)
-        await self.session.execute(stmt)
-        await self.session.commit()
-        await self.session.refresh(
-            await self.session.get(AccountModel, account_id.value)
+        await self._session.execute(stmt)
+        await self._session.commit()
+        await self._session.refresh(
+            await self._session.get(AccountModel, account_id.value)
         )
         return
 

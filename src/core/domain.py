@@ -6,7 +6,7 @@ from typing import Any
 
 @dataclass(frozen=True)
 class DomainEvent:
-    occurred_at: datetime
+    occurred_at: datetime = field(default_factory=datetime.now)
 
 
 @dataclass(frozen=True)

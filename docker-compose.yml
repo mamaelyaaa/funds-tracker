@@ -1,11 +1,8 @@
-networks:
-  dev:
-
 services:
   database:
     image: postgres:17
     hostname: postgres
-    container_name: funds-tracker-db
+    container_name: postgres
     environment:
       POSTGRES_DB: ${DB__NAME}
       POSTGRES_USER: ${DB__USER}
@@ -17,8 +14,6 @@ services:
       - "${DB__PORT}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-    networks:
-      - dev
 #    healthcheck:
 #      test: [ "CMD-SHELL", "pg_isready -U user" ]
 #      interval: 5s
@@ -26,7 +21,7 @@ services:
 #      retries: 3
 
   rabbitmq:
-    container_name: funds-tracker-rabbitmq
+    container_name: rabbitmq
     image: rabbitmq:3-management-alpine
     ports:
       - "${BROKER__PORT}:5672"
@@ -38,8 +33,6 @@ services:
       - .env
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq/mnesia
-    networks:
-      - dev
 #    healthcheck:
 #      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping"]
 #      interval: 10s
@@ -61,19 +54,26 @@ services:
 #    depends_on:
 #      - rabbitmq
 
-  cache:
+  redis:
     image: redis:7
     container_name: redis
     restart: unless-stopped
     ports:
       - "${CACHE__PORT}:6379"
+    volumes:
+      - cache:/data
 
   redis_gui:
     container_name: redis-gui
     image: redis/redisinsight
+    restart: unless-stopped
     ports:
       - "5540:5540"
+    volumes:
+      - redisinsight:/db
 
 volumes:
   pgdata:
   rabbitmq_data:
+  cache:
+  redisinsight:

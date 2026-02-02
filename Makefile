@@ -7,6 +7,10 @@ APP_FILE = docker-compose.yml
 all:
 	${DC} -f ${APP_FILE} up --build -d
 
+.PHONY: stop
+stop:
+	${DC} -f ${APP_FILE} stop
+
 .PHONY: test
 test:
 	pytest -s -v

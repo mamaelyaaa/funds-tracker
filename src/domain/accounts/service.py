@@ -1,18 +1,15 @@
 import logging
 
-from infra import broker
-from infra.cache.accounts import AccountCacheDep
+from domain.users.entity import User
+from domain.users.values import UserId
 from infra.publishers.accounts import AccountEventPublisherDep
 from infra.repositories.accounts import AccountRepositoryDep
-from users.domain import User
-from users.values import UserId
-from .cache import AccountCacheProtocol
 from .comands import (
     CreateAccountCommand,
     UpdateAccountBalanceCommand,
     UpdateAccountNameCommand,
 )
-from .entities import Account, AccountId
+from .entity import Account, AccountId
 from .exceptions import (
     AccountNotFoundException,
     TooManyAccountsForUserException,
@@ -31,13 +28,11 @@ class AccountCRUDService:
         self,
         account_repo: AccountRepositoryProtocol,
         account_publisher: AccountEventPublisherProtocol,
-        account_cache: AccountCacheProtocol,
     ):
         self._repository = account_repo
         self._publisher = account_publisher
-        self._cache = account_cache
 
-    async def create_account(self, command: CreateAccountCommand) -> AccountId:
+    async def create_account(self, command: CreateAccountCommand) -> Account:
         """Создаем новый счет"""
 
         user_id = UserId(command.user_id)
@@ -65,19 +60,23 @@ class AccountCRUDService:
             currency=command.currency,
         )
         acc_id = await self._repository.save(new_account)
-        await self._cache.set(account=new_account, ttl=300)
+
+        # await self._cache.set(account=new_account, ttl=300)
+
+        for event in new_account.events:
+            await self._publisher.publish(event)
 
         logger.info("Новый счёт #%s создан", acc_id.value)
 
-        return acc_id
+        return new_account
 
     async def find_account_by_id(self, account_id: str) -> Account:
         account_id_obj = AccountId(account_id)
 
-        cached = await self._cache.get(account_id_obj)
-        if cached:
-            logger.info(f"Счёт #{account_id} взят из кеша")
-            return cached
+        # cached = await self._cache.get(account_id_obj)
+        # if cached:
+        #     logger.info(f"Счёт #{account_id} взят из кеша")
+        #     return cached
 
         if not (account := await self._repository.get_by_id(account_id_obj)):
             logger.warning("Счёт #%s не найден", account_id_obj.value)
@@ -106,9 +105,8 @@ class AccountService(AccountCRUDService):
         self,
         account_repo: AccountRepositoryProtocol,
         account_publisher: AccountEventPublisherProtocol,
-        account_cache: AccountCacheProtocol,
     ):
-        super().__init__(account_repo, account_publisher, account_cache)
+        super().__init__(account_repo, account_publisher)
 
     async def update_balance(self, command: UpdateAccountBalanceCommand) -> None:
         """Обновляем баланс счета"""
@@ -143,10 +141,6 @@ class AccountService(AccountCRUDService):
 
 
 def get_account_service(
-    acc_repo: AccountRepositoryDep,
-    acc_publisher: AccountEventPublisherDep,
-    acc_cache: AccountCacheDep,
+    acc_repo: AccountRepositoryDep, acc_publisher: AccountEventPublisherDep
 ) -> AccountService:
-    return AccountService(
-        account_repo=acc_repo, account_publisher=acc_publisher, account_cache=acc_cache
-    )
+    return AccountService(account_repo=acc_repo, account_publisher=acc_publisher)

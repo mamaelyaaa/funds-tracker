@@ -4,17 +4,18 @@ from fastapi import Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from infra.database import SessionDep
+from domain.users.entity import User
+from domain.users.repository import UserRepositoryProtocol
+from domain.users.values import UserId
+from infra import SessionDep
 from infra.models import UserModel
-from users.domain import User
-from users.repository import UserRepositoryProtocol
-from users.values import UserId
+from infra.repositories.base import BaseInMemoryRepository
 
 
-class InMemoryUserRepository:
+class InMemoryUserRepository(BaseInMemoryRepository[UserId, User]):
 
     def __init__(self):
-        self._storage: dict[UserId, User] = {}
+        super().__init__()
 
     async def save(self, user: User) -> UserId:
         self._storage[user.id] = user
@@ -27,7 +28,7 @@ class InMemoryUserRepository:
 class SQLAUserRepository:
 
     def __init__(self, session: AsyncSession):
-        self.session = session
+        self._session = session
 
     async def save(self, user: User) -> UserId:
         user_model = UserModel(
@@ -35,13 +36,13 @@ class SQLAUserRepository:
             name=user.name,
             created_at=user.created_at,
         )
-        self.session.add(user_model)
-        await self.session.commit()
+        self._session.add(user_model)
+        await self._session.commit()
         return user.id
 
     async def get_by_id(self, user_id: UserId) -> Optional[User]:
         query = select(UserModel).filter_by(id=user_id.value)
-        res = await self.session.execute(query)
+        res = await self._session.execute(query)
         return res.scalar_one_or_none()
 
 

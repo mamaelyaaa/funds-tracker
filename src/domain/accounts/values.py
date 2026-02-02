@@ -3,7 +3,10 @@ from dataclasses import dataclass
 from enum import Enum
 import string
 
-from accounts.exceptions import TooLargeTitleException, InvalidLettersTitleException
+from domain.accounts.exceptions import (
+    TooLargeTitleException,
+    InvalidLettersTitleException,
+)
 from core.domain import DomainValueObject
 
 
@@ -41,6 +44,7 @@ alphabet = (
     + "".join(chr(i) for i in range(ord("а"), ord("я") + 1))
     + "".join(chr(i) for i in range(ord("А"), ord("Я") + 1))
     + " "
+    + "ё"
 )
 
 

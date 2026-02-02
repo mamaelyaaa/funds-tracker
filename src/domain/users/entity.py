@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 
-from users.values import UserId
+from .values import UserId
 
 
 @dataclass

@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from accounts.values import AccountType, AccountCurrency
+from domain.accounts.values import AccountType, AccountCurrency
 
 if TYPE_CHECKING:
     from infra.models import UserModel

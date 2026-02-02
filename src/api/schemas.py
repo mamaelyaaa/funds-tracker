@@ -12,3 +12,14 @@ class BaseResponseDetailSchema[D, M](BaseResponseSchema):
 
 class BaseExceptionSchema(BaseResponseSchema):
     suggestion: str
+
+
+class ValidationDetailSchema(BaseModel):
+    field: str
+    message: str
+    type: str
+
+
+class ValidationExceptionSchema(BaseResponseSchema):
+    message: str = "Ошибка валидации входных данных"
+    detail: list[ValidationDetailSchema]

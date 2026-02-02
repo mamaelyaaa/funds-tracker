@@ -1,7 +1,7 @@
 from typing import Protocol, Optional
 
-from users.domain import User
-from users.values import UserId
+from .entity import User
+from .values import UserId
 
 
 class UserRepositoryProtocol(Protocol):

@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 
-from accounts.exceptions import InvalidInitBalanceException
-from accounts.values import AccountId
+from domain.accounts.exceptions import InvalidInitBalanceException
+from domain.accounts.values import AccountId
 from .values import SavingsId
 
 

@@ -4,10 +4,10 @@ from typing import Annotated
 from fastapi import Depends
 
 from infra.repositories.users import UserRepositoryDep
-from users.domain import User
-from users.exceptions import UserNotFoundException
-from users.repository import UserRepositoryProtocol
-from users.values import UserId
+from .entity import User
+from .exceptions import UserNotFoundException
+from .repository import UserRepositoryProtocol
+from .values import UserId
 
 logger = logging.getLogger(__name__)
 

@@ -1,9 +1,9 @@
 from datetime import datetime
-from typing import Any, Self
+from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
-from accounts.entities import AccountType, AccountCurrency, Account
+from domain.accounts.entity import AccountType, AccountCurrency, Account
 
 
 class CreateAccountSchema(BaseModel):
@@ -13,13 +13,8 @@ class CreateAccountSchema(BaseModel):
     currency: AccountCurrency
 
 
-class AccountIdResponse(BaseModel):
-    account_id: str = Field(alias="accountId")
-
-
 class AccountDetailSchema(BaseModel):
     id: str
-    user_id: str
     name: str
     type: AccountType
     balance: float
@@ -30,10 +25,13 @@ class AccountDetailSchema(BaseModel):
     def from_domain(cls, account: Account) -> "AccountDetailSchema":
         return AccountDetailSchema(
             id=account.id.value,
-            user_id=account.user_id.value,
             name=account.name.value,
             balance=account.balance,
             currency=account.currency,
             type=account.type,
             created_at=account.created_at,
         )
+
+    @staticmethod
+    def to_domain(data: dict[str, Any]) -> Account:
+        return Account(**data)

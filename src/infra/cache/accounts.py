@@ -5,9 +5,9 @@ from typing import Optional, Annotated, Any
 from fastapi import Depends
 from redis.asyncio import Redis
 
-from accounts.cache import AccountCacheProtocol
-from accounts.entities import Account
-from accounts.values import AccountId
+from domain.accounts.cache import AccountCacheProtocol
+from domain.accounts.entity import Account
+from domain.accounts.values import AccountId
 from infra.cache.redis import RedisDep
 
 
@@ -24,6 +24,10 @@ class InMemoryAccountCache:
     ) -> None:
         self._cache[account.id] = account
         return
+
+    @staticmethod
+    def account_key(account_id: AccountId) -> str:
+        return f"account:{account_id.short}"
 
 
 class RedisAccountCache:
@@ -54,8 +58,8 @@ class RedisAccountCache:
 
     @staticmethod
     def deserialize(data: dict[str, Any]) -> Account:
-        from users.values import UserId
-        from accounts.values import Title
+        from domain.users.values import UserId
+        from domain.accounts.values import Title
 
         return Account(
             id=AccountId(data.get("id")),

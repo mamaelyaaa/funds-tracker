@@ -1,7 +1,11 @@
-from accounts.values import AccountId
+import logging
+
+from domain.accounts.values import AccountId
+from domain.savings.domain import SavingsHistory
+from domain.savings.repository import SavingsHistoryRepositoryProtocol
 from infra.repositories.savings import SavingsRepositoryDep
-from savings.domain import SavingsHistory
-from savings.repository import SavingsHistoryRepositoryProtocol
+
+logger = logging.getLogger(__name__)
 
 
 class SavingsHistoryService:
@@ -10,6 +14,7 @@ class SavingsHistoryService:
         self._repository = savings_repo
 
     async def make_account_screenshot(self, account_id: str, balance: float) -> str:
+        logger.debug(account_id)
         savings = SavingsHistory(account_id=AccountId(account_id), balance=balance)
         await self._repository.save(savings)
         return savings.id.value

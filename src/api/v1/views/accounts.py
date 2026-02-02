@@ -1,18 +1,20 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
-from fastapi import Body, status
+from fastapi import APIRouter, Depends, status
+from fastapi import Body
 
-from accounts.comands import CreateAccountCommand, UpdateAccountBalanceCommand
-from accounts.service import AccountService, get_account_service
-from api.schemas import BaseResponseSchema, BaseResponseDetailSchema
+from api.schemas import (
+    BaseResponseSchema,
+    BaseResponseDetailSchema,
+    BaseExceptionSchema,
+)
 from api.v1.schemas.accounts import (
     CreateAccountSchema,
-    AccountIdResponse,
     AccountDetailSchema,
 )
-from users.dependencies import get_user
-from users.domain import User
+from domain.accounts.comands import CreateAccountCommand, UpdateAccountBalanceCommand
+from domain.accounts.service import AccountService, get_account_service
+from domain.users.dependencies import UserDep
 
 router = APIRouter(
     prefix="/users/{user_id}/accounts",
@@ -26,18 +28,32 @@ AccountServiceDep = Annotated[AccountService, Depends(get_account_service)]
 
 @router.post(
     "",
-    response_model=BaseResponseDetailSchema[AccountIdResponse, dict],
+    response_model=BaseResponseDetailSchema[AccountDetailSchema, dict],
     status_code=status.HTTP_201_CREATED,
+    responses={
+        201: {
+            "model": BaseResponseDetailSchema[AccountDetailSchema, dict],
+            "description": "Счёт создан",
+        },
+        409: {
+            "model": BaseExceptionSchema,
+            "description": "Превышен лимит активных счётов ИЛИ Счёт с таким названием уже существует",
+        },
+        400: {
+            "model": BaseExceptionSchema,
+            "description": "Невалидные символы для названия счёта (пустые строки не попадают под эту ошибку)",
+        },
+    },
 )
 async def create_account(
     account_service: AccountServiceDep,
     schema: CreateAccountSchema,
     user_id: str,
-    user: Annotated[User, Depends(get_user)],
+    user: UserDep,
 ):
     """Создание нового счёта"""
 
-    account_id = await account_service.create_account(
+    account = await account_service.create_account(
         command=CreateAccountCommand(
             account_type=schema.account_type,
             name=schema.name,
@@ -49,7 +65,7 @@ async def create_account(
 
     return BaseResponseDetailSchema(
         message=f"Счет '{schema.name}' успешно создан",
-        detail=AccountIdResponse(accountId=account_id.value),
+        detail=AccountDetailSchema.from_domain(account),
     )
 
 
@@ -60,7 +76,7 @@ async def create_account(
 async def get_accounts(
     account_service: AccountServiceDep,
     user_id: str,
-    user: Annotated[User, Depends(get_user)],
+    user: UserDep,
 ):
     """Получение счетов пользователя"""
 
@@ -79,8 +95,8 @@ async def get_accounts(
 async def get_account(
     account_service: AccountServiceDep,
     account_id: str,
-    user: Annotated[User, Depends(get_user)],
     user_id: str,
+    user: UserDep,
 ):
     """Получение счета пользователя по уникальному id"""
 
@@ -100,7 +116,7 @@ async def update_account_balance(
     account_service: AccountServiceDep,
     account_id: str,
     user_id: str,
-    user: Annotated[User, Depends(get_user)],
+    user: UserDep,
     actual_balance: float = Body(embed=True),
 ):
     """
@@ -124,7 +140,7 @@ async def delete_balance(
     account_service: AccountServiceDep,
     account_id: str,
     user_id: str,
-    user: Annotated[User, Depends(get_user)],
+    user: UserDep,
 ):
     """Удаляет счёт"""
 

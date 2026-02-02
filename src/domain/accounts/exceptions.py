@@ -39,6 +39,15 @@ class TooLargeTitleException(AppException):
         return f"Слишком длинное название счёта"
 
 
+class EmptyTitleException(AppException):
+    status_code: int = status.HTTP_400_BAD_REQUEST
+    suggestion: str = "Введите название для счёта"
+
+    @property
+    def message(self) -> str:
+        return f"Название счёта не может быть пустым"
+
+
 class InvalidLettersTitleException(AppException):
     status_code: int = status.HTTP_400_BAD_REQUEST
     suggestion: str = (

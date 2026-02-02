@@ -1,11 +1,11 @@
 from dataclasses import dataclass
 
-from accounts.values import AccountId, AccountCurrency
+from domain.accounts.values import AccountId, AccountCurrency
 from core.domain import DomainEvent
-from users.values import UserId
+from domain.users.values import UserId
 
 
-@dataclass(frozen=True)
+@dataclass(kw_only=True, frozen=True)
 class BalanceUpdatedEvent(DomainEvent):
     """Баланс счета обновлен"""
 
@@ -15,3 +15,10 @@ class BalanceUpdatedEvent(DomainEvent):
     new_balance: float
     delta: float
     currency: AccountCurrency
+
+
+@dataclass(kw_only=True, frozen=True)
+class AccountCreatedEvent(DomainEvent):
+    user_id: UserId
+    account_id: AccountId
+    new_balance: float

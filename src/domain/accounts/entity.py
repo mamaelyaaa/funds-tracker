@@ -3,9 +3,9 @@ from datetime import datetime
 from typing import Any
 
 from core.domain import DomainEntity
-from users.values import UserId
+from domain.users.values import UserId
 from .comands import CreateAccountCommand
-from .events import BalanceUpdatedEvent
+from .events import BalanceUpdatedEvent, AccountCreatedEvent
 from .exceptions import InvalidInitBalanceException
 from .values import AccountType, AccountCurrency, AccountId, Title
 
@@ -32,13 +32,22 @@ class Account(DomainEntity):
     ) -> "Account":
         if balance < 0:
             raise InvalidInitBalanceException
-        return cls(
+
+        account = cls(
             user_id=user_id,
             name=name,
             type=account_type,
             balance=balance,
             currency=currency,
         )
+        account.events.append(
+            AccountCreatedEvent(
+                user_id=user_id,
+                account_id=account.id,
+                new_balance=balance,
+            )
+        )
+        return account
 
     @classmethod
     def create_from_command(cls, command: CreateAccountCommand) -> "Account":

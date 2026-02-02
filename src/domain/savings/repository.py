@@ -1,7 +1,7 @@
 from typing import Protocol, Optional
 
-from savings.domain import SavingsHistory
-from savings.values import SavingsId
+from domain.savings.domain import SavingsHistory
+from domain.savings.values import SavingsId
 
 
 class SavingsHistoryRepositoryProtocol(Protocol):

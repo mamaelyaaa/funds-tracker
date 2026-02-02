@@ -1,35 +1,51 @@
 import asyncio
 import logging
-from typing import Annotated
+from typing import Annotated, Callable
 
 from fastapi import Depends
-from taskiq import TaskiqResult, AsyncTaskiqTask
+from taskiq import AsyncTaskiqTask
 
-from accounts.events import BalanceUpdatedEvent
-from accounts.publisher import AccountEventPublisherProtocol
 from core.domain import DomainEvent
-from infra.tasks.accounts import sync_net_worth, make_account_screenshot
+from domain.accounts.events import AccountCreatedEvent, BalanceUpdatedEvent
+from domain.accounts.publisher import AccountEventPublisherProtocol
+from infra.tasks.accounts import save_account_history
 
 logger = logging.getLogger(__name__)
 
 
 class AccountTaskiqPublisher:
 
-    async def publish(self, event: DomainEvent) -> None:
-        if isinstance(event, BalanceUpdatedEvent):
-            task: AsyncTaskiqTask[str] = await sync_net_worth.kiq(event)
-            logger.info(f"Синхронизируем капитал пользователя: task#{task.task_id}")
-            asyncio.create_task(self._track_task_result(task))
+    def __init__(self):
+        self.handlers: dict[type[DomainEvent], list[Callable]] = {
+            AccountCreatedEvent: [self._handle_account_update_history],
+            BalanceUpdatedEvent: [self._handle_account_update_history],
+        }
 
-            task: AsyncTaskiqTask[None] = await make_account_screenshot.kiq(event)
-            logger.info(f"Обновляем историю счёта: task#{task.task_id}")
+    async def publish(self, event: DomainEvent) -> None:
+        for handler in self.handlers.get(type(event)):
+            await handler(event)
         return
 
-    async def _track_task_result(self, task: AsyncTaskiqTask):
-        """Фоновая задача для отслеживания результата"""
-        # Ждем до 30 секунд
-        result = await task.wait_result(timeout=30)
-        logger.info(f"Задача {task.task_id} выполнена: {result.return_value}")
+    async def _handle_account_update_history(self, event: AccountCreatedEvent) -> None:
+        task: AsyncTaskiqTask = await save_account_history.kiq(event)
+        logger.info(f"Обновляем историю счёта: task#{task.task_id}")
+        asyncio.create_task(self.track_tasks([task]))
+        return
+
+    @staticmethod
+    async def track_tasks(tasks: list[AsyncTaskiqTask]) -> None:
+        """Фоновая задача для отслеживания результатов"""
+
+        for task in tasks:
+            try:
+                result = await task.wait_result(timeout=30)
+                logger.info(f"Задача #{task.task_id} выполнена: {result.return_value}")
+
+            except asyncio.TimeoutError:
+                logger.warning(f"Задача #{task.task_id} не завершилась за 30 секунд")
+
+            except Exception as e:
+                logger.error(f"Ошибка в задаче #{task.task_id}: {e}")
 
 
 def get_account_event_publisher() -> AccountEventPublisherProtocol:
