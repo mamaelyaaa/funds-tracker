@@ -16,7 +16,6 @@ NetWorthServiceDep = Annotated[NetWorthService, Depends(get_net_worth_service)]
 @router.get(
     "/net-worth/total-balance",
     response_model=BaseResponseDetailSchema[NetWorthBalanceSchema, dict],
-    deprecated=True,
 )
 async def get_user_net_worth_total_balance(
     nw_service: NetWorthServiceDep,

@@ -1,3 +1,4 @@
+from datetime import timedelta
 from pathlib import Path
 from typing import Literal
 
@@ -57,6 +58,8 @@ class BrokerConfig(BaseModel):
         return (
             f"amqp://{self.user}:{self.password}@{self.host}:{self.port}/{self.vhost}"
         )
+
+    result_backend_ex_time: int = timedelta(minutes=2).total_seconds()
 
 
 class CacheConfig(BaseModel):

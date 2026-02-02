@@ -4,7 +4,8 @@ from typing import Annotated
 from taskiq import TaskiqDepends
 
 from domain.accounts.events import AccountCreatedEvent
-from domain.savings.service import SavingsHistoryService, get_savings_service
+from domain.histories.commands import SaveHistoryCommand
+from domain.histories.service import HistoryService, get_history_service
 from infra import broker
 
 logger = logging.getLogger(__name__)
@@ -13,13 +14,13 @@ logger = logging.getLogger(__name__)
 @broker.task
 async def save_account_history(
     event: AccountCreatedEvent,
-    savings_service: Annotated[
-        SavingsHistoryService, TaskiqDepends(get_savings_service)
-    ],
+    history_service: Annotated[HistoryService, TaskiqDepends(get_history_service)],
 ) -> str:
     logger.info(f"Сохраняем историю счёта #{event.account_id.short} ...")
-    savings_id: str = await savings_service.make_account_screenshot(
-        balance=event.new_balance,
-        account_id=event.account_id.value,
+    history_id: str = await history_service.save_account_history(
+        command=SaveHistoryCommand(
+            balance=event.new_balance,
+            account_id=event.account_id.value,
+        )
     )
-    return savings_id
+    return history_id

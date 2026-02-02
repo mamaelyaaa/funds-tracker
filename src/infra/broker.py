@@ -15,7 +15,7 @@ def setup_broker() -> AsyncBroker:
         return InMemoryBroker()
 
     return AioPikaBroker(url=settings.broker.AMQP_DSN).with_result_backend(
-        RedisAsyncResultBackend(redis_url=settings.cache.REDIS_DSN, result_ex_time=1000)
+        RedisAsyncResultBackend(redis_url=settings.cache.REDIS_DSN, result_ex_time=100)
     )
 
 

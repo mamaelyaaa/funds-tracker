@@ -14,4 +14,4 @@ class SavingsHistoryModel(Base, DataMixin):
     )
     balance: Mapped[float] = mapped_column(default=0.0)
 
-    account: Mapped["AccountModel"] = relationship(backref="savings")
+    account: Mapped["AccountModel"] = relationship(backref="histories")

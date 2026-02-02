@@ -1,4 +1,4 @@
-"""add savings model
+"""add histories model
 
 Revision ID: 2ed26f640a85
 Revises: 633655d3351a

@@ -61,6 +61,9 @@ class Account(DomainEntity):
         if self.balance == new_balance:
             return
 
+        if new_balance < 0:
+            raise InvalidInitBalanceException
+
         old_balance = self.balance
         self.balance = new_balance
 

@@ -7,7 +7,7 @@ from .values import SavingsId
 
 
 @dataclass
-class SavingsHistory:
+class AccountHistory:
     account_id: AccountId
     balance: float
 
@@ -15,7 +15,7 @@ class SavingsHistory:
     created_at: datetime = field(default_factory=datetime.now)
 
     @classmethod
-    def create(cls, account_id: AccountId, balance: float) -> "SavingsHistory":
+    def create(cls, account_id: AccountId, balance: float) -> "AccountHistory":
         if balance < 0:
             raise InvalidInitBalanceException
         return cls(balance=balance, account_id=account_id)

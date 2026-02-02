@@ -23,3 +23,8 @@ class ValidationDetailSchema(BaseModel):
 class ValidationExceptionSchema(BaseResponseSchema):
     message: str = "Ошибка валидации входных данных"
     detail: list[ValidationDetailSchema]
+
+
+class PaginationSchema(BaseModel):
+    page: int
+    limit: int
