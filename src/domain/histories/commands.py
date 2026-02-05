@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from domain.commands import PaginationCommand
+from domain.histories.values import HistoryInterval
 
 
 @dataclass(frozen=True)
@@ -12,4 +12,4 @@ class SaveHistoryCommand:
 @dataclass(frozen=True)
 class GetAccountHistoryCommand:
     account_id: str
-    pagination: PaginationCommand
+    interval: HistoryInterval

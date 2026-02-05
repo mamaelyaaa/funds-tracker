@@ -2,7 +2,9 @@ import logging
 
 from domain.users.entity import User
 from domain.users.values import UserId
-from infra.publishers.accounts import AccountEventPublisherDep
+from infra.publishers.accounts import (
+    AccountEventPublisherDep,
+)
 from infra.repositories.accounts import AccountRepositoryDep
 from .comands import (
     CreateAccountCommand,

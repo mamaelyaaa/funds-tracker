@@ -10,6 +10,7 @@ from domain.accounts.exceptions import (
     TooManyAccountsForUserException,
     AccountNotFoundException,
 )
+from domain.accounts.publisher import AccountEventPublisherProtocol
 from domain.accounts.service import AccountService
 from domain.accounts.values import Title, AccountCurrency, AccountType, AccountId
 from domain.users.entity import User
@@ -40,14 +41,14 @@ def mock_acc_repo(mock_account):
 
 
 @pytest.fixture
-def mock_acc_publisher(mock_account):
+def mock_acc_publisher(mock_account) -> AccountEventPublisherProtocol:
     publisher = AccountTaskiqPublisher()
     publisher.publish = AsyncMock()
     return publisher
 
 
 @pytest.fixture
-def mock_acc_service(mock_acc_repo, mock_acc_publisher):
+def mock_acc_service(mock_acc_repo, mock_acc_publisher) -> AccountService:
     return AccountService(
         account_repo=mock_acc_repo,
         account_publisher=mock_acc_publisher,

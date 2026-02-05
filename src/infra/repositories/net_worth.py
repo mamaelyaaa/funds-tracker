@@ -10,7 +10,7 @@ from infra import SessionDep
 from infra.models import AccountModel
 
 
-class SQLANetWorthRepository:
+class PostgresNetWorthRepository:
 
     def __init__(self, session: AsyncSession):
         self._session = session
@@ -22,7 +22,7 @@ class SQLANetWorthRepository:
 
 
 def get_net_worth_repository(session: SessionDep) -> NetWorthRepositoryProtocol:
-    return SQLANetWorthRepository(session)
+    return PostgresNetWorthRepository(session)
 
 
 NetWorthRepositoryDep = Annotated[

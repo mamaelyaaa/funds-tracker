@@ -7,7 +7,7 @@ class BaseResponseSchema(BaseModel):
 
 class BaseResponseDetailSchema[D, M](BaseResponseSchema):
     detail: D
-    metadata: M = {}
+    metadata: M
 
 
 class BaseExceptionSchema(BaseResponseSchema):

@@ -38,11 +38,11 @@ class AccountTaskiqPublisher:
 
         for task in tasks:
             try:
-                result = await task.wait_result(timeout=30)
+                result = await task.wait_result(timeout=300)
                 logger.info(f"Задача #{task.task_id} выполнена: {result.return_value}")
 
             except asyncio.TimeoutError:
-                logger.warning(f"Задача #{task.task_id} не завершилась за 30 секунд")
+                logger.warning(f"Задача #{task.task_id} не завершилась за 300 секунд")
 
             except Exception as e:
                 logger.error(f"Ошибка в задаче #{task.task_id}: {e}")

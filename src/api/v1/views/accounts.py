@@ -23,8 +23,6 @@ router = APIRouter(
 
 AccountServiceDep = Annotated[AccountService, Depends(get_account_service)]
 
-# TODO Описать все responses
-
 
 @router.post(
     "",
@@ -66,6 +64,7 @@ async def create_account(
     return BaseResponseDetailSchema(
         message=f"Счет '{schema.name}' успешно создан",
         detail=AccountDetailSchema.from_domain(account),
+        metadata={},
     )
 
 
@@ -85,6 +84,7 @@ async def get_accounts(
     return BaseResponseDetailSchema(
         message=f"Получение счётов пользователя",
         detail=[AccountDetailSchema.from_domain(account) for account in accounts],
+        metadata={},
     )
 
 
@@ -105,6 +105,7 @@ async def get_account(
     return BaseResponseDetailSchema(
         message=f"Получение счёта пользователя",
         detail=AccountDetailSchema.from_domain(account),
+        metadata={},
     )
 
 

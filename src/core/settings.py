@@ -45,6 +45,10 @@ class DBConfig(BaseModel):
     def POSTGRES_DSN(self) -> str:
         return f"postgresql+asyncpg://{self.user}:{self.password}@{self.host}:{self.port}/{self.name}"
 
+    @property
+    def SQLITE_DSN(self) -> str:
+        return "sqlite+aiosqlite:///:memory:"
+
 
 class BrokerConfig(BaseModel):
     user: str

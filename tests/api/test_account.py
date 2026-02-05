@@ -1,6 +1,7 @@
-from unittest.mock import AsyncMock
-
 import pytest
+
+from domain.accounts.entity import Account
+from domain.accounts.values import AccountCurrency, Title, AccountType
 
 
 @pytest.mark.asyncio
@@ -43,7 +44,14 @@ class TestAccountApiCreation:
         assert response.status_code in (400, 422)
 
     async def test_account_already_exists(self, client, test_user, test_account_repo):
-        test_account_repo.is_name_taken = AsyncMock(return_value=True)
+        account = Account.create(
+            user_id=test_user.id,
+            name=Title("Новый счет"),
+            balance=2000,
+            currency=AccountCurrency.RUB,
+            account_type=AccountType.CARD,
+        )
+        await test_account_repo.save(account)
 
         response = await client.post(
             url=f"/api/v1/users/{test_user.id.value}/accounts",
@@ -57,5 +65,5 @@ class TestAccountApiCreation:
         assert response.status_code == 409
         response_data = response.json()
         assert "message" in response_data
-        assert "suggestion" in response_data
         assert "уже существует" in response_data["message"]
+        assert "suggestion" in response_data

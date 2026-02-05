@@ -48,5 +48,14 @@ class SQLADatabaseHelper:
         return self._session_factory
 
 
-db_helper = SQLADatabaseHelper(url=settings.db.POSTGRES_DSN, echo=settings.db.sqla.echo)
+def create_db_helper() -> SQLADatabaseHelper:
+    if settings.app.env == "TEST":
+        logger.info("Запущена тестовая база данных aiosqlite")
+        return SQLADatabaseHelper(
+            url=settings.db.SQLITE_DSN, echo=settings.db.sqla.echo
+        )
+    return SQLADatabaseHelper(url=settings.db.POSTGRES_DSN, echo=settings.db.sqla.echo)
+
+
+db_helper = create_db_helper()
 SessionDep = Annotated[AsyncSession, Depends(db_helper.session_getter)]

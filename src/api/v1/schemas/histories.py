@@ -2,7 +2,12 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
-from domain.histories.domain import AccountHistory
+from domain.histories.commands import HistoryInterval
+from domain.histories.domain import History
+
+
+class GetHistorySchema(BaseModel):
+    interval: HistoryInterval
 
 
 class HistoryDetailSchema(BaseModel):
@@ -11,7 +16,7 @@ class HistoryDetailSchema(BaseModel):
     created_at: datetime
 
     @classmethod
-    def from_model(cls, history: AccountHistory) -> "HistoryDetailSchema":
+    def from_model(cls, history: History) -> "HistoryDetailSchema":
         return HistoryDetailSchema(
             # id=history.id.value,
             balance=history.balance,

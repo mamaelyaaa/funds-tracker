@@ -2,7 +2,6 @@ from dataclasses import dataclass
 
 from domain.accounts.entity import Account
 from domain.users.values import UserId
-from pydantic.types import Decimal
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -13,8 +12,8 @@ class NetWorth:
     accounts: list[Account]
 
     @property
-    def total_balance(self) -> Decimal:
-        return Decimal(sum(account.balance for account in self.accounts))
+    def total_balance(self) -> float:
+        return sum(account.balance for account in self.accounts)
 
     # @property
     # def month_profit(self) -> float:

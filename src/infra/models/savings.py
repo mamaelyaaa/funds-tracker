@@ -6,7 +6,7 @@ from infra.models import Base
 from infra.models.mixin import DataMixin
 
 
-class SavingsHistoryModel(Base, DataMixin):
+class HistoryModel(Base, DataMixin):
     __tablename__ = "savings_history"
 
     account_id: Mapped[str] = mapped_column(

@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from typing import Annotated
 
@@ -11,7 +12,7 @@ from infra import broker
 logger = logging.getLogger(__name__)
 
 
-@broker.task
+@broker.task(retry_on_error=True, max_retries=10)
 async def save_account_history(
     event: AccountCreatedEvent,
     history_service: Annotated[HistoryService, TaskiqDepends(get_history_service)],

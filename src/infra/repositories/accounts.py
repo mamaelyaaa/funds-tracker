@@ -51,7 +51,7 @@ class InMemoryAccountRepository(BaseInMemoryRepository[AccountId, Account]):
         return
 
 
-class SQLAAccountRepository:
+class PostgresAccountRepository:
 
     def __init__(self, session: AsyncSession):
         self._session = session
@@ -124,7 +124,7 @@ class SQLAAccountRepository:
 
 
 def get_account_repository(session: SessionDep) -> AccountRepositoryProtocol:
-    return SQLAAccountRepository(session)
+    return PostgresAccountRepository(session)
 
 
 AccountRepositoryDep = Annotated[
