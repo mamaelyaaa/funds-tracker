@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Literal
 
 from dotenv import load_dotenv
-from pydantic import BaseModel, AmqpDsn, RedisDsn
+from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 load_dotenv()
@@ -91,4 +91,4 @@ class Settings(BaseSettings):
     )
 
 
-settings = Settings()  # type: ignore
+settings = Settings()  # noqa

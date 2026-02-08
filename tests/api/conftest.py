@@ -1,16 +1,17 @@
 from typing import AsyncGenerator
+from unittest.mock import AsyncMock
 
 import pytest
 from httpx import AsyncClient, ASGITransport
+from taskiq.middlewares.opentelemetry_middleware import retrieve_context
 
 from domain.accounts.entity import Account
+from domain.accounts.publisher import AccountEventPublisherProtocol
 from domain.accounts.repository import AccountRepositoryProtocol
 from domain.accounts.values import Title, AccountCurrency, AccountType
-from domain.histories.repository import HistoryRepositoryProtocol
 from domain.users.entity import User
 from domain.users.repository import UserRepositoryProtocol
 from infra.repositories.accounts import get_account_repository
-from infra.repositories.histories import get_history_repository
 from infra.repositories.users import get_user_repository
 
 
@@ -19,6 +20,15 @@ def test_account_repo() -> AccountRepositoryProtocol:
     from infra.repositories.accounts import InMemoryAccountRepository
 
     repo = InMemoryAccountRepository()
+    return repo
+
+
+@pytest.fixture
+def test_account_publisher() -> AccountEventPublisherProtocol:
+    from infra.publishers.accounts import AccountTaskiqPublisher
+
+    repo = AccountTaskiqPublisher()
+    repo.publish = AsyncMock(return_type=None)
     return repo
 
 
@@ -50,22 +60,22 @@ async def test_user(test_user_repo) -> User:
     return user
 
 
-@pytest.fixture
-def test_history_repo() -> HistoryRepositoryProtocol:
-    from infra.repositories.histories import InMemoryHistoryRepository
-
-    repo = InMemoryHistoryRepository()
-    return repo
+# @pytest.fixture
+# def test_history_repo() -> HistoryRepositoryProtocol:
+#     from infra.repositories.histories import InMemoryHistoryRepository
+#
+#     repo = InMemoryHistoryRepository()
+#     return repo
 
 
 @pytest.fixture(autouse=True)
-def override_app(test_account_repo, test_user_repo, test_history_repo):
+def override_app(test_account_repo, test_user_repo):
     from main import app
 
     overrides = {
         get_account_repository: lambda: test_account_repo,
         get_user_repository: lambda: test_user_repo,
-        get_history_repository: lambda: test_history_repo,
+        # get_history_repository: lambda: test_history_repo,
     }
 
     original_overrides = app.dependency_overrides.copy()

@@ -19,8 +19,8 @@ from core.settings import settings
 from infra import admin, broker, db_helper
 from infra.cache.redis import get_redis_client
 
-setup_logger()
 logger = logging.getLogger(__name__)
+setup_logger()
 
 
 @asynccontextmanager

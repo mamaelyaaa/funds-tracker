@@ -1,5 +1,5 @@
-from pydantic import BaseModel
+from api.schemas import BaseApiModel
 
 
-class NetWorthBalanceSchema(BaseModel):
+class NetWorthBalanceSchema(BaseApiModel):
     total_balance: float

@@ -114,7 +114,12 @@ class PostgresHistoryRepository:
         return res
 
     async def get_history_linked_to_period(
-        self, account_id: AccountId, period: str, start_date: datetime
+        self,
+        account_id: AccountId,
+        period: str,
+        start_date: datetime,
+        limit: Optional[int] = None,
+        asc: bool = True,
     ) -> list[History]:
 
         subq = (
@@ -132,8 +137,13 @@ class PostgresHistoryRepository:
             .filter_by(account_id=account_id.value)
             .join(subq, HistoryModel.created_at == subq.c.last_date)
             .where(HistoryModel.created_at >= start_date)
-            .order_by(HistoryModel.created_at.desc())
+            .order_by(
+                HistoryModel.created_at.desc() if not asc else HistoryModel.created_at
+            )
         )
+        if limit:
+            query = query.limit(limit)
+
         res = await self._session.execute(query)
         return [self._to_domain(row) for row in res.scalars().all()]
 

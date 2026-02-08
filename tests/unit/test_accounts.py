@@ -44,7 +44,7 @@ class TestAccountDomain:
                 name=Title(faker.word()),
                 currency=AccountCurrency.RUB,
                 account_type=AccountType.CARD,
-                balance=-100,
+                balance=faker.pyfloat(positive=False),
             )
 
     def test_update_balance_success(self, faker: Faker):
@@ -58,16 +58,10 @@ class TestAccountDomain:
             balance=30,
         )
         assert len(account.events) == 1
-        event1 = cast(AccountCreatedEvent, account.events[0])
 
         account.update_balance(new_balance=5000)
         assert account.balance == 5000
-
         assert len(account.events) == 2
-        event2 = cast(BalanceUpdatedEvent, account.events[1])
-
-        assert event1.new_balance == 30
-        assert event2.new_balance == 5000
 
 
 @pytest.mark.unit

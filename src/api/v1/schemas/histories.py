@@ -1,16 +1,15 @@
 from datetime import datetime
 
-from pydantic import BaseModel
-
+from api.schemas import BaseApiModel
 from domain.histories.commands import HistoryInterval
 from domain.histories.domain import History
 
 
-class GetHistorySchema(BaseModel):
+class GetHistorySchema(BaseApiModel):
     interval: HistoryInterval
 
 
-class HistoryDetailSchema(BaseModel):
+class HistoryDetailSchema(BaseApiModel):
     # id: str
     balance: float
     created_at: datetime
@@ -22,3 +21,7 @@ class HistoryDetailSchema(BaseModel):
             balance=history.balance,
             created_at=history.created_at,
         )
+
+
+class HistoryPercentChangeSchema(BaseApiModel):
+    percent_profit: float

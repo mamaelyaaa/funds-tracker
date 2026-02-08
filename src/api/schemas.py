@@ -1,7 +1,15 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
+from pydantic.alias_generators import to_camel
 
 
-class BaseResponseSchema(BaseModel):
+class BaseApiModel(BaseModel):
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        validate_by_name=True,
+    )
+
+
+class BaseResponseSchema(BaseApiModel):
     message: str
 
 
@@ -14,7 +22,7 @@ class BaseExceptionSchema(BaseResponseSchema):
     suggestion: str
 
 
-class ValidationDetailSchema(BaseModel):
+class ValidationDetailSchema(BaseApiModel):
     field: str
     message: str
     type: str
@@ -25,6 +33,6 @@ class ValidationExceptionSchema(BaseResponseSchema):
     detail: list[ValidationDetailSchema]
 
 
-class PaginationSchema(BaseModel):
+class PaginationSchema(BaseApiModel):
     page: int
     limit: int

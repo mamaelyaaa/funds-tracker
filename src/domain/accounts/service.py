@@ -8,8 +8,9 @@ from infra.publishers.accounts import (
 from infra.repositories.accounts import AccountRepositoryDep
 from .comands import (
     CreateAccountCommand,
-    UpdateAccountBalanceCommand,
+    GetAccountCommand,
     UpdateAccountNameCommand,
+    UpdateAccountBalanceCommand,
 )
 from .entity import Account, AccountId
 from .exceptions import (
@@ -72,30 +73,28 @@ class AccountCRUDService:
 
         return new_account
 
-    async def find_account_by_id(self, account_id: str) -> Account:
-        account_id_obj = AccountId(account_id)
+    async def find_account_by_id(self, command: GetAccountCommand) -> Account:
+        print(f"ПАРАМЕТРЫ: account_id={command.account_id}, user_id={command.user_id}")
 
-        # cached = await self._cache.get(account_id_obj)
-        # if cached:
-        #     logger.info(f"Счёт #{account_id} взят из кеша")
-        #     return cached
-
-        if not (account := await self._repository.get_by_id(account_id_obj)):
-            logger.warning("Счёт #%s не найден", account_id_obj.value)
+        if not (
+            account := await self._repository.get_by_id(
+                account_id=AccountId(command.account_id),
+                user_id=UserId(command.user_id),
+            )
+        ):
+            logger.warning("Счёт #%s не найден", command.account_id)
             raise AccountNotFoundException
 
-        logger.info(f"Счёт #{account_id} получен")
+        logger.info(f"Счёт #{command.account_id} получен")
         return account
 
     async def find_accounts_by_user_id(self, user_id: str) -> list[Account]:
-        user_id_obj = UserId(user_id)
-        accounts = await self._repository.get_by_user_id(user_id_obj)
+        accounts = await self._repository.get_by_user_id(UserId(user_id))
         return accounts
 
-    async def delete_account(self, account_id: str) -> None:
-        account = await self.find_account_by_id(account_id)
-
-        await self._repository.delete(account.id)
+    async def delete_account(self, command: GetAccountCommand) -> None:
+        account = await self.find_account_by_id(command=command)
+        await self._repository.delete(account_id=account.id, user_id=account.user_id)
         logger.info("Счёт #%s был удален", account.id.value)
         return
 
@@ -113,7 +112,11 @@ class AccountService(AccountCRUDService):
     async def update_balance(self, command: UpdateAccountBalanceCommand) -> None:
         """Обновляем баланс счета"""
 
-        account = await self.find_account_by_id(command.account_id)
+        account = await self.find_account_by_id(
+            command=GetAccountCommand(
+                account_id=command.account_id, user_id=command.user_id
+            )
+        )
 
         if command.new_balance == account.balance:
             logger.info("Баланс счета #%s не изменен", account.id.value)
@@ -121,7 +124,11 @@ class AccountService(AccountCRUDService):
 
         account.update_balance(command.new_balance)
 
-        await self._repository.update(AccountId(command.account_id), account)
+        await self._repository.update(
+            account_id=AccountId(command.account_id),
+            user_id=UserId(command.user_id),
+            new_account=account,
+        )
         logger.info("Баланс счета #%s обновлен", account.id.value)
 
         if len(account.events) > 1:
@@ -133,16 +140,17 @@ class AccountService(AccountCRUDService):
         account.events.clear()
         return
 
-    async def rename_account(self, command: UpdateAccountNameCommand) -> None:
-        account = await self.find_account_by_id(command.account_id)
-        account.rename_account(Title(command.new_name))
-
-        await self._repository.save(account)
-        logger.info("Название счета #%s обновлено", account.id.value)
-        return
+    # async def rename_account(self, command: UpdateAccountNameCommand) -> None:
+    #     account = await self.find_account_by_id(command.account_id)
+    #     account.rename_account(Title(command.new_name))
+    #
+    #     await self._repository.save(account)
+    #     logger.info("Название счета #%s обновлено", account.id.value)
+    #     return
 
 
 def get_account_service(
-    acc_repo: AccountRepositoryDep, acc_publisher: AccountEventPublisherDep
+    acc_repo: AccountRepositoryDep,
+    acc_publisher: AccountEventPublisherDep,
 ) -> AccountService:
     return AccountService(account_repo=acc_repo, account_publisher=acc_publisher)

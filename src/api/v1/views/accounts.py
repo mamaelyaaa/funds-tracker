@@ -12,13 +12,19 @@ from api.v1.schemas.accounts import (
     CreateAccountSchema,
     AccountDetailSchema,
 )
-from domain.accounts.comands import CreateAccountCommand, UpdateAccountBalanceCommand
+from domain.accounts.comands import (
+    CreateAccountCommand,
+    GetAccountCommand,
+    UpdateAccountBalanceCommand,
+)
+from domain.accounts.entity import Account
 from domain.accounts.service import AccountService, get_account_service
-from domain.users.dependencies import UserDep
+from domain.users.dependencies import get_user
 
 router = APIRouter(
     prefix="/users/{user_id}/accounts",
     tags=["Счета🏦"],
+    dependencies=[Depends(get_user)],
 )
 
 AccountServiceDep = Annotated[AccountService, Depends(get_account_service)]
@@ -47,7 +53,6 @@ async def create_account(
     account_service: AccountServiceDep,
     schema: CreateAccountSchema,
     user_id: str,
-    user: UserDep,
 ):
     """Создание нового счёта"""
 
@@ -75,7 +80,6 @@ async def create_account(
 async def get_accounts(
     account_service: AccountServiceDep,
     user_id: str,
-    user: UserDep,
 ):
     """Получение счетов пользователя"""
 
@@ -92,15 +96,16 @@ async def get_accounts(
     "/{account_id}",
     response_model=BaseResponseDetailSchema[AccountDetailSchema, dict],
 )
-async def get_account(
+async def get_account_by_id(
     account_service: AccountServiceDep,
     account_id: str,
     user_id: str,
-    user: UserDep,
 ):
     """Получение счета пользователя по уникальному id"""
 
-    account = await account_service.find_account_by_id(account_id=account_id)
+    account = await account_service.find_account_by_id(
+        command=GetAccountCommand(account_id=account_id, user_id=user_id)
+    )
 
     return BaseResponseDetailSchema(
         message=f"Получение счёта пользователя",
@@ -117,7 +122,6 @@ async def update_account_balance(
     account_service: AccountServiceDep,
     account_id: str,
     user_id: str,
-    user: UserDep,
     actual_balance: float = Body(embed=True),
 ):
     """
@@ -129,6 +133,7 @@ async def update_account_balance(
     await account_service.update_balance(
         command=UpdateAccountBalanceCommand(
             account_id=account_id,
+            user_id=user_id,
             new_balance=actual_balance,
         )
     )
@@ -136,14 +141,35 @@ async def update_account_balance(
     return BaseResponseSchema(message="Баланс счёта обновлен")
 
 
-@router.delete("/{account_id}", response_model=BaseResponseSchema)
+@router.delete(
+    "/{account_id}",
+    response_model=BaseResponseSchema,
+)
 async def delete_balance(
     account_service: AccountServiceDep,
     account_id: str,
     user_id: str,
-    user: UserDep,
 ):
     """Удаляет счёт"""
 
-    await account_service.delete_account(account_id=account_id)
+    await account_service.delete_account(
+        command=GetAccountCommand(account_id=account_id, user_id=user_id)
+    )
     return BaseResponseSchema(message="Счёт удален")
+
+
+async def get_account(
+    account_service: AccountServiceDep,
+    account_id: str,
+    user_id: str,
+) -> Account:
+    account = await account_service.find_account_by_id(
+        command=GetAccountCommand(
+            account_id=account_id,
+            user_id=user_id,
+        )
+    )
+    return account
+
+
+AccountDep = Annotated[Account, Depends(get_account)]

@@ -4,6 +4,7 @@ from typing import Protocol, Optional
 from domain.accounts.values import AccountId
 from domain.histories.domain import History
 from domain.histories.values import HistoryId
+from domain.users.values import UserId
 
 
 class HistoryRepositoryProtocol(Protocol):
@@ -15,7 +16,12 @@ class HistoryRepositoryProtocol(Protocol):
         pass
 
     async def get_history_linked_to_period(
-        self, account_id: AccountId, period: str, start_date: datetime
+        self,
+        account_id: AccountId,
+        period: str,
+        start_date: datetime,
+        limit: Optional[int] = None,
+        asc: bool = True,
     ) -> list[History]:
         pass
 

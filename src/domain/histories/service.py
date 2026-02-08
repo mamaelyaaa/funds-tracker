@@ -12,6 +12,7 @@ from domain.histories.commands import (
     GetAccountHistoryCommand,
 )
 from domain.histories.domain import History
+from domain.histories.exceptions import HistoryNotExistsException
 from domain.histories.repository import HistoryRepositoryProtocol
 from domain.histories.values import HistoryInterval, HistoryPeriod
 from infra.repositories.histories import HistoryRepositoryDep
@@ -74,12 +75,7 @@ class HistoryService:
         self, command: GetAccountHistoryCommand
     ) -> list[History]:
 
-        start_date: datetime = self.INTERVALS[command.interval]
-        period: str = self.PERIOD[command.interval]
-        self.metadata = {
-            "start_date": start_date,
-            "period": period,
-        }
+        period, start_date = await self.set_metadata(command)
 
         history = await self._repository.get_history_linked_to_period(
             account_id=AccountId(command.account_id),
@@ -87,6 +83,42 @@ class HistoryService:
             start_date=start_date,
         )
         return history
+
+    async def get_history_percent_change(
+        self, command: GetAccountHistoryCommand
+    ) -> float:
+        period, start_date = await self.set_metadata(command)
+
+        first_history, *_ = await self._repository.get_history_linked_to_period(
+            account_id=AccountId(command.account_id),
+            start_date=start_date,
+            period=period,
+            limit=1,
+            asc=True,
+        )
+        if not first_history:
+            raise HistoryNotExistsException
+
+        last_history, *_ = await self._repository.get_history_linked_to_period(
+            account_id=AccountId(command.account_id),
+            start_date=start_date,
+            period=period,
+            limit=1,
+            asc=False,
+        )
+        if not last_history:
+            raise HistoryNotExistsException
+
+        return (last_history.balance - first_history.balance) / first_history.balance
+
+    async def set_metadata(self, command):
+        start_date: datetime = self.INTERVALS[command.interval]
+        period: str = self.PERIOD[command.interval]
+        self.metadata = {
+            "start_date": start_date,
+            "period": period,
+        }
+        return period, start_date
 
 
 def get_history_service(histories_repo: HistoryRepositoryDep) -> HistoryService:

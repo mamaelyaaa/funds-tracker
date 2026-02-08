@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
-from domain.accounts.values import AccountId, AccountCurrency
 from core.domain import DomainEvent
+from domain.accounts.values import AccountId, AccountCurrency
 from domain.users.values import UserId
 
 

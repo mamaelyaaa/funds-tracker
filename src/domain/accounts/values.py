@@ -1,13 +1,13 @@
+import string
 import uuid
 from dataclasses import dataclass
 from enum import Enum
-import string
 
+from core.domain import DomainValueObject
 from domain.accounts.exceptions import (
     TooLargeTitleException,
     InvalidLettersTitleException,
 )
-from core.domain import DomainValueObject
 
 
 class AccountType(str, Enum):

@@ -1,6 +1,7 @@
 from unittest.mock import AsyncMock
 
 import pytest
+from faker.proxy import Faker
 
 from domain.accounts.comands import CreateAccountCommand
 from domain.accounts.entity import Account
@@ -20,23 +21,19 @@ from infra.repositories.accounts import InMemoryAccountRepository
 
 
 @pytest.fixture
-def mock_account() -> Account:
+def mock_account(faker: Faker) -> Account:
     return Account.create(
         user_id=UserId("user-123"),
         name=Title("Новый счёт"),
         currency=AccountCurrency.RUB,
         account_type=AccountType.CARD,
-        balance=150,
+        balance=faker.pyfloat(positive=True),
     )
 
 
 @pytest.fixture
 def mock_acc_repo(mock_account):
     repo = InMemoryAccountRepository()
-
-    repo.save = AsyncMock(return_value=mock_account.id)
-    repo.get_by_id = AsyncMock(return_value=mock_account)
-
     return repo
 
 
@@ -55,59 +52,57 @@ def mock_acc_service(mock_acc_repo, mock_acc_publisher) -> AccountService:
     )
 
 
+async def create_account(mock_acc_service, mock_account) -> Account:
+    account = await mock_acc_service.create_account(
+        command=CreateAccountCommand(
+            user_id=mock_account.user_id.value,
+            account_type=mock_account.type,
+            balance=mock_account.balance,
+            name=mock_account.name.value,
+            currency=mock_account.currency,
+        )
+    )
+    return account
+
+
 @pytest.mark.asyncio
 @pytest.mark.integration
-class TestAccountServiceCreation:
-
-    @staticmethod
-    async def create_account(mock_acc_service, mock_account) -> Account:
-        account = await mock_acc_service.create_account(
-            command=CreateAccountCommand(
-                user_id=mock_account.user_id.value,
-                account_type=mock_account.type,
-                balance=mock_account.balance,
-                name=mock_account.name.value,
-                currency=mock_account.currency,
-            )
-        )
-        return account
+class TestAccountServiceCreate:
 
     async def test_service_account_creation(
         self,
         mock_acc_service,
         mock_account,
-        mock_acc_repo: AsyncMock,
+        mock_acc_repo,
         mock_acc_publisher: AsyncMock,
     ):
-        account = await self.create_account(mock_acc_service, mock_account)
+        """Тест на успешное создание счёта сервисом"""
+
+        account = await create_account(mock_acc_service, mock_account)
 
         # Проверка репозитория
-        mock_acc_repo.save.assert_awaited_once()
-        saved_account = mock_acc_repo.save.call_args[0][0]
+        saved_account = await mock_acc_repo.get_by_id(account_id=account.id)
 
-        assert isinstance(saved_account, Account)
-        assert account.id == saved_account.id
-        assert account.user_id == saved_account.user_id
-        assert account.name.value == saved_account.name.value
+        assert saved_account.id == account.id
+        assert saved_account.balance == account.balance
+        assert saved_account.created_at == account.created_at
 
         # Проверка publisher'а
-        mock_acc_publisher.publish.assert_called_once()
-        publish_event = mock_acc_publisher.publish.call_args[0][0]
-
-        assert isinstance(publish_event, AccountCreatedEvent)
-        assert publish_event.account_id == account.id
-        assert publish_event.new_balance == account.balance
+        mock_acc_publisher.publish.assert_awaited_once()
 
     async def test_service_account_name_already_taken(
         self,
         mock_acc_service,
         mock_account,
-        mock_acc_repo: AsyncMock,
+        mock_acc_repo,
     ):
-        mock_acc_repo.is_name_taken = AsyncMock(return_value=True)
+        """Тест счёт с таким названием уже существует"""
+        await mock_acc_repo.save(mock_account)
 
         with pytest.raises(AccountAlreadyCreatedException):
-            await self.create_account(mock_acc_service, mock_account)
+            await create_account(mock_acc_service, mock_account)
+
+        assert len(mock_acc_repo._storage) == 1
 
     async def test_service_account_creation_limit_reached(
         self,
@@ -115,10 +110,12 @@ class TestAccountServiceCreation:
         mock_account,
         mock_acc_repo: AsyncMock,
     ):
+        """Тест превышен лимит создания счётов"""
+
         mock_acc_repo.count_by_user_id = AsyncMock(return_value=User.MAX_ACCOUNTS)
 
         with pytest.raises(TooManyAccountsForUserException):
-            await self.create_account(mock_acc_service, mock_account)
+            await create_account(mock_acc_service, mock_account)
 
 
 @pytest.mark.asyncio

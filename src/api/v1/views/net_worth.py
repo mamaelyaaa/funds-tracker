@@ -26,4 +26,5 @@ async def get_user_net_worth_total_balance(
     return BaseResponseDetailSchema(
         message="Получен капитал пользователя",
         detail=NetWorthBalanceSchema(total_balance=total_balance),
+        metadata={},
     )

@@ -1,19 +1,18 @@
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel
-
+from api.schemas import BaseApiModel
 from domain.accounts.entity import AccountType, AccountCurrency, Account
 
 
-class CreateAccountSchema(BaseModel):
+class CreateAccountSchema(BaseApiModel):
     name: str
     initial_balance: float
     account_type: AccountType
     currency: AccountCurrency
 
 
-class AccountDetailSchema(BaseModel):
+class AccountDetailSchema(BaseApiModel):
     id: str
     name: str
     type: AccountType

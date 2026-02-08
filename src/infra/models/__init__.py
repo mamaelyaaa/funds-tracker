@@ -5,8 +5,7 @@ __all__ = (
     "HistoryModel",
 )
 
-from .base import Base
-
 from .accounts import AccountModel
-from .users import UserModel
+from .base import Base
 from .savings import HistoryModel
+from .users import UserModel

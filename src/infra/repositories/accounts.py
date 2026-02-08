@@ -62,8 +62,12 @@ class PostgresAccountRepository:
         await self._session.commit()
         return AccountId(acc.id)
 
-    async def get_by_id(self, account_id: AccountId) -> Optional[Account]:
-        query = select(AccountModel).filter_by(id=account_id.value)
+    async def get_by_id(
+        self, user_id: UserId, account_id: AccountId
+    ) -> Optional[Account]:
+        query = select(AccountModel).filter_by(
+            id=account_id.value, user_id=user_id.value
+        )
         account: AccountModel = await self._session.scalar(query)
         if not account:
             return None
@@ -74,8 +78,10 @@ class PostgresAccountRepository:
         accounts = await self._session.execute(query)
         return [self._to_domain(account) for account in accounts.scalars().all()]
 
-    async def delete(self, account_id: AccountId) -> None:
-        stmt = delete(AccountModel).filter_by(id=account_id.value)
+    async def delete(self, user_id: UserId, account_id: AccountId) -> None:
+        stmt = delete(AccountModel).filter_by(
+            id=account_id.value, user_id=user_id.value
+        )
         await self._session.execute(stmt)
         await self._session.commit()
         return
@@ -98,11 +104,17 @@ class PostgresAccountRepository:
         count = await self._session.scalar(query)
         return bool(count)
 
-    async def update(self, account_id: AccountId, new_account: Account) -> None:
+    async def update(
+        self, user_id: UserId, account_id: AccountId, new_account: Account
+    ) -> None:
         update_data = new_account.to_dict()
         update_data.pop("user_id", None)
 
-        stmt = update(AccountModel).filter_by(id=account_id.value).values(**update_data)
+        stmt = (
+            update(AccountModel)
+            .filter_by(id=account_id.value, user_id=user_id.value)
+            .values(**update_data)
+        )
         await self._session.execute(stmt)
         await self._session.commit()
         await self._session.refresh(
