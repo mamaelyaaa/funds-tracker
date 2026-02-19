@@ -32,7 +32,7 @@ class SQLAUserRepository:
 
     async def save(self, user: User) -> UserId:
         user_model = UserModel(
-            id=user.id.value,
+            id=user.id.as_generic_type(),
             name=user.name,
             created_at=user.created_at,
         )
@@ -41,7 +41,7 @@ class SQLAUserRepository:
         return user.id
 
     async def get_by_id(self, user_id: UserId) -> Optional[User]:
-        query = select(UserModel).filter_by(id=user_id.value)
+        query = select(UserModel).filter_by(id=user_id.as_generic_type())
         res = await self._session.execute(query)
         return res.scalar_one_or_none()
 

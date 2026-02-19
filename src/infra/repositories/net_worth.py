@@ -16,7 +16,7 @@ class PostgresNetWorthRepository:
         self._session = session
 
     async def get_user_total_balance(self, user_id: UserId) -> float:
-        query = select(AccountModel).filter_by(user_id=user_id.value)
+        query = select(AccountModel).filter_by(user_id=user_id.as_generic_type())
         accounts = await self._session.scalars(query)
         return sum(account.balance for account in accounts.all())
 

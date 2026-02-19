@@ -8,9 +8,12 @@ from core.domain import DomainValueObject
 @dataclass(frozen=True)
 class HistoryId(DomainValueObject[str]):
 
+    def as_generic_type(self) -> str:
+        return self._value
+
     @classmethod
     def generate(cls) -> "HistoryId":
-        return cls(value=str(uuid.uuid4()))
+        return cls(_value=str(uuid.uuid4()))
 
 
 class HistoryInterval(str, Enum):

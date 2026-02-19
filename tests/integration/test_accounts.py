@@ -112,7 +112,7 @@
 #     ):
 #         """Тест превышен лимит создания счётов"""
 #
-#         mock_acc_repo.count_by_user_id = AsyncMock(return_value=User.MAX_ACCOUNTS)
+#         mock_acc_repo.count_by_user_id = AsyncMock(returnas_generic_type()=User.MAX_ACCOUNTS)
 #
 #         with pytest.raises(TooManyAccountsForUserException):
 #             await create_account(mock_acc_service, mock_account)
@@ -132,7 +132,7 @@
 #         mock_account,
 #         mock_acc_repo: AsyncMock,
 #     ):
-#         mock_acc_repo.delete = AsyncMock(return_value=mock_account.id)
+#         mock_acc_repo.delete = AsyncMock(returnas_generic_type()=mock_account.id)
 #
 #         await self.delete_account(mock_acc_service, account_id=mock_account.id.value)
 #
@@ -148,8 +148,8 @@
 #         mock_account,
 #         mock_acc_repo: AsyncMock,
 #     ):
-#         mock_acc_repo.delete = AsyncMock(return_value=None)
-#         mock_acc_repo.get_by_id = AsyncMock(return_value=None)
+#         mock_acc_repo.delete = AsyncMock(returnas_generic_type()=None)
+#         mock_acc_repo.get_by_id = AsyncMock(returnas_generic_type()=None)
 #
 #         with pytest.raises(AccountNotFoundException):
 #             await self.delete_account(

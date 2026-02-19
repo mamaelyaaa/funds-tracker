@@ -31,11 +31,14 @@ class AccountId(DomainValueObject[str]):
 
     @classmethod
     def generate(cls) -> "AccountId":
-        return cls(value=str(uuid.uuid4()))
+        return cls(_value=str(uuid.uuid4()))
 
     @property
     def short(self) -> str:
-        return self.value[:8]
+        return self._value[:8]
+
+    def as_generic_type(self) -> str:
+        return str(self._value)
 
 
 alphabet = (
@@ -59,10 +62,13 @@ class Title(DomainValueObject[str]):
         self.validate_letters()
 
     def validate_length(self) -> None:
-        if len(self.value) > self.MAX_LEN:
+        if len(self._value) > self.MAX_LEN:
             raise TooLargeTitleException
 
     def validate_letters(self) -> None:
-        for char in self.value:
+        for char in self._value:
             if char not in alphabet:
                 raise InvalidLettersTitleException
+
+    def as_generic_type(self) -> str:
+        return self._value

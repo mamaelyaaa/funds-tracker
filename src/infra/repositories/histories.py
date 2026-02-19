@@ -99,9 +99,9 @@ class PostgresHistoryRepository:
 
     async def save(self, history: History) -> HistoryId:
         history_model = HistoryModel(
-            id=history.id.value,
+            id=history.id.as_generic_type(),
             balance=history.balance,
-            account_id=history.account_id.value,
+            account_id=history.account_id.as_generic_type(),
             created_at=history.created_at,
         )
         self._session.add(history_model)
@@ -109,7 +109,7 @@ class PostgresHistoryRepository:
         return history.id
 
     async def get_by_id(self, history_id: HistoryId) -> Optional[History]:
-        query = select(HistoryModel).filter_by(id=history_id.value)
+        query = select(HistoryModel).filter_by(id=history_id.as_generic_type())
         res = await self._session.scalar(query)
         return res
 
@@ -134,7 +134,7 @@ class PostgresHistoryRepository:
 
         query = (
             select(HistoryModel)
-            .filter_by(account_id=account_id.value)
+            .filter_by(account_id=account_id.as_generic_type())
             .join(subq, HistoryModel.created_at == subq.c.last_date)
             .where(HistoryModel.created_at >= start_date)
             .order_by(
@@ -150,7 +150,7 @@ class PostgresHistoryRepository:
     async def update(self, history_id: HistoryId, new_history: History) -> History:
         stmt = (
             update(HistoryModel)
-            .filter_by(id=history_id.value)
+            .filter_by(id=history_id.as_generic_type())
             .values(
                 balance=new_history.balance,
                 created_at=new_history.created_at,
@@ -166,7 +166,7 @@ class PostgresHistoryRepository:
     ) -> Optional[History]:
         query = (
             select(HistoryModel)
-            .filter_by(account_id=account_id.value)
+            .filter_by(account_id=account_id.as_generic_type())
             .where(
                 datetime.now() - HistoryModel.created_at < time_limit,
             )

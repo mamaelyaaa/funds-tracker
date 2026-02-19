@@ -35,12 +35,12 @@ class GoalDetailSchema(BaseApiModel):
     @classmethod
     def from_entity(cls, goal: Goal) -> "GoalDetailSchema":
         return cls(
-            id=goal.id.value,
-            user_id=goal.user_id.value,
-            title=goal.title.value,
+            id=goal.id.as_generic_type(),
+            user_id=goal.user_id.as_generic_type(),
+            title=goal.title.as_generic_type(),
             target_amount=goal.target_amount,
             current_amount=goal.current_amount,
-            savings_percentage=goal.savings_percentage.value,
-            account_id=goal.account_id.value if goal.account_id else None,
+            savings_percentage=goal.savings_percentage.as_generic_type(),
+            account_id=goal.account_id.as_generic_type() if goal.account_id else None,
             deadline=goal.deadline,
         )

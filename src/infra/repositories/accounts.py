@@ -1,60 +1,69 @@
-from typing import Optional, Annotated
+from typing import Optional, Annotated, Any
 
 from fastapi import Depends
 from sqlalchemy import select, func, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from domain.accounts.dto import AccountDTO
 from domain.accounts.entity import Account
 from domain.accounts.protocols import AccountRepositoryProtocol
-from domain.accounts.values import Title, AccountId
-from domain.users.values import UserId
 from infra import SessionDep
 from infra.models import AccountModel
-from infra.repositories.base import BaseInMemoryRepository
+from .base import BaseInMemoryRepository
+from .dto.accounts import AccountOrmDTO
 
 
-class InMemoryAccountRepository(BaseInMemoryRepository[AccountId, Account]):
+class InMemoryAccountRepository(BaseInMemoryRepository[str, Account]):
 
     def __init__(self):
         super().__init__()
 
-    async def save(self, account: Account) -> AccountId:
-        self._storage[account.id] = account
-        return account.id
-
-    async def get_by_id(
-        self, user_id: UserId, account_id: AccountId
-    ) -> Optional[Account]:
-        return self._storage.get(account_id, None)
-
-    async def get_by_user_id(self, user_id: UserId) -> list[Account]:
-        return [
-            account for account in self._storage.values() if account.user_id == user_id
-        ]
-
-    async def delete(
-        self, user_id: UserId, account_id: AccountId
-    ) -> Optional[AccountId]:
-        account = await self.get_by_id(account_id=account_id, user_id=user_id)
-        if not account:
-            return None
-        self._storage.pop(account_id)
+    async def save(self, account: Account) -> str:
+        account_id = account.id.as_generic_type()
+        self._storage[account_id] = account
         return account_id
 
-    async def count_by_user_id(self, user_id: UserId) -> int:
-        return sum(1 for acc in self._storage.values() if acc.user_id == user_id)
+    async def get_by_id(self, user_id: str, account_id: str) -> Optional[Account]:
+        if account_id in self._storage:
+            if user_id == self._storage[account_id].user_id.as_generic_type():
+                return self._storage[account_id]
+        return None
 
-    async def is_name_taken(self, user_id: UserId, name: Title) -> bool:
+    async def get_by_user_id(self, user_id: str) -> list[Account]:
+        return [
+            account
+            for account in self._storage.values()
+            if account.user_id.as_generic_type() == user_id
+        ]
+
+    async def delete(self, user_id: str, account_id: str) -> Optional[str]:
+        account = await self.get_by_id(account_id=account_id, user_id=user_id)
+        self._storage.pop(account.id.as_generic_type())
+        return account_id
+
+    async def count_by_user_id(self, user_id: str) -> int:
+        return sum(
+            1
+            for acc in self._storage.values()
+            if acc.user_id.as_generic_type == user_id
+        )
+
+    async def is_name_taken(self, user_id: str, name: str) -> bool:
         return any(
-            acc.name == name and acc.user_id == user_id
+            acc.name.as_generic_type() == name
+            and acc.user_id.as_generic_type() == user_id
             for acc in self._storage.values()
         )
 
     async def update(
-        self, user_id: UserId, account_id: AccountId, new_account: Account
-    ) -> None:
-        await self.save(new_account)
-        return
+        self, user_id: str, account_id: str, upd_data: dict[str, Any]
+    ) -> Optional[Account]:
+        account = await self.get_by_id(account_id=account_id, user_id=user_id)
+        if account:
+            account_dict = AccountDTO.from_entity_to_dict(account)
+            account_dict.update(**upd_data)
+            return AccountDTO.from_dict_to_entity(account_dict)
+        return account
 
 
 class PostgresAccountRepository:
@@ -62,83 +71,56 @@ class PostgresAccountRepository:
     def __init__(self, session: AsyncSession):
         self._session = session
 
-    async def save(self, account: Account) -> AccountId:
-        acc = AccountModel(**account.to_dict())
+    async def save(self, account: Account) -> str:
+        acc: AccountModel = AccountOrmDTO.from_entity_to_orm(account)
         self._session.add(acc)
         await self._session.commit()
-        return AccountId(acc.id)
+        return acc.id
 
-    async def get_by_id(
-        self, user_id: UserId, account_id: AccountId
-    ) -> Optional[Account]:
-        query = select(AccountModel).filter_by(
-            id=account_id.value, user_id=user_id.value
-        )
-        account: AccountModel = await self._session.scalar(query)
-        if not account:
-            return None
-        return self._to_domain(account)
+    async def get_by_id(self, user_id: str, account_id: str) -> Optional[Account]:
+        query = select(AccountModel).filter_by(id=account_id, user_id=user_id)
+        account = await self._session.scalar(query)
+        return AccountOrmDTO.from_orm_to_entity(account) if account else None
 
-    async def get_by_user_id(self, user_id: UserId) -> list[Account]:
-        query = select(AccountModel).filter_by(user_id=user_id.value)
-        accounts = await self._session.execute(query)
-        return [self._to_domain(account) for account in accounts.scalars().all()]
+    async def get_by_user_id(self, user_id: str) -> list[Account]:
+        query = select(AccountModel).filter_by(user_id=user_id)
+        accounts = await self._session.scalars(query)
+        return [AccountOrmDTO.from_orm_to_entity(account) for account in accounts.all()]
 
-    async def delete(self, user_id: UserId, account_id: AccountId) -> None:
-        stmt = delete(AccountModel).filter_by(
-            id=account_id.value, user_id=user_id.value
-        )
+    async def delete(self, user_id: str, account_id: str) -> None:
+        stmt = delete(AccountModel).filter_by(id=account_id, user_id=user_id)
         await self._session.execute(stmt)
         await self._session.commit()
         return
 
-    async def count_by_user_id(self, user_id: UserId) -> int:
+    async def count_by_user_id(self, user_id: str) -> int:
         query = (
-            select(func.count())
-            .select_from(AccountModel)
-            .filter_by(user_id=user_id.value)
+            select(func.count()).select_from(AccountModel).filter_by(user_id=user_id)
         )
         res = await self._session.scalar(query)
         return res or 0
 
-    async def is_name_taken(self, user_id: UserId, name: Title) -> bool:
+    async def is_name_taken(self, user_id: str, name: str) -> bool:
         query = (
             select(func.count())
             .select_from(AccountModel)
-            .filter_by(user_id=user_id.value, name=name.value)
+            .filter_by(user_id=user_id, name=name)
         )
         count = await self._session.scalar(query)
         return bool(count)
 
     async def update(
-        self, user_id: UserId, account_id: AccountId, new_account: Account
-    ) -> None:
-        update_data = new_account.to_dict()
-        update_data.pop("user_id", None)
-
+        self, user_id: str, account_id: str, upd_data: dict[str, Any]
+    ) -> Optional[Account]:
         stmt = (
             update(AccountModel)
-            .filter_by(id=account_id.value, user_id=user_id.value)
-            .values(**update_data)
+            .filter_by(id=account_id, user_id=user_id)
+            .values(**upd_data)
+            .returning(AccountModel)
         )
-        await self._session.execute(stmt)
+        res = await self._session.execute(stmt)
         await self._session.commit()
-        await self._session.refresh(
-            await self._session.get(AccountModel, account_id.value)
-        )
-        return
-
-    @staticmethod
-    def _to_domain(model: AccountModel) -> Account:
-        return Account(
-            id=AccountId(model.id),
-            user_id=UserId(model.user_id),
-            name=Title(model.name),
-            type=model.type,
-            currency=model.currency,
-            balance=model.balance,
-            created_at=model.created_at,
-        )
+        return res.scalar_one_or_none()
 
 
 def get_account_repository(session: SessionDep) -> AccountRepositoryProtocol:

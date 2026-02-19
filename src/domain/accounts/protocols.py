@@ -1,38 +1,32 @@
-from typing import Protocol, Optional
+from typing import Protocol, Optional, Any
 
 from core.domain import DomainEvent
-from domain.users.values import UserId
-from .entity import Account, AccountId
-from .values import Title
+from .entity import Account
 
 
 class AccountRepositoryProtocol(Protocol):
 
-    async def save(self, account: Account) -> AccountId:
+    async def save(self, account: Account) -> str:
         pass
 
-    async def get_by_id(
-        self, user_id: UserId, account_id: AccountId
-    ) -> Optional[Account]:
+    async def get_by_id(self, user_id: str, account_id: str) -> Optional[Account]:
         pass
 
-    async def get_by_user_id(self, user_id: UserId) -> list[Account]:
+    async def get_by_user_id(self, user_id: str) -> list[Account]:
         pass
 
-    async def delete(
-        self, user_id: UserId, account_id: AccountId
-    ) -> Optional[AccountId]:
+    async def delete(self, user_id: str, account_id: str) -> Optional[str]:
         pass
 
-    async def count_by_user_id(self, user_id: UserId) -> int:
+    async def count_by_user_id(self, user_id: str) -> int:
         pass
 
-    async def is_name_taken(self, user_id: UserId, name: Title) -> bool:
+    async def is_name_taken(self, user_id: str, name: str) -> bool:
         pass
 
     async def update(
-        self, user_id: UserId, account_id: AccountId, new_account: Account
-    ) -> None:
+        self, user_id: str, account_id: str, upd_data: dict[str, Any]
+    ) -> Optional[Account]:
         pass
 
 

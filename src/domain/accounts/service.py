@@ -4,7 +4,6 @@ from typing import Annotated
 from fastapi import Depends
 
 from domain.users.entity import User
-from domain.users.values import UserId
 from infra.publishers.accounts import AccountEventPublisherDep
 from infra.repositories.accounts import AccountRepositoryDep
 from .commands import (
@@ -12,14 +11,14 @@ from .commands import (
     GetAccountCommand,
     UpdateAccountBalanceCommand,
 )
-from .entity import Account, AccountId
+from .dto import AccountDTO
+from .entity import Account
 from .exceptions import (
     AccountNotFoundException,
     TooManyAccountsForUserException,
     AccountAlreadyCreatedException,
 )
 from .protocols import AccountRepositoryProtocol, AccountEventPublisherProtocol
-from .values import Title
 
 logger = logging.getLogger(__name__)
 
@@ -35,22 +34,28 @@ class AccountCRUDService:
         self._publisher = account_publisher
 
     async def create_account(self, command: CreateAccountCommand) -> Account:
-        """Создаем новый счет"""
+        """
+        Создаем новый счет
 
-        user_id = UserId(command.user_id)
-        account_name = Title(command.name)
+        - Если счёт для текущего пользователя уже существует - ошибка
+        - Если превышен лимит активных счётов пользователя - ошибка
+        """
 
-        check = await self._repository.is_name_taken(user_id, account_name)
+        # Проверка на существование счёта с таким названием
+        check = await self._repository.is_name_taken(
+            user_id=command.user_id, name=command.name
+        )
         if check:
             logger.warning(
-                f"Ошибка создания нового счёта для пользователя #{user_id.short}"
+                f"Ошибка создания нового счёта для пользователя #{command.user_id[:8]}"
             )
             raise AccountAlreadyCreatedException
 
-        count = await self._repository.count_by_user_id(user_id)
+        # Проверка на лимит активных счетов пользователя
+        count = await self._repository.count_by_user_id(command.user_id)
         if count >= User.MAX_ACCOUNTS:
             logger.warning(
-                f"Пользователь #%s превысил лимит активных счётов", user_id.short
+                f"Пользователь #%s превысил лимит активных счётов", command.user_id[:8]
             )
             raise TooManyAccountsForUserException
 
@@ -63,20 +68,18 @@ class AccountCRUDService:
         )
         acc_id = await self._repository.save(new_account)
 
-        # await self._cache.set(account=new_account, ttl=300)
-
         for event in new_account.events:
             await self._publisher.publish(event)
 
-        logger.info("Новый счёт #%s создан", acc_id.value)
+        logger.info("Новый счёт #%s создан", acc_id)
 
         return new_account
 
     async def find_account_by_id(self, command: GetAccountCommand) -> Account:
         if not (
             account := await self._repository.get_by_id(
-                account_id=AccountId(command.account_id),
-                user_id=UserId(command.user_id),
+                account_id=command.account_id,
+                user_id=command.user_id,
             )
         ):
             logger.warning("Счёт #%s не найден", command.account_id)
@@ -86,13 +89,16 @@ class AccountCRUDService:
         return account
 
     async def find_accounts_by_user_id(self, user_id: str) -> list[Account]:
-        accounts = await self._repository.get_by_user_id(UserId(user_id))
+        accounts = await self._repository.get_by_user_id(user_id)
         return accounts
 
     async def delete_account(self, command: GetAccountCommand) -> None:
         account = await self.find_account_by_id(command=command)
-        await self._repository.delete(account_id=account.id, user_id=account.user_id)
-        logger.info("Счёт #%s был удален", account.id.value)
+        await self._repository.delete(
+            account_id=account.id.as_generic_type(),
+            user_id=account.user_id.as_generic_type(),
+        )
+        logger.info("Счёт #%s был удален", account.id.as_generic_type())
         return
 
 
@@ -116,17 +122,19 @@ class AccountService(AccountCRUDService):
         )
 
         if command.new_balance == account.balance:
-            logger.info("Баланс счета #%s не изменен", account.id.value)
+            logger.info("Баланс счета #%s не изменен", account.id.as_generic_type())
             return
 
         account.update_balance(command.new_balance)
 
         await self._repository.update(
-            account_id=AccountId(command.account_id),
-            user_id=UserId(command.user_id),
-            new_account=account,
+            account_id=command.account_id,
+            user_id=command.user_id,
+            upd_data=AccountDTO.from_entity_to_dict(
+                account, excludes=["id", "user_id"]
+            ),
         )
-        logger.info("Баланс счета #%s обновлен", account.id.value)
+        logger.info("Баланс счета #%s обновлен", account.id.as_generic_type())
 
         if len(account.events) > 1:
             logger.error("Лишние события в доменной модели")

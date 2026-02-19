@@ -39,7 +39,9 @@ class GoalsTaskiqPublisher:
         for task in tasks:
             try:
                 result = await task.wait_result(timeout=300)
-                logger.info(f"Задача #{task.task_id} выполнена: {result.return_value}")
+                logger.info(
+                    f"Задача #{task.task_id} выполнена: {result.returnas_generic_type()}"
+                )
 
             except asyncio.TimeoutError:
                 logger.warning(f"Задача #{task.task_id} не завершилась за 300 секунд")

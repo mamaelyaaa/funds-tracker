@@ -28,13 +28,13 @@ class GoalDTO(BaseModel):
     @staticmethod
     def to_orm(goal: Goal) -> GoalModel:
         return GoalModel(
-            id=goal.id.value,
-            user_id=goal.user_id.value,
-            account_id=goal.account_id.value if goal.account_id else None,
-            title=goal.title.value,
+            id=goal.id.as_generic_type(),
+            user_id=goal.user_id.as_generic_type(),
+            account_id=goal.account_id.as_generic_type() if goal.account_id else None,
+            title=goal.title.as_generic_type(),
             target_amount=goal.target_amount,
             deadline=goal.deadline,
-            savings_percentage=goal.savings_percentage.value,
+            savings_percentage=goal.savings_percentage.as_generic_type(),
             status=goal.status,
             current_amount=goal.current_amount,
             created_at=goal.created_at,

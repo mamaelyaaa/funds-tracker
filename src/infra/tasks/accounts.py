@@ -20,8 +20,8 @@ async def save_account_history(
     history_id: str = await history_service.save_account_history(
         command=SaveHistoryCommand(
             balance=event.new_balance,
-            account_id=event.account_id.value,
-            user_id=event.user_id.value,
+            account_id=event.account_id.as_generic_type(),
+            user_id=event.user_id.as_generic_type(),
         )
     )
     return history_id

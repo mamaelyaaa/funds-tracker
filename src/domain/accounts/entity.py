@@ -1,10 +1,7 @@
-from dataclasses import dataclass, field, asdict
-from datetime import datetime
-from typing import Any
+from dataclasses import dataclass, field
 
-from core.domain import DomainEntity
+from core.domain import DomainEntity, DomainEvent
 from domain.users.values import UserId
-from .commands import CreateAccountCommand
 from .events import BalanceUpdatedEvent, AccountCreatedEvent
 from .exceptions import InvalidInitBalanceException
 from .values import AccountType, AccountCurrency, AccountId, Title
@@ -20,6 +17,12 @@ class Account(DomainEntity):
     type: AccountType
     currency: AccountCurrency
     balance: float = field(default=0.0)
+
+    _events: list[DomainEvent] = field(default_factory=list)
+
+    @property
+    def events(self) -> list[DomainEvent]:
+        return self._events
 
     @classmethod
     def create(
@@ -49,12 +52,6 @@ class Account(DomainEntity):
         )
         return account
 
-    @classmethod
-    def create_from_command(cls, command: CreateAccountCommand) -> "Account":
-        if command.balance < 0:
-            raise InvalidInitBalanceException
-        return cls(**asdict(command))
-
     def update_balance(self, new_balance: float) -> None:
         """Обновление баланса счета"""
 
@@ -75,7 +72,6 @@ class Account(DomainEntity):
                 old_balance=old_balance,
                 delta=self.balance - old_balance,
                 currency=self.currency,
-                occurred_at=datetime.now(),
             )
         )
 
@@ -84,15 +80,15 @@ class Account(DomainEntity):
         self.name = new_name
         return
 
-    def to_dict(self, all_str: bool = False) -> dict[str, Any]:
-        return {
-            "id": self.id.value,
-            "user_id": self.user_id.value,
-            "name": self.name.value,
-            "type": self.type,
-            "balance": self.balance,
-            "currency": self.currency,
-            "created_at": (
-                self.created_at if not all_str else self.created_at.isoformat()
-            ),
-        }
+    # def to_dict(self, all_str: bool = False) -> dict[str, Any]:
+    #     return {
+    #         "id": self.id.as_generic_type,
+    #         "user_id": self.user_id.as_generic_type,
+    #         "name": self.name.as_generic_type,
+    #         "type": self.type,
+    #         "balance": self.balance,
+    #         "currency": self.currency,
+    #         "created_at": (
+    #             self.created_at if not all_str else self.created_at.isoformat()
+    #         ),
+    #     }

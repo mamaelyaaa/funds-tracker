@@ -18,8 +18,8 @@ async def test_create_account(
 
     account = await test_account_service.create_account(
         command=CreateAccountCommand(
-            user_id=test_account.user_id.value,
-            name=test_account.name.value,
+            user_id=test_account.user_id.as_generic_type(),
+            name=test_account.name.as_generic_type(),
             balance=test_account.balance,
             account_type=test_account.type,
             currency=test_account.currency,
@@ -27,7 +27,8 @@ async def test_create_account(
     )
 
     exists_acc = await test_account_repo.get_by_id(
-        user_id=account.user_id, account_id=account.id
+        user_id=account.user_id.as_generic_type(),
+        account_id=account.id.as_generic_type(),
     )
     assert account == exists_acc
 

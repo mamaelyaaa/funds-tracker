@@ -29,13 +29,13 @@ class TestGoalsService:
 
         goal = await test_goals_service.create_goal(
             command=CreateGoalCommand(
-                title=test_goal.title.value,
+                title=test_goal.title.as_generic_type(),
                 target_amount=test_goal.target_amount,
-                user_id=test_goal.user_id.value,
+                user_id=test_goal.user_id.as_generic_type(),
             )
         )
 
-        saved_goal = await test_goals_repository.get_by_id(goal.id.value)
+        saved_goal = await test_goals_repository.get_by_id(goal.id.as_generic_type())
         assert goal == saved_goal
 
     async def test_goal_title_already_taken(
@@ -53,8 +53,8 @@ class TestGoalsService:
         with pytest.raises(GoalTitleAlreadyTakenException):
             await test_goals_service.create_goal(
                 command=CreateGoalCommand(
-                    user_id=test_goal.user_id.value,
-                    title=test_goal.title.value,
+                    user_id=test_goal.user_id.as_generic_type(),
+                    title=test_goal.title.as_generic_type(),
                     target_amount=test_goal.target_amount,
                 )
             )
@@ -75,10 +75,11 @@ class TestGoalsService:
         with pytest.raises(GoalsPercentageOutOfBoundsException):
             await test_goals_service.create_goal(
                 command=CreateGoalCommand(
-                    user_id=test_goal.user_id.value,
+                    user_id=test_goal.user_id.as_generic_type(),
                     title=faker.word(),
                     target_amount=test_goal.target_amount,
-                    savings_percentage=test_goal.savings_percentage.value + 1,
+                    savings_percentage=test_goal.savings_percentage.as_generic_type()
+                    + 1,
                 )
             )
 
@@ -86,10 +87,10 @@ class TestGoalsService:
 
         await test_goals_service.create_goal(
             command=CreateGoalCommand(
-                user_id=test_goal.user_id.value,
+                user_id=test_goal.user_id.as_generic_type(),
                 title=faker.word(),
                 target_amount=test_goal.target_amount,
-                savings_percentage=1 - test_goal.savings_percentage.value,
+                savings_percentage=1 - test_goal.savings_percentage.as_generic_type(),
             )
         )
 
@@ -105,7 +106,9 @@ class TestGoalsService:
 
         await test_goals_repository.save(test_goal)
 
-        saved_goal = await test_goals_service.get_user_goal(goal_id=test_goal.id.value)
+        saved_goal = await test_goals_service.get_user_goal(
+            goal_id=test_goal.id.as_generic_type()
+        )
         assert saved_goal == test_goal
 
     async def test_user_goal_not_found(
@@ -119,7 +122,9 @@ class TestGoalsService:
         assert await test_goals_repository.count() == 0
 
         with pytest.raises(GoalNotFoundException):
-            await test_goals_service.get_user_goal(goal_id=test_goal.id.value)
+            await test_goals_service.get_user_goal(
+                goal_id=test_goal.id.as_generic_type()
+            )
 
     async def test_user_goals_success(
         self,
@@ -140,7 +145,7 @@ class TestGoalsService:
             )
 
         saved_goals = await test_goals_service.get_user_goals(
-            user_id=test_goal.user_id.value
+            user_id=test_goal.user_id.as_generic_type()
         )
 
         assert len(saved_goals) == 5
@@ -192,13 +197,15 @@ class TestGoalsService:
 
         upd_goal = await test_goals_service.update_goal_partially(
             command=UpdateGoalPartiallyCommand(
-                goal_id=test_goal.id.value,
-                user_id=test_goal.user_id.value,
+                goal_id=test_goal.id.as_generic_type(),
+                user_id=test_goal.user_id.as_generic_type(),
                 **fields_to_update,
             )
         )
 
-        saved_goal = await test_goals_repository.get_by_id(upd_goal.id.value)
+        saved_goal = await test_goals_repository.get_by_id(
+            upd_goal.id.as_generic_type()
+        )
         assert saved_goal == upd_goal
 
         # if "title" in fields_to_update and fields_to_update["title"] is not None:
@@ -266,8 +273,8 @@ class TestGoalsService:
         with pytest.raises(expected_error):
             await test_goals_service.update_goal_partially(
                 command=UpdateGoalPartiallyCommand(
-                    goal_id=test_goal.id.value,
-                    user_id=test_goal.user_id.value,
+                    goal_id=test_goal.id.as_generic_type(),
+                    user_id=test_goal.user_id.as_generic_type(),
                     **fields_to_update,
                 )
             )
@@ -293,8 +300,8 @@ class TestGoalsService:
         upd_goal = await test_goals_service.update_goal_partially(
             command=UpdateGoalPartiallyCommand(
                 account=exists_acc,
-                goal_id=test_goal.id.value,
-                user_id=test_goal.user_id.value,
+                goal_id=test_goal.id.as_generic_type(),
+                user_id=test_goal.user_id.as_generic_type(),
             )
         )
         assert upd_goal.account_id is not None
@@ -313,6 +320,6 @@ class TestGoalsService:
         await test_goals_repository.save(test_goal)
         assert await test_goals_repository.count() == 1
 
-        await test_goals_service.delete_goal(test_goal.id.value)
+        await test_goals_service.delete_goal(test_goal.id.as_generic_type())
 
         assert await test_goals_repository.count() == 0

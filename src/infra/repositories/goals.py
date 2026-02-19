@@ -25,7 +25,8 @@ class InMemoryGoalsRepository(BaseInMemoryRepository[GoalId, Goal]):
         return any(
             goal
             for goal in self._storage.values()
-            if goal.title.value == title and goal.user_id.value == user_id
+            if goal.title.as_generic_type() == title
+            and goal.user_id.as_generic_type() == user_id
         )
 
     async def count(self) -> int:
@@ -33,7 +34,9 @@ class InMemoryGoalsRepository(BaseInMemoryRepository[GoalId, Goal]):
 
     async def get_by_user_id(self, user_id: str) -> list[Goal]:
         return [
-            goal for goal in self._storage.values() if goal.user_id.value == user_id
+            goal
+            for goal in self._storage.values()
+            if goal.user_id.as_generic_type() == user_id
         ]
 
     async def delete(self, goal: Goal) -> None:
@@ -94,8 +97,8 @@ class PostgresGoalsRepository:
 
     async def delete(self, goal: Goal) -> None:
         stmt = delete(GoalModel).where(
-            user_id=goal.user_id.value,
-            goal_id=goal.id.value,
+            user_id=goal.user_id.as_generic_type(),
+            goal_id=goal.id.as_generic_type(),
         )
         await self._session.execute(stmt)
         await self._session.commit()

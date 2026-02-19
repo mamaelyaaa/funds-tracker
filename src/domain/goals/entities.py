@@ -82,9 +82,9 @@ class Goal(DomainEntity):
         if self.account_id:
             self._events.append(
                 GoalLinkedToAccountEvent(
-                    account_id=self.account_id.value,
-                    goal_id=self.id.value,
-                    user_id=self.user_id.value,
+                    account_id=self.account_id.as_generic_type(),
+                    goal_id=self.id.as_generic_type(),
+                    user_id=self.user_id.as_generic_type(),
                 )
             )
         self.account_id = account_id
@@ -104,13 +104,17 @@ class Goal(DomainEntity):
 
     def to_dict(self, all_str: bool = False) -> dict[str, Any]:
         return {
-            "id": self.id.value,
-            "user_id": self.user_id.value,
-            "account_id": self.account_id.value if self.account_id else None,
-            "title": self.title.value,
+            "id": self.id.as_generic_type(),
+            "user_id": self.user_id.as_generic_type(),
+            "account_id": (
+                self.account_id.as_generic_type() if self.account_id else None
+            ),
+            "title": self.title.as_generic_type(),
             "target_amount": self.target_amount,
             "savings_percentage": (
-                self.savings_percentage.value if self.savings_percentage else None
+                self.savings_percentage.as_generic_type()
+                if self.savings_percentage
+                else None
             ),
             "deadline": self.deadline if self.deadline else None,
         }

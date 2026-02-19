@@ -16,6 +16,7 @@ from domain.accounts.commands import (
     GetAccountCommand,
     UpdateAccountBalanceCommand,
 )
+from domain.accounts.dto import AccountDTO
 from domain.accounts.entity import Account
 from domain.accounts.service import AccountServiceDep
 from domain.users.dependencies import get_user
@@ -65,7 +66,7 @@ async def create_account(
 
     return BaseResponseDetailSchema(
         message=f"Счет '{schema.name}' успешно создан",
-        detail=AccountDetailSchema.from_domain(account),
+        detail=AccountDTO.from_entity_to_dict(account),
         metadata={},
     )
 
@@ -84,7 +85,7 @@ async def get_accounts(
 
     return BaseResponseDetailSchema(
         message=f"Получение счётов пользователя",
-        detail=[AccountDetailSchema.from_domain(account) for account in accounts],
+        detail=[AccountDTO.from_entity_to_dict(account) for account in accounts],
         metadata={},
     )
 
@@ -112,7 +113,7 @@ async def get_account_by_id(
 
     return BaseResponseDetailSchema(
         message=f"Получение счёта пользователя",
-        detail=AccountDetailSchema.from_domain(account),
+        detail=AccountDTO.from_entity_to_dict(account),
         metadata={},
     )
 

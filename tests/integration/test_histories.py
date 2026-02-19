@@ -54,7 +54,7 @@
 #         """Тест на обновление истории с учетом лимита времени для создания"""
 #
 #         mock_history_repo.get_acc_by_acc_id_with_time_limit = AsyncMock(
-#             return_value=mock_history_entity
+#             returnas_generic_type()=mock_history_entity
 #         )
 #
 #         history_id = await mock_history_service.save_account_history(

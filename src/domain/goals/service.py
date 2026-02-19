@@ -40,7 +40,7 @@ class GoalsService:
             goals = await self.get_user_goals(user_id=command.user_id)
             if (
                 command.savings_percentage
-                + sum(goal.savings_percentage.value for goal in goals)
+                + sum(goal.savings_percentage.as_generic_type() for goal in goals)
                 > 1
             ):
                 raise GoalsPercentageOutOfBoundsException
@@ -97,7 +97,7 @@ class GoalsService:
             )
             if (
                 command.savings_percentage
-                + sum(goal.savings_percentage.value for goal in goals)
+                + sum(goal.savings_percentage.as_generic_type() for goal in goals)
                 > 1
             ):
                 raise GoalsPercentageOutOfBoundsException

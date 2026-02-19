@@ -17,7 +17,7 @@ from domain.goals.values import GoalStatus, GoalPercentage
 class TestGoalDomain:
 
     def test_create_success(self, test_goal):
-        assert test_goal.savings_percentage.value == 0.2
+        assert test_goal.savings_percentage.as_generic_type() == 0.2
         assert test_goal.account_id is None
         assert test_goal.deadline is None
         assert test_goal.current_amount == 0
@@ -46,11 +46,11 @@ class TestGoalDomain:
 
     def test_change_percentage(self, test_goal):
         test_goal.change_percentage(new_percentage=GoalPercentage(0.3))
-        assert test_goal.savings_percentage.value == 0.3
+        assert test_goal.savings_percentage.as_generic_type() == 0.3
 
     def test_link_to_account(self, test_goal):
         test_goal.link_to_account(account_id=AccountId("acc-123"))
-        assert test_goal.account_id.value == "acc-123"
+        assert test_goal.account_id._value == "acc-123"
 
     def test_change_deadline_success(self, test_goal):
         test_date = datetime.now() + timedelta(days=30)

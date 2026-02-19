@@ -46,7 +46,7 @@ class HistoryService:
         )
 
         if existing:
-            logger.info(f"Обновляем историю #{existing.id.value}")
+            logger.info(f"Обновляем историю #{existing.id.as_generic_type()}")
 
             updated_history = History(
                 id=existing.id,
@@ -58,7 +58,7 @@ class HistoryService:
                 history_id=existing.id,
                 new_history=updated_history,
             )
-            return upd_history.id.value
+            return upd_history.id.as_generic_type()
 
         new_history = History.create(
             account_id=command.account_id,
@@ -66,9 +66,9 @@ class HistoryService:
         )
 
         history_id = await self._repository.save(new_history)
-        logger.info(f"Создана новая история #{history_id.value}")
+        logger.info(f"Создана новая история #{history_id.as_generic_type()}")
 
-        return history_id.value
+        return history_id.as_generic_type()
 
     async def get_account_history(
         self, command: GetAccountHistoryCommand
