@@ -1,15 +1,15 @@
 import logging
+from typing import Annotated
+
+from fastapi import Depends
 
 from domain.users.entity import User
 from domain.users.values import UserId
-from infra.publishers.accounts import (
-    AccountEventPublisherDep,
-)
+from infra.publishers.accounts import AccountEventPublisherDep
 from infra.repositories.accounts import AccountRepositoryDep
-from .comands import (
+from .commands import (
     CreateAccountCommand,
     GetAccountCommand,
-    UpdateAccountNameCommand,
     UpdateAccountBalanceCommand,
 )
 from .entity import Account, AccountId
@@ -18,8 +18,7 @@ from .exceptions import (
     TooManyAccountsForUserException,
     AccountAlreadyCreatedException,
 )
-from .publisher import AccountEventPublisherProtocol
-from .repository import AccountRepositoryProtocol
+from .protocols import AccountRepositoryProtocol, AccountEventPublisherProtocol
 from .values import Title
 
 logger = logging.getLogger(__name__)
@@ -56,8 +55,8 @@ class AccountCRUDService:
             raise TooManyAccountsForUserException
 
         new_account = Account.create(
-            user_id=user_id,
-            name=account_name,
+            user_id=command.user_id,
+            name=command.name,
             balance=command.balance,
             account_type=command.account_type,
             currency=command.currency,
@@ -74,8 +73,6 @@ class AccountCRUDService:
         return new_account
 
     async def find_account_by_id(self, command: GetAccountCommand) -> Account:
-        print(f"ПАРАМЕТРЫ: account_id={command.account_id}, user_id={command.user_id}")
-
         if not (
             account := await self._repository.get_by_id(
                 account_id=AccountId(command.account_id),
@@ -154,3 +151,6 @@ def get_account_service(
     acc_publisher: AccountEventPublisherDep,
 ) -> AccountService:
     return AccountService(account_repo=acc_repo, account_publisher=acc_publisher)
+
+
+AccountServiceDep = Annotated[AccountService, Depends(get_account_service)]

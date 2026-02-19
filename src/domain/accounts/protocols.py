@@ -1,5 +1,6 @@
 from typing import Protocol, Optional
 
+from core.domain import DomainEvent
 from domain.users.values import UserId
 from .entity import Account, AccountId
 from .values import Title
@@ -32,4 +33,10 @@ class AccountRepositoryProtocol(Protocol):
     async def update(
         self, user_id: UserId, account_id: AccountId, new_account: Account
     ) -> None:
+        pass
+
+
+class AccountEventPublisherProtocol(Protocol):
+
+    async def publish(self, event: DomainEvent) -> None:
         pass

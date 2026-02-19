@@ -1,0 +1,318 @@
+from datetime import datetime, timedelta
+
+import pytest
+from faker.proxy import Faker
+
+from domain.goals.command import CreateGoalCommand, UpdateGoalPartiallyCommand
+from domain.goals.entities import Goal
+from domain.goals.exceptions import (
+    GoalTitleAlreadyTakenException,
+    GoalsPercentageOutOfBoundsException,
+    GoalNotFoundException,
+    InvalidGoalAmountsException,
+    InvalidGoalPercentageException,
+)
+
+
+@pytest.mark.asyncio
+@pytest.mark.goals
+@pytest.mark.integration
+class TestGoalsService:
+
+    async def test_goals_service_create_success(
+        self,
+        test_goal,
+        test_goals_service,
+        test_goals_repository,
+    ):
+        """Успешное создание цели с помощью сервиса"""
+
+        goal = await test_goals_service.create_goal(
+            command=CreateGoalCommand(
+                title=test_goal.title.value,
+                target_amount=test_goal.target_amount,
+                user_id=test_goal.user_id.value,
+            )
+        )
+
+        saved_goal = await test_goals_repository.get_by_id(goal.id.value)
+        assert goal == saved_goal
+
+    async def test_goal_title_already_taken(
+        self,
+        test_goal,
+        test_goals_repository,
+        test_goals_service,
+    ):
+        """Цель с таким названием уже имеется у пользователя"""
+
+        await test_goals_repository.save(test_goal)
+
+        assert await test_goals_repository.count() == 1
+
+        with pytest.raises(GoalTitleAlreadyTakenException):
+            await test_goals_service.create_goal(
+                command=CreateGoalCommand(
+                    user_id=test_goal.user_id.value,
+                    title=test_goal.title.value,
+                    target_amount=test_goal.target_amount,
+                )
+            )
+
+        assert await test_goals_repository.count() == 1
+
+    async def test_goal_percentage_out_of_bounds(
+        self,
+        faker: Faker,
+        test_goal,
+        test_goals_repository,
+        test_goals_service,
+    ):
+        """Пользователю необходимо перераспределить проценты на цели"""
+
+        await test_goals_repository.save(test_goal)
+
+        with pytest.raises(GoalsPercentageOutOfBoundsException):
+            await test_goals_service.create_goal(
+                command=CreateGoalCommand(
+                    user_id=test_goal.user_id.value,
+                    title=faker.word(),
+                    target_amount=test_goal.target_amount,
+                    savings_percentage=test_goal.savings_percentage.value + 1,
+                )
+            )
+
+        assert await test_goals_repository.count() == 1
+
+        await test_goals_service.create_goal(
+            command=CreateGoalCommand(
+                user_id=test_goal.user_id.value,
+                title=faker.word(),
+                target_amount=test_goal.target_amount,
+                savings_percentage=1 - test_goal.savings_percentage.value,
+            )
+        )
+
+        assert await test_goals_repository.count() == 2
+
+    async def test_user_goal_success(
+        self,
+        test_goal,
+        test_goals_service,
+        test_goals_repository,
+    ):
+        """Успешное получение цели пользователя"""
+
+        await test_goals_repository.save(test_goal)
+
+        saved_goal = await test_goals_service.get_user_goal(goal_id=test_goal.id.value)
+        assert saved_goal == test_goal
+
+    async def test_user_goal_not_found(
+        self,
+        test_goal,
+        test_goals_service,
+        test_goals_repository,
+    ):
+        """Цель пользователя не найдена"""
+
+        assert await test_goals_repository.count() == 0
+
+        with pytest.raises(GoalNotFoundException):
+            await test_goals_service.get_user_goal(goal_id=test_goal.id.value)
+
+    async def test_user_goals_success(
+        self,
+        faker: Faker,
+        test_goal,
+        test_goals_service,
+        test_goals_repository,
+    ):
+        """Успешное получение всех целей пользователя"""
+
+        for _ in range(5):
+            await test_goals_repository.save(
+                Goal.create(
+                    user_id="user-123",
+                    title=faker.word(),
+                    target_amount=faker.pyfloat(positive=True),
+                )
+            )
+
+        saved_goals = await test_goals_service.get_user_goals(
+            user_id=test_goal.user_id.value
+        )
+
+        assert len(saved_goals) == 5
+
+    @pytest.mark.parametrize(
+        "fields_to_update",
+        [
+            # 1. Обновление каждого поля по отдельности
+            {"title": "Новое название"},
+            {"current_amount": 5000.0},
+            {"target_amount": 100000.0},
+            {"deadline": datetime.now() + timedelta(days=30)},
+            {"savings_percentage": 0.25},
+            # 2. Обновление нескольких полей
+            {
+                "title": "Обновленный заголовок",
+                "current_amount": 7500.0,
+            },
+            {
+                "target_amount": 150000.0,
+                "deadline": datetime.now() + timedelta(days=60),
+            },
+            # 3. Обновление всех полей сразу
+            {
+                "title": "Полное обновление",
+                "current_amount": 10000.0,
+                "target_amount": 200000.0,
+                "deadline": datetime.now() + timedelta(days=90),
+                "savings_percentage": 0.5,
+            },
+            # 4. Граничные значения процента
+            {"savings_percentage": 0.01},
+            {"savings_percentage": 1.0},  # 100%
+            # 5. Удаление привязки к счету
+            {"unlink_account": True},
+            # 7. Обновление с None значениями
+            {"title": None, "current_amount": None},
+        ],
+    )
+    async def test_update_goal(
+        self,
+        test_goal,
+        test_goals_service,
+        test_goals_repository,
+        fields_to_update,
+    ):
+
+        await test_goals_repository.save(test_goal)
+
+        upd_goal = await test_goals_service.update_goal_partially(
+            command=UpdateGoalPartiallyCommand(
+                goal_id=test_goal.id.value,
+                user_id=test_goal.user_id.value,
+                **fields_to_update,
+            )
+        )
+
+        saved_goal = await test_goals_repository.get_by_id(upd_goal.id.value)
+        assert saved_goal == upd_goal
+
+        # if "title" in fields_to_update and fields_to_update["title"] is not None:
+        #     assert upd_goal.title.value == fields_to_update["title"]
+        #
+        # if (
+        #     "current_amount" in fields_to_update
+        #     and fields_to_update["current_amount"] is not None
+        # ):
+        #     assert upd_goal.current_amount == fields_to_update["current_amount"]
+        #
+        # if (
+        #     "target_amount" in fields_to_update
+        #     and fields_to_update["target_amount"] is not None
+        # ):
+        #     assert upd_goal.target_amount == fields_to_update["target_amount"]
+        #
+        # if (
+        #     "savings_percentage" in fields_to_update
+        #     and fields_to_update["savings_percentage"] is not None
+        # ):
+        #     assert (
+        #         upd_goal.savings_percentage.value
+        #         == fields_to_update["savings_percentage"]
+        #     )
+        #
+        # if "account_id" in fields_to_update:
+        #     if fields_to_update["account_id"] == "":
+        #         assert upd_goal.account_id is None
+        #     elif fields_to_update["account_id"] is not None:
+        #         assert upd_goal.account_id.value == fields_to_update["account_id"]
+        #
+        # if "deadline" in fields_to_update and fields_to_update["deadline"] is not None:
+        #     assert upd_goal.deadline == fields_to_update["deadline"]
+
+    @pytest.mark.parametrize(
+        "fields_to_update, expected_error",
+        [
+            (
+                {"current_amount": -100},
+                InvalidGoalAmountsException,
+            ),  # Отрицательная сумма
+            (
+                {"savings_percentage": -0.1},
+                InvalidGoalPercentageException,
+            ),  # Отрицательный процент
+            (
+                {"savings_percentage": 1.5},
+                InvalidGoalPercentageException,
+            ),  # Процент больше 100%
+        ],
+    )
+    async def test_update_goal_partially_errors(
+        self,
+        test_goal,
+        test_goals_service,
+        test_goals_repository,
+        fields_to_update,
+        expected_error,
+    ):
+        """Проверяем обработку ошибок при некорректных данных."""
+
+        await test_goals_repository.save(test_goal)
+
+        with pytest.raises(expected_error):
+            await test_goals_service.update_goal_partially(
+                command=UpdateGoalPartiallyCommand(
+                    goal_id=test_goal.id.value,
+                    user_id=test_goal.user_id.value,
+                    **fields_to_update,
+                )
+            )
+
+    async def test_link_account_id_success(
+        self,
+        test_goal,
+        test_goals_repository,
+        test_goals_service,
+        test_account,
+        test_account_repo,
+    ):
+        """Привязка счета к текущей цели"""
+
+        # Сохраняем цель пользователя
+        await test_goals_repository.save(test_goal)
+
+        acc_id = await test_account_repo.save(test_account)
+        exists_acc = await test_account_repo.get_by_id(
+            account_id=acc_id, user_id=test_account.user_id
+        )
+
+        upd_goal = await test_goals_service.update_goal_partially(
+            command=UpdateGoalPartiallyCommand(
+                account=exists_acc,
+                goal_id=test_goal.id.value,
+                user_id=test_goal.user_id.value,
+            )
+        )
+        assert upd_goal.account_id is not None
+
+        acc_by_goal = await test_account_repo.get_by_id(
+            user_id=upd_goal.user_id, account_id=upd_goal.account_id
+        )
+        assert acc_by_goal == exists_acc
+
+    async def test_goal_delete_success(
+        self,
+        test_goal,
+        test_goals_service,
+        test_goals_repository,
+    ):
+        await test_goals_repository.save(test_goal)
+        assert await test_goals_repository.count() == 1
+
+        await test_goals_service.delete_goal(test_goal.id.value)
+
+        assert await test_goals_repository.count() == 0

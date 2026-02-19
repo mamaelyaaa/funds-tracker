@@ -1,6 +1,7 @@
 import pytest
 
 from core.settings import settings
+from .fixtures import *  # noqa
 
 
 @pytest.fixture(autouse=True)

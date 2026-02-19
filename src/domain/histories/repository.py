@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from typing import Protocol, Optional
 
 from domain.accounts.values import AccountId
-from domain.histories.domain import History
+from domain.histories.entities import History
 from domain.histories.values import HistoryId
 from domain.users.values import UserId
 

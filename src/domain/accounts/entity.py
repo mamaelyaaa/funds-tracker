@@ -4,7 +4,7 @@ from typing import Any
 
 from core.domain import DomainEntity
 from domain.users.values import UserId
-from .comands import CreateAccountCommand
+from .commands import CreateAccountCommand
 from .events import BalanceUpdatedEvent, AccountCreatedEvent
 from .exceptions import InvalidInitBalanceException
 from .values import AccountType, AccountCurrency, AccountId, Title
@@ -24,8 +24,8 @@ class Account(DomainEntity):
     @classmethod
     def create(
         cls,
-        user_id: UserId,
-        name: Title,
+        user_id: str,
+        name: str,
         balance: float,
         account_type: AccountType,
         currency: AccountCurrency,
@@ -34,15 +34,15 @@ class Account(DomainEntity):
             raise InvalidInitBalanceException
 
         account = cls(
-            user_id=user_id,
-            name=name,
+            user_id=UserId(user_id),
+            name=Title(name),
             type=account_type,
             balance=balance,
             currency=currency,
         )
         account.events.append(
             AccountCreatedEvent(
-                user_id=user_id,
+                user_id=UserId(user_id),
                 account_id=account.id,
                 new_balance=balance,
             )

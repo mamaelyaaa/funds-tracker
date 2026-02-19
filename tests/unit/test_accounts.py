@@ -1,67 +1,50 @@
 from datetime import datetime
-from typing import cast
 
 import pytest
 from faker import Faker
 
 from domain.accounts.entity import Account
-from domain.accounts.events import BalanceUpdatedEvent, AccountCreatedEvent
 from domain.accounts.exceptions import (
     TooLargeTitleException,
     InvalidLettersTitleException,
     InvalidInitBalanceException,
 )
 from domain.accounts.values import Title, AccountCurrency, AccountType
-from domain.users.values import UserId
 
 
 @pytest.mark.unit
+@pytest.mark.accounts
 class TestAccountDomain:
 
-    def test_domain_creation_success(self, faker: Faker):
+    def test_domain_creation_success(self, test_account):
         """Тест создания счёта"""
 
-        account = Account.create(
-            user_id=UserId("user-123"),
-            name=Title(faker.word()),
-            currency=AccountCurrency.RUB,
-            account_type=AccountType.CARD,
-            balance=150,
-        )
-
-        assert account.user_id.value == "user-123"
-        assert account.created_at.date() == datetime.now().date()
-        assert account.balance == 150
-        assert account.type == "Card"
-        assert account.currency == "RUB"
+        assert test_account.user_id.value == "user-123"
+        assert test_account.created_at.date() == datetime.now().date()
+        assert test_account.balance > 0
+        assert test_account.type == "Card"
+        assert test_account.currency == "RUB"
 
     def test_invalid_initial_balance(self, faker: Faker):
         """Тест создания счёта с невалидным балансом"""
 
         with pytest.raises(InvalidInitBalanceException):
             Account.create(
-                user_id=UserId("user-123"),
-                name=Title(faker.word()),
+                user_id="user-123",
+                name=faker.word(),
                 currency=AccountCurrency.RUB,
                 account_type=AccountType.CARD,
                 balance=faker.pyfloat(positive=False),
             )
 
-    def test_update_balance_success(self, faker: Faker):
+    def test_update_balance_success(self, test_account, faker: Faker):
         """Тест на обновление баланса счёта"""
 
-        account = Account.create(
-            user_id=UserId("user-123"),
-            name=Title(faker.word()),
-            currency=AccountCurrency.USD,
-            account_type=AccountType.CASH,
-            balance=30,
-        )
-        assert len(account.events) == 1
+        assert len(test_account.events) == 1
 
-        account.update_balance(new_balance=5000)
-        assert account.balance == 5000
-        assert len(account.events) == 2
+        test_account.update_balance(new_balance=5000)
+        assert test_account.balance == 5000
+        assert len(test_account.events) == 2
 
 
 @pytest.mark.unit

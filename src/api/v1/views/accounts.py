@@ -1,7 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
-from fastapi import Body
+from fastapi import APIRouter, Depends, status, Body
 
 from api.schemas import (
     BaseResponseSchema,
@@ -12,13 +11,13 @@ from api.v1.schemas.accounts import (
     CreateAccountSchema,
     AccountDetailSchema,
 )
-from domain.accounts.comands import (
+from domain.accounts.commands import (
     CreateAccountCommand,
     GetAccountCommand,
     UpdateAccountBalanceCommand,
 )
 from domain.accounts.entity import Account
-from domain.accounts.service import AccountService, get_account_service
+from domain.accounts.service import AccountServiceDep
 from domain.users.dependencies import get_user
 
 router = APIRouter(
@@ -26,8 +25,6 @@ router = APIRouter(
     tags=["Счета🏦"],
     dependencies=[Depends(get_user)],
 )
-
-AccountServiceDep = Annotated[AccountService, Depends(get_account_service)]
 
 
 @router.post(
@@ -95,6 +92,12 @@ async def get_accounts(
 @router.get(
     "/{account_id}",
     response_model=BaseResponseDetailSchema[AccountDetailSchema, dict],
+    responses={
+        status.HTTP_404_NOT_FOUND: {
+            "model": BaseExceptionSchema,
+            "description": "Счёт не найден",
+        }
+    },
 )
 async def get_account_by_id(
     account_service: AccountServiceDep,
@@ -117,6 +120,12 @@ async def get_account_by_id(
 @router.put(
     "/{account_id}/balance",
     response_model=BaseResponseSchema,
+    responses={
+        status.HTTP_404_NOT_FOUND: {
+            "model": BaseExceptionSchema,
+            "description": "Счёт не найден",
+        }
+    },
 )
 async def update_account_balance(
     account_service: AccountServiceDep,
@@ -144,6 +153,12 @@ async def update_account_balance(
 @router.delete(
     "/{account_id}",
     response_model=BaseResponseSchema,
+    responses={
+        status.HTTP_404_NOT_FOUND: {
+            "model": BaseExceptionSchema,
+            "description": "Счёт не найден",
+        }
+    },
 )
 async def delete_balance(
     account_service: AccountServiceDep,

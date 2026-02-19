@@ -9,10 +9,10 @@ from api.v1.schemas.histories import (
     GetHistorySchema,
     HistoryPercentChangeSchema,
 )
-from api.v1.views.accounts import get_account, AccountDep
 from domain.histories.commands import GetAccountHistoryCommand
 from domain.histories.service import HistoryServiceDep
 from domain.users.dependencies import get_user
+from .accounts import get_account
 
 router = APIRouter(
     prefix="/users/{user_id}/accounts/{account_id}/history",

@@ -1,24 +1,23 @@
 import asyncio
 import logging
-from typing import Annotated, Callable
+from typing import Callable, Annotated
 
 from fastapi import Depends
 from taskiq import AsyncTaskiqTask
 
 from core.domain import DomainEvent
-from domain.accounts.events import AccountCreatedEvent, BalanceUpdatedEvent
-from domain.accounts.protocols import AccountEventPublisherProtocol
-from infra.tasks.accounts import save_account_history
+from domain.goals.events import GoalLinkedToAccountEvent
+from domain.goals.protocols import GoalsEventPublisherProtocol
+from infra.tasks.goals import goal_linked_to_account
 
 logger = logging.getLogger(__name__)
 
 
-class AccountTaskiqPublisher:
+class GoalsTaskiqPublisher:
 
     def __init__(self):
         self.handlers: dict[type[DomainEvent], list[Callable]] = {
-            AccountCreatedEvent: [self._handle_account_update_history],
-            BalanceUpdatedEvent: [self._handle_account_update_history],
+            GoalLinkedToAccountEvent: [self._handle_goal_linked_to_account],
         }
 
     async def publish(self, event: DomainEvent) -> None:
@@ -26,9 +25,11 @@ class AccountTaskiqPublisher:
             await handler(event)
         return
 
-    async def _handle_account_update_history(self, event: AccountCreatedEvent) -> None:
-        task: AsyncTaskiqTask = await save_account_history.kiq(event)
-        asyncio.create_task(self.track_tasks([task]))
+    async def _handle_goal_linked_to_account(
+        self, event: GoalLinkedToAccountEvent
+    ) -> None:
+        task = await goal_linked_to_account.kiq(event=event)
+        await self.track_tasks([task])
         return
 
     @staticmethod
@@ -47,10 +48,10 @@ class AccountTaskiqPublisher:
                 logger.error(f"Ошибка в задаче #{task.task_id}: {e}")
 
 
-def get_account_event_publisher() -> AccountEventPublisherProtocol:
-    return AccountTaskiqPublisher()
+def get_goals_event_publisher() -> GoalsEventPublisherProtocol:
+    return GoalsTaskiqPublisher()
 
 
-AccountEventPublisherDep = Annotated[
-    AccountEventPublisherProtocol, Depends(get_account_event_publisher)
+GoalsPublisherDep = Annotated[
+    GoalsEventPublisherProtocol, Depends(get_goals_event_publisher)
 ]

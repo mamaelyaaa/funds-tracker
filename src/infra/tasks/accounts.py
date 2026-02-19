@@ -5,7 +5,7 @@ from taskiq import TaskiqDepends
 
 from domain.accounts.events import AccountCreatedEvent
 from domain.histories.commands import SaveHistoryCommand
-from domain.histories.service import HistoryService, get_history_service
+from domain.histories.service import get_history_service, HistoryService
 from infra import broker
 
 logger = logging.getLogger(__name__)
@@ -21,6 +21,7 @@ async def save_account_history(
         command=SaveHistoryCommand(
             balance=event.new_balance,
             account_id=event.account_id.value,
+            user_id=event.user_id.value,
         )
     )
     return history_id

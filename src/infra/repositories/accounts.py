@@ -5,7 +5,7 @@ from sqlalchemy import select, func, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from domain.accounts.entity import Account
-from domain.accounts.repository import AccountRepositoryProtocol
+from domain.accounts.protocols import AccountRepositoryProtocol
 from domain.accounts.values import Title, AccountId
 from domain.users.values import UserId
 from infra import SessionDep
@@ -22,7 +22,9 @@ class InMemoryAccountRepository(BaseInMemoryRepository[AccountId, Account]):
         self._storage[account.id] = account
         return account.id
 
-    async def get_by_id(self, account_id: AccountId) -> Optional[Account]:
+    async def get_by_id(
+        self, user_id: UserId, account_id: AccountId
+    ) -> Optional[Account]:
         return self._storage.get(account_id, None)
 
     async def get_by_user_id(self, user_id: UserId) -> list[Account]:
@@ -30,8 +32,10 @@ class InMemoryAccountRepository(BaseInMemoryRepository[AccountId, Account]):
             account for account in self._storage.values() if account.user_id == user_id
         ]
 
-    async def delete(self, account_id: AccountId) -> Optional[AccountId]:
-        account = await self.get_by_id(account_id)
+    async def delete(
+        self, user_id: UserId, account_id: AccountId
+    ) -> Optional[AccountId]:
+        account = await self.get_by_id(account_id=account_id, user_id=user_id)
         if not account:
             return None
         self._storage.pop(account_id)
@@ -46,7 +50,9 @@ class InMemoryAccountRepository(BaseInMemoryRepository[AccountId, Account]):
             for acc in self._storage.values()
         )
 
-    async def update(self, account_id: AccountId, new_account: Account) -> None:
+    async def update(
+        self, user_id: UserId, account_id: AccountId, new_account: Account
+    ) -> None:
         await self.save(new_account)
         return
 

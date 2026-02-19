@@ -7,7 +7,7 @@ from sqlalchemy import select, desc, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from domain.accounts.values import AccountId
-from domain.histories.domain import History
+from domain.histories.entities import History
 from domain.histories.repository import HistoryRepositoryProtocol
 from domain.histories.values import HistoryId
 from infra.database import SessionDep

@@ -2,7 +2,7 @@ from datetime import datetime
 
 from api.schemas import BaseApiModel
 from domain.histories.commands import HistoryInterval
-from domain.histories.domain import History
+from domain.histories.entities import History
 
 
 class GetHistorySchema(BaseApiModel):

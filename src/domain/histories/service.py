@@ -1,21 +1,20 @@
 import logging
-from datetime import datetime, UTC
+from datetime import datetime, UTC, timedelta
 from typing import Optional, Annotated
 
-from asyncpg.pgproto.pgproto import timedelta
 from dateutil.relativedelta import relativedelta
 from fastapi import Depends
 
 from domain.accounts.values import AccountId
-from domain.histories.commands import (
+from infra.repositories.histories import HistoryRepositoryDep
+from .commands import (
     SaveHistoryCommand,
     GetAccountHistoryCommand,
 )
-from domain.histories.domain import History
-from domain.histories.exceptions import HistoryNotExistsException
-from domain.histories.repository import HistoryRepositoryProtocol
-from domain.histories.values import HistoryInterval, HistoryPeriod
-from infra.repositories.histories import HistoryRepositoryDep
+from .entities import History
+from .exceptions import HistoryNotExistsException
+from .repository import HistoryRepositoryProtocol
+from .values import HistoryInterval, HistoryPeriod
 
 logger = logging.getLogger(__name__)
 
@@ -61,8 +60,8 @@ class HistoryService:
             )
             return upd_history.id.value
 
-        new_history = History(
-            account_id=AccountId(command.account_id),
+        new_history = History.create(
+            account_id=command.account_id,
             balance=command.balance,
         )
 
