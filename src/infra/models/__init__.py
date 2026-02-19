@@ -10,5 +10,5 @@ __all__ = (
 from .accounts import AccountModel
 from .base import Base
 from .goals import GoalStatus, GoalModel
-from .savings import HistoryModel
+from .histories import HistoryModel
 from .users import UserModel

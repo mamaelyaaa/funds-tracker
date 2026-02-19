@@ -1,9 +1,8 @@
 import string
-import uuid
 from dataclasses import dataclass
 from enum import Enum
 
-from core.domain import DomainValueObject
+from core.domain import DomainValueObject, DomainIdValueObject
 from domain.accounts.exceptions import (
     TooLargeTitleException,
     InvalidLettersTitleException,
@@ -26,19 +25,10 @@ class AccountCurrency(str, Enum):
 
 
 @dataclass(frozen=True)
-class AccountId(DomainValueObject[str]):
+class AccountId(DomainIdValueObject):
     """Value-object уникального id счета"""
 
-    @classmethod
-    def generate(cls) -> "AccountId":
-        return cls(_value=str(uuid.uuid4()))
-
-    @property
-    def short(self) -> str:
-        return self._value[:8]
-
-    def as_generic_type(self) -> str:
-        return str(self._value)
+    pass
 
 
 alphabet = (
@@ -69,6 +59,3 @@ class Title(DomainValueObject[str]):
         for char in self._value:
             if char not in alphabet:
                 raise InvalidLettersTitleException
-
-    def as_generic_type(self) -> str:
-        return self._value

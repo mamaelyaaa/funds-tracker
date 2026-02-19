@@ -45,8 +45,8 @@ class Account(DomainEntity):
         )
         account.events.append(
             AccountCreatedEvent(
-                user_id=UserId(user_id),
-                account_id=account.id,
+                user_id=account.user_id.as_generic_type(),
+                account_id=account.id.as_generic_type(),
                 new_balance=balance,
             )
         )
@@ -66,8 +66,8 @@ class Account(DomainEntity):
 
         self._events.append(
             BalanceUpdatedEvent(
-                user_id=self.user_id,
-                account_id=self.id,
+                user_id=self.user_id.as_generic_type(),
+                account_id=self.id.as_generic_type(),
                 new_balance=self.balance,
                 old_balance=old_balance,
                 delta=self.balance - old_balance,
@@ -79,16 +79,3 @@ class Account(DomainEntity):
         """Обновление названия счёта"""
         self.name = new_name
         return
-
-    # def to_dict(self, all_str: bool = False) -> dict[str, Any]:
-    #     return {
-    #         "id": self.id.as_generic_type,
-    #         "user_id": self.user_id.as_generic_type,
-    #         "name": self.name.as_generic_type,
-    #         "type": self.type,
-    #         "balance": self.balance,
-    #         "currency": self.currency,
-    #         "created_at": (
-    #             self.created_at if not all_str else self.created_at.isoformat()
-    #         ),
-    #     }

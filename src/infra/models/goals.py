@@ -3,18 +3,19 @@ from datetime import datetime
 from sqlalchemy import ForeignKey, CheckConstraint, UniqueConstraint, String, DateTime
 from sqlalchemy.orm import Mapped, mapped_column
 
+from domain.accounts.values import Title
 from domain.goals.values import GoalStatus
-from . import Base
-from .mixin import DataMixin
+from .base import Base
+from .mixin import DateMixin
 
 
-class GoalModel(Base, DataMixin):
+class GoalModel(Base, DateMixin):
     __tablename__ = "goals"
 
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id"))
     account_id: Mapped[str | None] = mapped_column(ForeignKey("accounts.id"))
 
-    title: Mapped[str] = mapped_column(String(63))
+    title: Mapped[str] = mapped_column(String(Title.MAX_LEN))
     target_amount: Mapped[float]
     current_amount: Mapped[float]
 

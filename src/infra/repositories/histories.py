@@ -1,6 +1,6 @@
 from collections import defaultdict
 from datetime import datetime, timedelta
-from typing import Optional, Annotated
+from typing import Optional, Annotated, Any
 
 from fastapi import Depends
 from sqlalchemy import select, desc, func, update
@@ -8,11 +8,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from domain.accounts.values import AccountId
 from domain.histories.entities import History
-from domain.histories.repository import HistoryRepositoryProtocol
+from domain.histories.protocols import HistoryRepositoryProtocol
 from domain.histories.values import HistoryId
 from infra.database import SessionDep
 from infra.models import HistoryModel
 from infra.repositories.base import BaseInMemoryRepository
+from infra.repositories.dto.histories import HistoryOrmDTO
 
 
 class InMemoryHistoryRepository(BaseInMemoryRepository[HistoryId, History]):
@@ -97,25 +98,20 @@ class PostgresHistoryRepository:
     def __init__(self, session: AsyncSession):
         self._session = session
 
-    async def save(self, history: History) -> HistoryId:
-        history_model = HistoryModel(
-            id=history.id.as_generic_type(),
-            balance=history.balance,
-            account_id=history.account_id.as_generic_type(),
-            created_at=history.created_at,
-        )
+    async def save(self, history: History) -> str:
+        history_model: HistoryModel = HistoryOrmDTO.from_entity_to_orm(history)
         self._session.add(history_model)
         await self._session.commit()
-        return history.id
+        return history_model.id
 
-    async def get_by_id(self, history_id: HistoryId) -> Optional[History]:
-        query = select(HistoryModel).filter_by(id=history_id.as_generic_type())
-        res = await self._session.scalar(query)
-        return res
+    async def get_by_id(self, history_id: str) -> Optional[History]:
+        query = select(HistoryModel).filter_by(id=history_id)
+        res = await self._session.execute(query)
+        return res.scalar_one_or_none()
 
     async def get_history_linked_to_period(
         self,
-        account_id: AccountId,
+        account_id: str,
         period: str,
         start_date: datetime,
         limit: Optional[int] = None,
@@ -134,7 +130,7 @@ class PostgresHistoryRepository:
 
         query = (
             select(HistoryModel)
-            .filter_by(account_id=account_id.as_generic_type())
+            .filter_by(account_id=account_id)
             .join(subq, HistoryModel.created_at == subq.c.last_date)
             .where(HistoryModel.created_at >= start_date)
             .order_by(
@@ -145,28 +141,27 @@ class PostgresHistoryRepository:
             query = query.limit(limit)
 
         res = await self._session.execute(query)
-        return [self._to_domain(row) for row in res.scalars().all()]
+        return [HistoryOrmDTO.from_orm_to_entity(row) for row in res.scalars().all()]
 
-    async def update(self, history_id: HistoryId, new_history: History) -> History:
+    async def update(
+        self, history_id: str, upd_data: dict[str, Any]
+    ) -> Optional[History]:
         stmt = (
             update(HistoryModel)
-            .filter_by(id=history_id.as_generic_type())
-            .values(
-                balance=new_history.balance,
-                created_at=new_history.created_at,
-            )
+            .filter_by(id=history_id)
+            .values(**upd_data)
             .returning(HistoryModel)
         )
-        res = await self._session.execute(stmt)
+        history = await self._session.scalar(stmt)
         await self._session.commit()
-        return self._to_domain(res.scalar_one())
+        return HistoryOrmDTO.from_orm_to_entity(history) if history else None
 
     async def get_acc_by_acc_id_with_time_limit(
-        self, account_id: AccountId, time_limit: timedelta
+        self, account_id: str, time_limit: timedelta
     ) -> Optional[History]:
         query = (
             select(HistoryModel)
-            .filter_by(account_id=account_id.as_generic_type())
+            .filter_by(account_id=account_id)
             .where(
                 datetime.now() - HistoryModel.created_at < time_limit,
             )
@@ -174,16 +169,7 @@ class PostgresHistoryRepository:
             .limit(1)
         )
         history = await self._session.scalar(query)
-        return self._to_domain(history) if history else None
-
-    @staticmethod
-    def _to_domain(model: HistoryModel) -> History:
-        return History(
-            id=HistoryId(model.id),
-            account_id=AccountId(model.account_id),
-            balance=model.balance,
-            created_at=model.created_at,
-        )
+        return HistoryOrmDTO.from_orm_to_entity(history) if history else None
 
 
 def get_history_repository(session: SessionDep) -> HistoryRepositoryProtocol:

@@ -1,7 +1,6 @@
-from abc import ABC, abstractmethod
+import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any
 
 
 @dataclass(frozen=True)
@@ -10,12 +9,23 @@ class DomainEvent:
 
 
 @dataclass(frozen=True)
-class DomainValueObject[T](ABC):
+class DomainValueObject[T]:
     _value: T
 
-    @abstractmethod
     def as_generic_type(self) -> T:
-        pass
+        return self._value
+
+
+@dataclass(frozen=True)
+class DomainIdValueObject(DomainValueObject[str]):
+
+    @classmethod
+    def generate(cls):
+        return cls(_value=str(uuid.uuid4()))
+
+    @property
+    def short(self) -> str:
+        return self._value[:8]
 
 
 @dataclass

@@ -16,12 +16,12 @@ async def save_account_history(
     event: AccountCreatedEvent,
     history_service: Annotated[HistoryService, TaskiqDepends(get_history_service)],
 ) -> str:
-    logger.info(f"Сохраняем историю счёта #{event.account_id.short} ...")
+    logger.info(f"Сохраняем историю счёта #{event.account_id[:8]} ...")
     history_id: str = await history_service.save_account_history(
         command=SaveHistoryCommand(
             balance=event.new_balance,
-            account_id=event.account_id.as_generic_type(),
-            user_id=event.user_id.as_generic_type(),
+            account_id=event.account_id,
+            user_id=event.user_id,
         )
     )
     return history_id

@@ -11,9 +11,10 @@ from .commands import (
     SaveHistoryCommand,
     GetAccountHistoryCommand,
 )
+from .dto import HistoryDTO
 from .entities import History
 from .exceptions import HistoryNotExistsException
-from .repository import HistoryRepositoryProtocol
+from .protocols import HistoryRepositoryProtocol
 from .values import HistoryInterval, HistoryPeriod
 
 logger = logging.getLogger(__name__)
@@ -41,7 +42,7 @@ class HistoryService:
     async def save_account_history(self, command: SaveHistoryCommand) -> str:
         # Проверяем, была ли недавняя запись
         existing = await self._repository.get_acc_by_acc_id_with_time_limit(
-            account_id=AccountId(command.account_id),
+            account_id=command.account_id,
             time_limit=timedelta(minutes=10),
         )
 
@@ -55,8 +56,10 @@ class HistoryService:
             )
 
             upd_history = await self._repository.update(
-                history_id=existing.id,
-                new_history=updated_history,
+                history_id=existing.id.as_generic_type(),
+                upd_data=HistoryDTO.from_entity_to_dict(
+                    updated_history, excludes=["id"]
+                ),
             )
             return upd_history.id.as_generic_type()
 
@@ -66,9 +69,9 @@ class HistoryService:
         )
 
         history_id = await self._repository.save(new_history)
-        logger.info(f"Создана новая история #{history_id.as_generic_type()}")
+        logger.info(f"Создана новая история #{history_id}")
 
-        return history_id.as_generic_type()
+        return history_id
 
     async def get_account_history(
         self, command: GetAccountHistoryCommand
@@ -77,7 +80,7 @@ class HistoryService:
         period, start_date = await self.set_metadata(command)
 
         history = await self._repository.get_history_linked_to_period(
-            account_id=AccountId(command.account_id),
+            account_id=command.account_id,
             period=period,
             start_date=start_date,
         )
@@ -89,7 +92,7 @@ class HistoryService:
         period, start_date = await self.set_metadata(command)
 
         first_history, *_ = await self._repository.get_history_linked_to_period(
-            account_id=AccountId(command.account_id),
+            account_id=command.account_id,
             start_date=start_date,
             period=period,
             limit=1,
@@ -99,7 +102,7 @@ class HistoryService:
             raise HistoryNotExistsException
 
         last_history, *_ = await self._repository.get_history_linked_to_period(
-            account_id=AccountId(command.account_id),
+            account_id=command.account_id,
             start_date=start_date,
             period=period,
             limit=1,
@@ -108,9 +111,10 @@ class HistoryService:
         if not last_history:
             raise HistoryNotExistsException
 
-        return (last_history.balance - first_history.balance) / first_history.balance
+        divider = first_history.balance if first_history.balance != 0 else 1
+        return (last_history.balance - first_history.balance) / divider
 
-    async def set_metadata(self, command):
+    async def set_metadata(self, command) -> tuple[str, datetime]:
         start_date: datetime = self.INTERVALS[command.interval]
         period: str = self.PERIOD[command.interval]
         self.metadata = {

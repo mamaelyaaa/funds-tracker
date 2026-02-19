@@ -1,28 +1,28 @@
 from typing import Any
 
+from domain.dto import BaseDTO
 from domain.users.values import UserId
 from .entity import Account
 from .values import AccountId, Title
 
 
-class AccountDTO:
+class AccountDTO(BaseDTO):
 
     @staticmethod
     def from_entity_to_dict(
-        entity: Account, excludes: list[str] = None
+        model: Account, excludes: list[str] = None
     ) -> dict[str, Any]:
-
         if not excludes:
             excludes = []
 
         data = {
-            "id": entity.id.as_generic_type(),
-            "user_id": entity.user_id.as_generic_type(),
-            "name": entity.name.as_generic_type(),
-            "type": entity.type,
-            "currency": entity.currency,
-            "balance": entity.balance,
-            "created_at": entity.created_at,
+            "id": model.id.as_generic_type(),
+            "user_id": model.user_id.as_generic_type(),
+            "name": model.name.as_generic_type(),
+            "type": model.type,
+            "currency": model.currency,
+            "balance": model.balance,
+            "created_at": model.created_at,
         }
         for excluded in excludes:
             data.pop(excluded)

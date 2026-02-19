@@ -1,19 +1,12 @@
-import uuid
 from dataclasses import dataclass
 from enum import Enum
 
-from core.domain import DomainValueObject
+from core.domain import DomainIdValueObject
 
 
 @dataclass(frozen=True)
-class HistoryId(DomainValueObject[str]):
-
-    def as_generic_type(self) -> str:
-        return self._value
-
-    @classmethod
-    def generate(cls) -> "HistoryId":
-        return cls(_value=str(uuid.uuid4()))
+class HistoryId(DomainIdValueObject):
+    pass
 
 
 class HistoryInterval(str, Enum):

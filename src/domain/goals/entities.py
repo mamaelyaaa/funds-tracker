@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Optional, Any
 
-from core.domain import DomainEvent, DomainEntity
+from core.domain import DomainEntity
 from domain.accounts.values import AccountId, Title
 from .events import GoalAlreadyReachedEvent, GoalLinkedToAccountEvent
 from .exceptions import InvalidGoalDeadlineException, InvalidGoalAmountsException

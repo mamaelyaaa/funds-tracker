@@ -1,17 +1,18 @@
 from dataclasses import dataclass, field
-from datetime import datetime
 
+from core.domain import DomainEntity
 from domain.accounts.exceptions import InvalidInitBalanceException
 from domain.accounts.values import AccountId
 from .values import HistoryId
 
 
-@dataclass
-class History:
+@dataclass(kw_only=True)
+class History(DomainEntity):
+    """Доменная модель истории счёта"""
+
+    id: HistoryId = field(default_factory=HistoryId.generate)
     account_id: AccountId
     balance: float
-    id: HistoryId = field(default_factory=HistoryId.generate)
-    created_at: datetime = field(default_factory=datetime.now)
 
     @classmethod
     def create(cls, account_id: str, balance: float) -> "History":

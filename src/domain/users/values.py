@@ -1,19 +1,11 @@
-import uuid
 from dataclasses import dataclass
 
-from core.domain import DomainValueObject
+from core.domain import DomainIdValueObject
 
 
 @dataclass(frozen=True)
-class UserId(DomainValueObject[str]):
+class UserId(DomainIdValueObject):
     """Value-obj уникального id пользователя"""
-
-    def as_generic_type(self) -> str:
-        return str(self._value)
-
-    @classmethod
-    def generate(cls) -> "UserId":
-        return cls(_value=str(uuid.uuid4()))
 
     @property
     def short(self) -> str:

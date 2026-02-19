@@ -1,23 +1,20 @@
 from datetime import datetime, timedelta
-from typing import Protocol, Optional
+from typing import Protocol, Optional, Any
 
-from domain.accounts.values import AccountId
 from domain.histories.entities import History
-from domain.histories.values import HistoryId
-from domain.users.values import UserId
 
 
 class HistoryRepositoryProtocol(Protocol):
 
-    async def save(self, history: History) -> HistoryId:
+    async def save(self, history: History) -> str:
         pass
 
-    async def get_by_id(self, history_id: HistoryId) -> Optional[History]:
+    async def get_by_id(self, history_id: str) -> Optional[History]:
         pass
 
     async def get_history_linked_to_period(
         self,
-        account_id: AccountId,
+        account_id: str,
         period: str,
         start_date: datetime,
         limit: Optional[int] = None,
@@ -25,10 +22,12 @@ class HistoryRepositoryProtocol(Protocol):
     ) -> list[History]:
         pass
 
-    async def update(self, history_id: HistoryId, new_history: History) -> History:
+    async def update(
+        self, history_id: str, upd_data: dict[str, Any]
+    ) -> Optional[History]:
         pass
 
     async def get_acc_by_acc_id_with_time_limit(
-        self, account_id: AccountId, time_limit: timedelta
+        self, account_id: str, time_limit: timedelta
     ) -> Optional[History]:
         pass
