@@ -1,0 +1,37 @@
+# Виртуальные окружения
+.venv/
+venv/
+
+# Кэш Python и uv
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.venv
+.eggs
+
+# Кэш uv
+.cache/
+uv-cache/
+
+# Git и IDE
+.git/
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Окружение и логи
+.env
+*.log
+pytest_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Docker (не копируем сами конфиги в образ)
+Dockerfile
+docker-compose*.yml
+.dockerignore
