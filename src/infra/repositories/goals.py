@@ -6,20 +6,23 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from domain.goals.entities import Goal
 from domain.goals.protocols import GoalsRepositoryProtocol
-from domain.goals.values import GoalId
 from infra.database import SessionDep
 from infra.models.goals import GoalModel
 from .base import BaseInMemoryRepository
-from .dto.goals import GoalDTO
+from .dto.goals import GoalDTO, GoalOrmDTO
 
 
-class InMemoryGoalsRepository(BaseInMemoryRepository[GoalId, Goal]):
+class InMemoryGoalsRepository(BaseInMemoryRepository[str, Goal]):
 
-    async def save(self, goal: Goal) -> None:
-        self._storage[goal.id] = goal
+    async def save(self, goal: Goal) -> str:
+        self._storage[goal.id.as_generic_type()] = goal
+        return goal.id.as_generic_type()
 
-    async def get_by_id(self, goal_id: str) -> Optional[Goal]:
-        return self._storage.get(GoalId(goal_id), None)
+    async def get_by_id(self, user_id: str, goal_id: str) -> Optional[Goal]:
+        goal = self._storage.get(goal_id, None)
+        if not goal:
+            return None
+        return goal if goal.user_id.as_generic_type() == user_id else None
 
     async def is_title_taken(self, title: str, user_id: str) -> bool:
         return any(
@@ -39,17 +42,26 @@ class InMemoryGoalsRepository(BaseInMemoryRepository[GoalId, Goal]):
             if goal.user_id.as_generic_type() == user_id
         ]
 
+    async def get_by_user_id_except_goal_id(
+        self, user_id: str, goal_id: str
+    ) -> list[Goal]:
+        return [
+            goal
+            for goal in self._storage.values()
+            if goal.user_id.as_generic_type() == user_id
+            and goal.id.as_generic_type() != goal_id
+        ]
+
     async def delete(self, goal: Goal) -> None:
-        self._storage.pop(goal.id)
+        self._storage.pop(goal.id.as_generic_type())
 
-    async def update(self, goal_id: str, new_goal: dict[str, Any]) -> Goal:
-        exists_goal = await self.get_by_id(goal_id)
-
-        for key, val in new_goal.items():
-            if hasattr(exists_goal, key):
-                setattr(exists_goal, key, val)
-
-        return exists_goal
+    async def update(
+        self, user_id: str, goal_id: str, new_goal: dict[str, Any]
+    ) -> Goal:
+        exists_goal = await self.get_by_id(user_id=user_id, goal_id=goal_id)
+        exists_goal_dict = GoalDTO.from_entity_to_dict(exists_goal)
+        exists_goal_dict.update(**new_goal)
+        return GoalDTO.from_dict_to_entity(exists_goal_dict)
 
 
 class PostgresGoalsRepository:
@@ -57,15 +69,16 @@ class PostgresGoalsRepository:
     def __init__(self, session: AsyncSession):
         self._session = session
 
-    async def save(self, goal: Goal) -> None:
-        goal_model = GoalDTO.to_orm(goal)
+    async def save(self, goal: Goal) -> str:
+        goal_model: GoalModel = GoalOrmDTO.from_entity_to_orm(goal)
         self._session.add(goal_model)
         await self._session.commit()
+        return goal_model.id
 
-    async def get_by_id(self, goal_id: str) -> Optional[Goal]:
-        query = select(GoalModel).filter_by(id=goal_id)
+    async def get_by_id(self, user_id: str, goal_id: str) -> Optional[Goal]:
+        query = select(GoalModel).filter_by(id=goal_id, user_id=user_id)
         goal = await self._session.scalar(query)
-        return GoalDTO.to_entity(goal) if goal else None
+        return GoalOrmDTO.from_orm_to_entity(goal) if goal else None
 
     async def is_title_taken(self, title: str, user_id: str) -> bool:
         query = (
@@ -84,7 +97,7 @@ class PostgresGoalsRepository:
     async def get_by_user_id(self, user_id: str) -> list[Goal]:
         query = select(GoalModel).filter_by(user_id=user_id)
         res = await self._session.execute(query)
-        return [GoalDTO.to_entity(row) for row in res.scalars()]
+        return [GoalOrmDTO.from_orm_to_entity(row) for row in res.scalars()]
 
     async def get_by_user_id_except_goal_id(
         self, user_id: str, goal_id: str
@@ -93,7 +106,7 @@ class PostgresGoalsRepository:
             select(GoalModel).filter_by(user_id=user_id).where(GoalModel.id != goal_id)
         )
         res = await self._session.execute(query)
-        return [GoalDTO.to_entity(row) for row in res.scalars()]
+        return [GoalOrmDTO.from_orm_to_entity(row) for row in res.scalars()]
 
     async def delete(self, goal: Goal) -> None:
         stmt = delete(GoalModel).where(
@@ -103,16 +116,18 @@ class PostgresGoalsRepository:
         await self._session.execute(stmt)
         await self._session.commit()
 
-    async def update(self, goal_id: str, new_goal: dict[str, Any]) -> Goal:
+    async def update(
+        self, user_id: str, goal_id: str, new_goal: dict[str, Any]
+    ) -> Optional[Goal]:
         stmt = (
             update(GoalModel)
-            .filter_by(id=goal_id)
+            .filter_by(id=goal_id, user_id=user_id)
             .values(**new_goal)
             .returning(GoalModel)
         )
-        res = await self._session.execute(stmt)
+        goal = await self._session.scalar(stmt)
         await self._session.commit()
-        return GoalDTO.to_entity(res.scalar_one())
+        return GoalOrmDTO.from_orm_to_entity(goal) if goal else None
 
 
 def get_goals_repository(session: SessionDep) -> GoalsRepositoryProtocol:

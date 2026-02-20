@@ -1,13 +1,13 @@
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Optional, Any
+from typing import Optional
 
-from core.domain import DomainEntity
+from core.domain import DomainEntity, DomainEvent
 from domain.accounts.values import AccountId, Title
+from domain.users.values import UserId
 from .events import GoalAlreadyReachedEvent, GoalLinkedToAccountEvent
 from .exceptions import InvalidGoalDeadlineException, InvalidGoalAmountsException
 from .values import GoalId, GoalStatus, GoalPercentage
-from ..users.values import UserId
 
 
 @dataclass(kw_only=True)
@@ -17,15 +17,13 @@ class Goal(DomainEntity):
     id: GoalId = field(default_factory=GoalId.generate)
     user_id: UserId
     account_id: Optional[AccountId] = field(default=None)
-
     title: Title
     target_amount: float
     current_amount: float = field(default=0)
-
     status: GoalStatus = field(default=GoalStatus.ACTIVE)
     deadline: Optional[datetime] = field(default=None)
-
     savings_percentage: Optional[GoalPercentage]
+    _events: list[DomainEvent] = field(default_factory=list)
 
     # TODO Подключить Minio S3
     # img_url: FileUrl
@@ -42,6 +40,8 @@ class Goal(DomainEntity):
     ):
         if target_amount < 0:
             raise InvalidGoalAmountsException
+        if deadline and deadline.isoformat() < datetime.now().isoformat():
+            raise InvalidGoalDeadlineException
 
         return cls(
             user_id=UserId(user_id),
@@ -64,7 +64,7 @@ class Goal(DomainEntity):
         if new_current > self.target_amount:
             self._events.append(
                 GoalAlreadyReachedEvent(
-                    goal_id=self.id,
+                    goal_id=self.id.as_generic_type(),
                     account_id=self.account_id,
                 )
             )
@@ -101,20 +101,3 @@ class Goal(DomainEntity):
     @property
     def progress_percent(self) -> float:
         return self.current_amount / self.target_amount
-
-    def to_dict(self, all_str: bool = False) -> dict[str, Any]:
-        return {
-            "id": self.id.as_generic_type(),
-            "user_id": self.user_id.as_generic_type(),
-            "account_id": (
-                self.account_id.as_generic_type() if self.account_id else None
-            ),
-            "title": self.title.as_generic_type(),
-            "target_amount": self.target_amount,
-            "savings_percentage": (
-                self.savings_percentage.as_generic_type()
-                if self.savings_percentage
-                else None
-            ),
-            "deadline": self.deadline if self.deadline else None,
-        }

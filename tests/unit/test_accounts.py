@@ -19,7 +19,6 @@ class TestAccountDomain:
     def test_domain_creation_success(self, test_account):
         """Тест создания счёта"""
 
-        assert test_account.user_id.as_generic_type() == "user-123"
         assert test_account.created_at.date() == datetime.now().date()
         assert test_account.balance > 0
         assert test_account.type == "Card"

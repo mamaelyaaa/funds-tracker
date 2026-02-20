@@ -9,31 +9,24 @@ from infra.repositories.goals import InMemoryGoalsRepository
 
 
 @pytest.fixture
-def test_goal(faker: Faker) -> Goal:
+def test_goal(test_user, faker: Faker) -> Goal:
     return Goal.create(
-        user_id="user-123",
+        user_id=test_user.id.as_generic_type(),
         title=faker.word(),
         target_amount=faker.pyfloat(positive=True),
     )
 
 
 @pytest.fixture
-def test_goals_repository() -> GoalsRepositoryProtocol:
+def test_goal_repo() -> GoalsRepositoryProtocol:
     return InMemoryGoalsRepository()
 
 
 @pytest.fixture
-def test_goals_publisher() -> GoalsEventPublisherProtocol:
+def test_goal_publisher() -> GoalsEventPublisherProtocol:
     return GoalsTaskiqPublisher()
 
 
 @pytest.fixture
-def test_goals_service(
-    test_goals_repository,
-    # test_goals_publisher,
-) -> GoalsService:
-    return GoalsService(
-        goals_repo=test_goals_repository,
-        # goal_event_publisher=test_goals_publisher,
-        # account_repo=test_account_repo,
-    )
+def test_goal_service(test_goal_repo) -> GoalsService:
+    return GoalsService(goals_repo=test_goal_repo)

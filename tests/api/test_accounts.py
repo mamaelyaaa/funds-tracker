@@ -10,18 +10,6 @@ from domain.accounts.values import AccountCurrency, AccountType
 @pytest.mark.api
 class TestAccountApi:
 
-    @pytest.fixture
-    async def saved_account(self, faker: Faker, saved_user, test_account_repo):
-        account = Account.create(
-            user_id=saved_user.id.as_generic_type(),
-            name=faker.word(),
-            balance=faker.pyfloat(positive=True),
-            currency=AccountCurrency.RUB,
-            account_type=AccountType.CASH,
-        )
-        await test_account_repo.save(account)
-        return account
-
     async def test_create_success(self, client, saved_user):
         response = await client.post(
             url=f"/api/v1/users/{saved_user.id.as_generic_type()}/accounts",
@@ -55,7 +43,7 @@ class TestAccountApi:
                 "account_type": "Card",
             },
         )
-        assert response.status_code in (400, 422)
+        assert response.status_code == 422
 
     async def test_account_already_exists(self, client, saved_user, test_account_repo):
         account = Account.create(

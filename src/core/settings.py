@@ -9,6 +9,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 load_dotenv()
 
 
+class RunConfig(BaseModel):
+    port: int = 8000
+    workers: int = 1
+
+
 class AppConfig(BaseModel):
     title: str = "Funds Tracker API"
     debug: bool = True
@@ -45,10 +50,6 @@ class DBConfig(BaseModel):
     def POSTGRES_DSN(self) -> str:
         return f"postgresql+asyncpg://{self.user}:{self.password}@{self.host}:{self.port}/{self.name}"
 
-    @property
-    def SQLITE_DSN(self) -> str:
-        return "sqlite+aiosqlite:///:memory:"
-
 
 class BrokerConfig(BaseModel):
     user: str
@@ -80,6 +81,7 @@ class Settings(BaseSettings):
     broker: BrokerConfig
     cache: CacheConfig
 
+    run: RunConfig = RunConfig()
     app: AppConfig = AppConfig()
     files: FilesConfig = FilesConfig()
     logs: LogsConfig = LogsConfig()

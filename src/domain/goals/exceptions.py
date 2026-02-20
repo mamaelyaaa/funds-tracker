@@ -41,16 +41,18 @@ class GoalTitleAlreadyTakenException(AppException):
 
 class GoalNotFoundException(AppException):
     status_code: int = status.HTTP_404_NOT_FOUND
-    suggestion: str = "Проверьте uid цели"
+    suggestion: str = "Проверьте id цели"
 
     @property
     def message(self) -> str:
-        return f"Такой цели не существует"
+        return f"Такая цель не найдена"
 
 
 class GoalsPercentageOutOfBoundsException(AppException):
-    status_code: int = status.HTTP_409_CONFLICT
-    suggestion: str = "Уменьшите проценты других счетов, чтобы добавить новую цель"
+    status_code: int = status.HTTP_400_BAD_REQUEST
+    suggestion: str = (
+        "Уменьшите проценты других счетов, чтобы добавить новую цель, или уменьшите текущую"
+    )
 
     @property
     def message(self) -> str:

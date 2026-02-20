@@ -1,20 +1,13 @@
-import uuid
 from dataclasses import dataclass
 from enum import Enum
 
-from core.domain import DomainValueObject
+from core.domain import DomainValueObject, DomainIdValueObject
 from domain.goals.exceptions import InvalidGoalPercentageException
 
 
 @dataclass(frozen=True)
-class GoalId(DomainValueObject[str]):
-
-    def as_generic_type(self) -> str:
-        return self._value
-
-    @classmethod
-    def generate(cls) -> "GoalId":
-        return cls(_value=str(uuid.uuid4()))
+class GoalId(DomainIdValueObject):
+    pass
 
 
 @dataclass(frozen=True)

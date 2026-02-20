@@ -2,7 +2,6 @@ from datetime import datetime
 from typing import Optional
 
 from api.schemas import BaseApiModel
-from domain.goals.entities import Goal
 
 
 class CreateGoalSchema(BaseApiModel):
@@ -31,16 +30,4 @@ class GoalDetailSchema(BaseApiModel):
     current_amount: float
     savings_percentage: float = 0.2
     deadline: Optional[datetime]
-
-    @classmethod
-    def from_entity(cls, goal: Goal) -> "GoalDetailSchema":
-        return cls(
-            id=goal.id.as_generic_type(),
-            user_id=goal.user_id.as_generic_type(),
-            title=goal.title.as_generic_type(),
-            target_amount=goal.target_amount,
-            current_amount=goal.current_amount,
-            savings_percentage=goal.savings_percentage.as_generic_type(),
-            account_id=goal.account_id.as_generic_type() if goal.account_id else None,
-            deadline=goal.deadline,
-        )
+    created_at: datetime

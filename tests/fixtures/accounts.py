@@ -15,9 +15,9 @@ from infra.repositories.accounts import InMemoryAccountRepository
 
 
 @pytest.fixture
-def test_account(faker: Faker) -> Account:
+def test_account(saved_user, faker: Faker) -> Account:
     return Account.create(
-        user_id="user-123",
+        user_id=saved_user.id.as_generic_type(),
         name=faker.word(),
         currency=AccountCurrency.RUB,
         account_type=AccountType.CARD,
@@ -31,6 +31,12 @@ def test_account_repo() -> AccountRepositoryProtocol:
 
 
 @pytest.fixture
+async def saved_account(test_account, saved_user, test_account_repo) -> Account:
+    await test_account_repo.save(test_account)
+    return test_account
+
+
+@pytest.fixture
 def test_account_publisher() -> AccountEventPublisherProtocol:
     publisher = AccountTaskiqPublisher()
     publisher.publish = AsyncMock()
@@ -40,6 +46,5 @@ def test_account_publisher() -> AccountEventPublisherProtocol:
 @pytest.fixture
 def test_account_service(test_account_repo, test_account_publisher) -> AccountService:
     return AccountService(
-        account_repo=test_account_repo,
-        account_publisher=test_account_publisher,
+        account_repo=test_account_repo, account_publisher=test_account_publisher
     )

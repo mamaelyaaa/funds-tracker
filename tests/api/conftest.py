@@ -4,17 +4,17 @@ import pytest
 from httpx import AsyncClient, ASGITransport
 
 from infra.repositories.accounts import get_account_repository
+from infra.repositories.goals import get_goals_repository
 from infra.repositories.users import get_user_repository
+from main import app
 
 
 @pytest.fixture(autouse=True)
-def override_app(test_account_repo, test_user_repo):
-    from main import app
-
+def override_app(test_account_repo, test_user_repo, test_goal_repo):
     overrides = {
         get_account_repository: lambda: test_account_repo,
         get_user_repository: lambda: test_user_repo,
-        # get_history_repository: lambda: test_history_repo,
+        get_goals_repository: lambda: test_goal_repo,
     }
 
     original_overrides = app.dependency_overrides.copy()

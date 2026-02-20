@@ -94,4 +94,9 @@ if __name__ == "__main__":
             "Запущено на тестовом окружении. Будет использован in-memory брокер"
         )
 
-    uvicorn.run(app="src.main:app", reload=True)
+    uvicorn.run(
+        app="src.main:app",
+        reload=True,
+        workers=settings.run.workers,
+        port=settings.run.port,
+    )

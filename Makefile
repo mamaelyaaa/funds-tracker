@@ -5,8 +5,7 @@ EXEC_PYTHON := $(DOCKER_COMPOSE) exec $(SERVICE_NAME) python
 EXEC_ALEMBIC := $(DOCKER_COMPOSE) exec $(SERVICE_NAME) alembic
 EXEC_PYTEST := $(DOCKER_COMPOSE) exec $(SERVICE_NAME) pytest
 
-
-.PHONY: help up down build logs shell migrate rollback migration test
+.PHONY: help up down build logs shell migrate rollback migration test prune
 
 # Отображение справки
 help:
@@ -21,6 +20,7 @@ help:
 	@echo "  make rollback    - Откатить последнюю миграцию"
 	@echo "  make migration   - Создать новую миграцию (требуется аргумент message)"
 	@echo "  make test        - Запустить тесты pytest"
+	@echo "  make prune       - Очищает ненужные контейнеры"
 
 # Запуск контейнеров
 up:
@@ -34,9 +34,13 @@ down:
 build:
 	$(DOCKER_COMPOSE) build --no-cache
 
+# Пересборка и запуск контейнеров
+rebuild:
+	$(DOCKER_COMPOSE) up -d --build
+
 # Просмотр логов
 logs:
-	$(DOCKER_COMPOSE) logs -f
+	$(DOCKER_COMPOSE) logs $(SERVICE_NAME) -f
 
 # Вход в контейнер
 shell:
@@ -56,13 +60,10 @@ migration:
 	$(EXEC_ALEMBIC) revision --autogenerate -m "$(message)"
 
 # Запуск тестов
+# Использование: make tests params="-m unit"
 test:
-	$(EXEC_PYTEST)
+	$(DOCKER_COMPOSE) exec -e APP__ENV=TEST $(SERVICE_NAME) pytest $(params)
 
-# Очистка мусора (кэш pytest, .pyc, __pycache__)
-clean:
-	find . -type d -name "__pycache__" -exec rm -r {} +
-	find . -type f -name "*.pyc" -delete
-	find . -type d -name ".pytest_cache" -exec rm -r {} +
-	find . -type f -name ".coverage" -delete
-	@echo "Очистка завершена"
+# Очистка неиспользуемых образов, контейнеров и сетей
+prune:
+	docker system prune -f
