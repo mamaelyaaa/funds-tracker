@@ -8,6 +8,7 @@ class SaveHistoryCommand:
     user_id: str
     account_id: str
     balance: float
+    delta: float
 
 
 @dataclass(frozen=True)

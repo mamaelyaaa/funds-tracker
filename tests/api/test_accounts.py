@@ -2,7 +2,7 @@ import pytest
 from faker.proxy import Faker
 
 from domain.accounts.entity import Account
-from domain.accounts.values import AccountCurrency, AccountType
+from domain.accounts.values import AccountCurrency, AccountType, Money
 
 
 @pytest.mark.asyncio
@@ -15,7 +15,7 @@ class TestAccountApi:
             url=f"/api/v1/users/{saved_user.id.as_generic_type()}/accounts",
             json={
                 "name": "Новый счет",
-                "initial_balance": 1000,
+                "initial_balance": 1000.3999,
                 "currency": "RUB",
                 "account_type": "Card",
             },
@@ -26,7 +26,7 @@ class TestAccountApi:
         detail: dict = response.json()["detail"]
 
         assert detail["name"] == "Новый счет"
-        assert detail["balance"] == 1000
+        assert detail["balance"] == 1000.400
         assert detail["currency"] == "RUB"
         assert detail["type"] == "Card"
         assert "createdAt" in detail
@@ -100,7 +100,6 @@ class TestAccountApi:
         assert len(response.json()["detail"]) == 0
 
     async def test_get_account_by_id_success(self, client, saved_user, saved_account):
-
         response = await client.get(
             url=f"/api/v1/users/{saved_user.id.as_generic_type()}/accounts/{saved_account.id.as_generic_type()}"
         )
@@ -109,7 +108,7 @@ class TestAccountApi:
         detail: dict = response.json()["detail"]
 
         assert detail["id"] == saved_account.id.as_generic_type()
-        assert detail["balance"] == saved_account.balance
+        assert detail["balance"] == saved_account.balance.as_generic_type()
         assert detail["name"] == saved_account.name.as_generic_type()
         assert "createdAt" in detail
 
@@ -126,7 +125,7 @@ class TestAccountApi:
     ):
         new_balance = faker.pyfloat(positive=True)
 
-        assert new_balance != saved_account.balance
+        assert new_balance != saved_account.balance.as_generic_type()
 
         response = await client.put(
             url=f"/api/v1/users/{saved_user.id.as_generic_type()}/accounts"
@@ -135,7 +134,9 @@ class TestAccountApi:
         )
 
         assert response.status_code == 200
-        assert saved_account.balance == new_balance
+        assert saved_account.balance.as_generic_type() == round(
+            new_balance, Money.MAX_DIGITS
+        )
 
     async def test_update_account_invalid_balance(
         self, client, faker: Faker, saved_user, saved_account
@@ -149,6 +150,6 @@ class TestAccountApi:
             json={"actual_balance": new_balance},
         )
 
-        assert response.status_code == 422
+        assert response.status_code == 400
         assert saved_account.balance != new_balance
         assert "невалидный" in response.json()["message"].lower()

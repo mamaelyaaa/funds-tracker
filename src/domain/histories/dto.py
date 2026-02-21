@@ -1,6 +1,6 @@
 from typing import Any
 
-from domain.accounts.values import AccountId
+from domain.accounts.values import AccountId, Money
 from domain.dto import BaseDTO
 from domain.histories.entities import History
 from domain.histories.values import HistoryId
@@ -19,7 +19,8 @@ class HistoryDTO(BaseDTO):
         data = {
             "id": entity.id.as_generic_type(),
             "account_id": entity.account_id.as_generic_type(),
-            "balance": entity.balance,
+            "balance": entity.balance.as_generic_type(),
+            "delta": entity.delta,
             "created_at": entity.created_at,
         }
         for excluded in excludes:
@@ -32,6 +33,7 @@ class HistoryDTO(BaseDTO):
         return History(
             id=HistoryId(data.get("id")),
             account_id=AccountId(data.get("account_id")),
-            balance=data.get("balance"),
+            balance=Money(data.get("balance")),
             created_at=data.get("created_at"),
+            delta=float(Money.to_decimal(data.get("delta"))),
         )

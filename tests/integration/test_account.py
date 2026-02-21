@@ -20,7 +20,7 @@ async def test_create_account(
         command=CreateAccountCommand(
             user_id=test_account.user_id.as_generic_type(),
             name=test_account.name.as_generic_type(),
-            balance=test_account.balance,
+            balance=test_account.balance.as_generic_type(),
             account_type=test_account.type,
             currency=test_account.currency,
         )

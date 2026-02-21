@@ -1,8 +1,7 @@
 from dataclasses import dataclass, field
 
 from core.domain import DomainEntity
-from domain.accounts.exceptions import InvalidInitBalanceException
-from domain.accounts.values import AccountId
+from domain.accounts.values import AccountId, Money
 from .values import HistoryId
 
 
@@ -12,10 +11,13 @@ class History(DomainEntity):
 
     id: HistoryId = field(default_factory=HistoryId.generate)
     account_id: AccountId
-    balance: float
+    balance: Money
+    delta: float
 
     @classmethod
-    def create(cls, account_id: str, balance: float) -> "History":
-        if balance < 0:
-            raise InvalidInitBalanceException
-        return cls(balance=balance, account_id=AccountId(account_id))
+    def create(cls, account_id: str, balance: float, delta: float) -> "History":
+        return cls(
+            account_id=AccountId(account_id),
+            balance=Money(balance),
+            delta=delta,
+        )

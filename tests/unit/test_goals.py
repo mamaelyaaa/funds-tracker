@@ -3,10 +3,10 @@ from datetime import datetime, timedelta
 import pytest
 from faker.proxy import Faker
 
+from domain.accounts.exceptions import InvalidBalanceException
 from domain.accounts.values import AccountId
 from domain.goals.entities import Goal
 from domain.goals.exceptions import (
-    InvalidGoalAmountsException,
     InvalidGoalDeadlineException,
 )
 from domain.goals.values import GoalStatus, GoalPercentage
@@ -18,12 +18,12 @@ class TestGoalDomain:
 
     def test_create_success(self, test_goal):
         assert test_goal.savings_percentage.as_generic_type() == 0.2
+        assert test_goal.current_amount.as_generic_type() == 0
         assert test_goal.account_id is None
         assert test_goal.deadline is None
-        assert test_goal.current_amount == 0
 
     def test_create_invalid_amount(self, faker: Faker):
-        with pytest.raises(InvalidGoalAmountsException):
+        with pytest.raises(InvalidBalanceException):
             Goal.create(
                 user_id="u-123",
                 title=faker.word(),
@@ -37,7 +37,7 @@ class TestGoalDomain:
             target_amount=2000,
         )
         goal.change_current_amount(new_current=2200)
-        assert goal.current_amount == 2200
+        assert goal.current_amount.as_generic_type() == 2200
         assert len(goal._events) == 1
 
     def test_change_status(self, test_goal):
@@ -50,7 +50,7 @@ class TestGoalDomain:
 
     def test_link_to_account(self, test_goal):
         test_goal.link_to_account(account_id=AccountId("acc-123"))
-        assert test_goal.account_id._value == "acc-123"
+        assert test_goal.account_id.as_generic_type() == "acc-123"
 
     def test_change_deadline_success(self, test_goal):
         test_date = datetime.now() + timedelta(days=30)
@@ -66,5 +66,6 @@ class TestGoalDomain:
     def test_progress_percentage(self, test_goal):
         assert (
             test_goal.progress_percent
-            == test_goal.current_amount / test_goal.target_amount
+            == test_goal.current_amount.as_generic_type()
+            / test_goal.target_amount.as_generic_type()
         )

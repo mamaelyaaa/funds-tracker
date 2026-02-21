@@ -1,12 +1,14 @@
 from datetime import datetime
 
+from pydantic import Field
+
 from api.schemas import BaseApiModel
 from domain.accounts.entity import AccountType, AccountCurrency
 
 
 class CreateAccountSchema(BaseApiModel):
     name: str
-    initial_balance: float
+    initial_balance: float = Field(default=0, ge=0)
     account_type: AccountType
     currency: AccountCurrency
 

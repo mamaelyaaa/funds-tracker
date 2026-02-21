@@ -3,7 +3,7 @@ from typing import Any
 from domain.dto import BaseDTO
 from domain.users.values import UserId
 from .entity import Account
-from .values import AccountId, Title
+from .values import AccountId, Title, Money
 
 
 class AccountDTO(BaseDTO):
@@ -21,7 +21,7 @@ class AccountDTO(BaseDTO):
             "name": model.name.as_generic_type(),
             "type": model.type,
             "currency": model.currency,
-            "balance": model.balance,
+            "balance": model.balance.as_generic_type(),
             "created_at": model.created_at,
         }
         for excluded in excludes:
@@ -35,8 +35,8 @@ class AccountDTO(BaseDTO):
             id=AccountId(data.get("id")),
             user_id=UserId(data.get("user_id")),
             name=Title(data.get("name")),
+            balance=Money(data.get("balance")),
             type=data.get("type"),
             currency=data.get("currency"),
-            balance=data.get("balance"),
             created_at=data.get("created_at"),
         )

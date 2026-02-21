@@ -12,6 +12,8 @@ services:
     depends_on:
       database:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     command: >
       sh -c "uv run alembic upgrade head && 
              uv run uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload"
@@ -51,10 +53,13 @@ services:
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq/mnesia
     healthcheck:
-      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping"]
+      test: >
+        sh -c "rabbitmq-diagnostics -q ping && 
+               nc -z localhost 5672"
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 10s
 
   workers:
     build: .
@@ -72,7 +77,8 @@ services:
       database:
         condition: service_healthy
     command: > 
-      sh -c "cd src && 
+      sh -c "sleep 10 &&
+             cd src && 
              uv run taskiq worker infra:broker -fsd -tp infra.tasks --ack-type when_executed -w ${BROKER__WORKERS}"
 
   redis:

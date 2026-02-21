@@ -26,7 +26,9 @@ class AccountTaskiqPublisher:
             await handler(event)
         return
 
-    async def _handle_account_update_history(self, event: AccountCreatedEvent) -> None:
+    async def _handle_account_update_history(
+        self, event: AccountCreatedEvent | BalanceUpdatedEvent
+    ) -> None:
         task: AsyncTaskiqTask = await save_account_history.kiq(event)
         asyncio.create_task(self.track_tasks([task]))
         return
@@ -38,9 +40,7 @@ class AccountTaskiqPublisher:
         for task in tasks:
             try:
                 result = await task.wait_result(timeout=300)
-                logger.info(
-                    f"Задача #{task.task_id} выполнена: {result.returnas_generic_type()}"
-                )
+                logger.info(f"Задача #{task.task_id} выполнена: {result.return_value}")
 
             except asyncio.TimeoutError:
                 logger.warning(f"Задача #{task.task_id} не завершилась за 300 секунд")

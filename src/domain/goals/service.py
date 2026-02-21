@@ -17,10 +17,7 @@ from .values import GoalPercentage
 
 class GoalsService:
 
-    def __init__(
-        self,
-        goals_repo: GoalsRepositoryProtocol,
-    ):
+    def __init__(self, goals_repo: GoalsRepositoryProtocol):
         self._goals_repo = goals_repo
 
     async def create_goal(self, command: CreateGoalCommand) -> Goal:
@@ -57,7 +54,9 @@ class GoalsService:
 
         # Если цель привязывается к счёту, то текущий баланс берется из баланса счёта
         if command.account:
-            goal.change_current_amount(new_current=command.account.balance)
+            goal.change_current_amount(
+                new_current=command.account.balance.as_generic_type()
+            )
 
         await self._goals_repo.save(goal)
         return goal
@@ -113,7 +112,9 @@ class GoalsService:
 
         if command.account:
             goal.link_to_account(account_id=command.account.id)
-            goal.change_current_amount(new_current=command.account.balance)
+            goal.change_current_amount(
+                new_current=command.account.balance.as_generic_type()
+            )
 
         if command.title:
             goal.change_title(new_title=command.title)

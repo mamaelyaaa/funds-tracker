@@ -59,8 +59,8 @@ class InvalidLettersTitleException(AppException):
         return f"Невалидные символы для названия счёта"
 
 
-class InvalidInitBalanceException(AppException):
-    status_code: int = status.HTTP_422_UNPROCESSABLE_CONTENT
+class InvalidBalanceException(AppException):
+    status_code: int = status.HTTP_400_BAD_REQUEST
     suggestion: str = "Баланс должен быть не отрицательным"
 
     @property

@@ -19,6 +19,7 @@ from .exceptions import (
     AccountAlreadyCreatedException,
 )
 from .protocols import AccountRepositoryProtocol, AccountEventPublisherProtocol
+from .values import Money
 
 logger = logging.getLogger(__name__)
 
@@ -71,8 +72,9 @@ class AccountCRUDService:
         for event in new_account.events:
             await self._publisher.publish(event)
 
-        logger.info("Новый счёт #%s создан", acc_id)
+        new_account.events.clear()
 
+        logger.info("Новый счёт #%s создан", acc_id)
         return new_account
 
     async def find_account_by_id(self, command: GetAccountCommand) -> Account:
@@ -90,6 +92,7 @@ class AccountCRUDService:
 
     async def find_accounts_by_user_id(self, user_id: str) -> list[Account]:
         accounts = await self._repository.get_by_user_id(user_id)
+        logger.info(f"Счёты пользователя #{user_id} получены")
         return accounts
 
     async def delete_account(self, command: GetAccountCommand) -> None:
@@ -121,7 +124,9 @@ class AccountService(AccountCRUDService):
             )
         )
 
-        if command.new_balance == account.balance:
+        if abs(command.new_balance - account.balance.as_generic_type()) < 10 ** -(
+            Money.MAX_DIGITS + 1
+        ):
             logger.info("Баланс счета #%s не изменен", account.id.as_generic_type())
             return
 
@@ -155,8 +160,7 @@ class AccountService(AccountCRUDService):
 
 
 def get_account_service(
-    acc_repo: AccountRepositoryDep,
-    acc_publisher: AccountEventPublisherDep,
+    acc_repo: AccountRepositoryDep, acc_publisher: AccountEventPublisherDep
 ) -> AccountService:
     return AccountService(account_repo=acc_repo, account_publisher=acc_publisher)
 

@@ -1,6 +1,6 @@
 from typing import Any
 
-from domain.accounts.values import Title, AccountId
+from domain.accounts.values import Title, AccountId, Money
 from domain.dto import BaseDTO
 from domain.users.values import UserId
 from .entities import Goal
@@ -23,9 +23,9 @@ class GoalDTO(BaseDTO):
             "title": model.title.as_generic_type(),
             "savings_percentage": model.savings_percentage.as_generic_type(),
             "status": model.status,
-            "target_amount": model.target_amount,
+            "target_amount": model.target_amount.as_generic_type(),
             "deadline": model.deadline if model.deadline else None,
-            "current_amount": model.current_amount,
+            "current_amount": model.current_amount.as_generic_type(),
             "created_at": model.created_at,
         }
         for excluded in excludes:
@@ -42,8 +42,8 @@ class GoalDTO(BaseDTO):
                 AccountId(data.get("account_id")) if data.get("account_id") else None
             ),
             title=Title(data.get("title")),
-            target_amount=data.get("target_amount"),
-            current_amount=data.get("current_amount"),
+            target_amount=Money(data.get("target_amount")),
+            current_amount=Money(data.get("current_amount")),
             status=data.get("status"),
             savings_percentage=GoalPercentage(data.get("savings_percentage")),
             deadline=data.get("deadline") if data.get("deadline") else None,

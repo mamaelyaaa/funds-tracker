@@ -1,6 +1,14 @@
 from datetime import datetime
+from decimal import Decimal
 
-from sqlalchemy import ForeignKey, CheckConstraint, UniqueConstraint, String, DateTime
+from sqlalchemy import (
+    ForeignKey,
+    CheckConstraint,
+    UniqueConstraint,
+    String,
+    DateTime,
+    Numeric,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from domain.accounts.values import Title

@@ -3,7 +3,7 @@ from datetime import datetime
 import pytest
 from faker.proxy import Faker
 
-from domain.accounts.exceptions import InvalidInitBalanceException
+from domain.accounts.exceptions import InvalidBalanceException
 from domain.histories.entities import History
 
 
@@ -14,7 +14,7 @@ class TestHistoryDomain:
         """Успешное создание истории"""
 
         balance = faker.pyfloat(positive=True)
-        history = History.create(account_id="acc-123", balance=balance)
+        history = History.create(account_id="acc-123", balance=balance, delta=0)
 
         assert history.created_at <= datetime.now()
         assert history.balance == balance
@@ -22,5 +22,7 @@ class TestHistoryDomain:
     def test_raise_invalid_balance(self, faker: Faker):
         """Проверка на невалидный баланс"""
 
-        with pytest.raises(InvalidInitBalanceException):
-            History.create(account_id="acc-321", balance=faker.pyfloat(positive=False))
+        with pytest.raises(InvalidBalanceException):
+            History.create(
+                account_id="acc-321", balance=faker.pyfloat(positive=False), delta=0
+            )

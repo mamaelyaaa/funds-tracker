@@ -43,7 +43,7 @@ router = APIRouter(
         },
         400: {
             "model": BaseExceptionSchema,
-            "description": "Невалидные символы для названия счёта (пустые строки не попадают под эту ошибку)",
+            "description": "Невалидный баланс или название счёта",
         },
     },
 )
@@ -125,14 +125,18 @@ async def get_account_by_id(
         status.HTTP_404_NOT_FOUND: {
             "model": BaseExceptionSchema,
             "description": "Счёт не найден",
-        }
+        },
+        status.HTTP_400_BAD_REQUEST: {
+            "model": BaseExceptionSchema,
+            "description": "Невалидный счёт",
+        },
     },
 )
 async def update_account_balance(
     account_service: AccountServiceDep,
     account_id: str,
     user_id: str,
-    actual_balance: float = Body(embed=True),
+    actual_balance: float = Body(default=0, embed=True),
 ):
     """
     Обновление баланса счёта и фоновое обновление полного капитала пользователя

@@ -3,10 +3,10 @@ from datetime import datetime
 from typing import Optional
 
 from core.domain import DomainEntity, DomainEvent
-from domain.accounts.values import AccountId, Title
+from domain.accounts.values import AccountId, Title, Money
 from domain.users.values import UserId
 from .events import GoalAlreadyReachedEvent, GoalLinkedToAccountEvent
-from .exceptions import InvalidGoalDeadlineException, InvalidGoalAmountsException
+from .exceptions import InvalidGoalDeadlineException
 from .values import GoalId, GoalStatus, GoalPercentage
 
 
@@ -18,8 +18,8 @@ class Goal(DomainEntity):
     user_id: UserId
     account_id: Optional[AccountId] = field(default=None)
     title: Title
-    target_amount: float
-    current_amount: float = field(default=0)
+    target_amount: Money
+    current_amount: Money = field(default=Money.zero)
     status: GoalStatus = field(default=GoalStatus.ACTIVE)
     deadline: Optional[datetime] = field(default=None)
     savings_percentage: Optional[GoalPercentage]
@@ -38,8 +38,6 @@ class Goal(DomainEntity):
         account_id: Optional[str] = None,
         deadline: Optional[datetime] = None,
     ):
-        if target_amount < 0:
-            raise InvalidGoalAmountsException
         if deadline and deadline.isoformat() < datetime.now().isoformat():
             raise InvalidGoalDeadlineException
 
@@ -47,7 +45,8 @@ class Goal(DomainEntity):
             user_id=UserId(user_id),
             title=Title(title),
             account_id=account_id,
-            target_amount=target_amount,
+            current_amount=Money.zero(),
+            target_amount=Money(target_amount),
             status=GoalStatus.ACTIVE,
             deadline=deadline,
             savings_percentage=GoalPercentage(savings_percentage),
@@ -59,21 +58,17 @@ class Goal(DomainEntity):
         self.deadline = new_date
 
     def change_current_amount(self, new_current: float) -> None:
-        if new_current < 0:
-            raise InvalidGoalAmountsException
-        if new_current > self.target_amount:
+        if new_current > self.target_amount.as_generic_type():
             self._events.append(
                 GoalAlreadyReachedEvent(
                     goal_id=self.id.as_generic_type(),
                     account_id=self.account_id,
                 )
             )
-        self.current_amount = new_current
+        self.current_amount = Money(new_current)
 
     def change_target_amount(self, new_target: float) -> None:
-        if new_target < 0:
-            raise InvalidGoalAmountsException
-        self.target_amount = new_target
+        self.target_amount = Money(new_target)
 
     def change_status(self, new_status: GoalStatus) -> None:
         self.status = new_status
@@ -100,4 +95,6 @@ class Goal(DomainEntity):
 
     @property
     def progress_percent(self) -> float:
-        return self.current_amount / self.target_amount
+        return (
+            self.current_amount.as_generic_type() / self.target_amount.as_generic_type()
+        )

@@ -13,6 +13,10 @@ class RunConfig(BaseModel):
     port: int = 8000
     workers: int = 1
 
+    @property
+    def URL(self) -> str:
+        return f"http://localhost:{self.port}"
+
 
 class AppConfig(BaseModel):
     title: str = "Funds Tracker API"

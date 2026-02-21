@@ -3,7 +3,6 @@ from datetime import datetime
 from typing import Optional
 
 from domain.accounts.entity import Account
-from domain.goals.values import GoalPercentage
 
 
 @dataclass(frozen=True)
@@ -11,8 +10,8 @@ class CreateGoalCommand:
     """Команда на создание цели"""
 
     title: str
-    target_amount: float
     user_id: str
+    target_amount: float
     account: Optional[Account] = None
     deadline: Optional[datetime] = None
     savings_percentage: float = 0.2
@@ -25,7 +24,7 @@ class GetUserGoalsCommand:
     user_id: str
     account_id: Optional[str] = None
     deadline: Optional[datetime] = None
-    savings_percentage: Optional[GoalPercentage] = None
+    savings_percentage: Optional[float] = None
 
 
 @dataclass(frozen=True)

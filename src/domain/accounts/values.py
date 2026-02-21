@@ -6,6 +6,7 @@ from core.domain import DomainValueObject, DomainIdValueObject
 from domain.accounts.exceptions import (
     TooLargeTitleException,
     InvalidLettersTitleException,
+    InvalidBalanceException,
 )
 
 
@@ -59,3 +60,25 @@ class Title(DomainValueObject[str]):
         for char in self._value:
             if char not in alphabet:
                 raise InvalidLettersTitleException
+
+
+@dataclass(frozen=True)
+class Money(DomainValueObject[float]):
+    MAX_DIGITS = 3
+
+    def __post_init__(self):
+        rounded = float(f"{self._value:.{self.MAX_DIGITS}f}")
+        object.__setattr__(self, "_value", rounded)
+
+        if self._value < 0:
+            raise InvalidBalanceException
+
+    def __sub__(self, other: "Money") -> "Money":
+        return Money(self._value - other._value)
+
+    def as_generic_type(self) -> float:
+        return float(f"{self._value:.{self.MAX_DIGITS}f}")
+
+    @classmethod
+    def zero(cls) -> "Money":
+        return cls(_value=0)

@@ -1,17 +1,15 @@
 import logging
-from datetime import datetime, UTC, timedelta
+from datetime import datetime, UTC
 from typing import Optional, Annotated
 
 from dateutil.relativedelta import relativedelta
 from fastapi import Depends
 
-from domain.accounts.values import AccountId
 from infra.repositories.histories import HistoryRepositoryDep
 from .commands import (
     SaveHistoryCommand,
     GetAccountHistoryCommand,
 )
-from .dto import HistoryDTO
 from .entities import History
 from .exceptions import HistoryNotExistsException
 from .protocols import HistoryRepositoryProtocol
@@ -40,32 +38,12 @@ class HistoryService:
         self.metadata: Optional[dict] = None
 
     async def save_account_history(self, command: SaveHistoryCommand) -> str:
-        # Проверяем, была ли недавняя запись
-        existing = await self._repository.get_acc_by_acc_id_with_time_limit(
-            account_id=command.account_id,
-            time_limit=timedelta(minutes=10),
-        )
-
-        if existing:
-            logger.info(f"Обновляем историю #{existing.id.as_generic_type()}")
-
-            updated_history = History(
-                id=existing.id,
-                account_id=AccountId(command.account_id),
-                balance=command.balance,
-            )
-
-            upd_history = await self._repository.update(
-                history_id=existing.id.as_generic_type(),
-                upd_data=HistoryDTO.from_entity_to_dict(
-                    updated_history, excludes=["id"]
-                ),
-            )
-            return upd_history.id.as_generic_type()
+        """Сохраняем историю счёта"""
 
         new_history = History.create(
             account_id=command.account_id,
             balance=command.balance,
+            delta=command.delta,
         )
 
         history_id = await self._repository.save(new_history)
@@ -89,6 +67,8 @@ class HistoryService:
     async def get_history_percent_change(
         self, command: GetAccountHistoryCommand
     ) -> float:
+        """Получение дохода по истории"""
+
         period, start_date = await self.set_metadata(command)
 
         first_history, *_ = await self._repository.get_history_linked_to_period(
@@ -112,7 +92,10 @@ class HistoryService:
             raise HistoryNotExistsException
 
         divider = first_history.balance if first_history.balance != 0 else 1
-        return (last_history.balance - first_history.balance) / divider
+        return (
+            last_history.balance.as_generic_type()
+            - first_history.balance.as_generic_type()
+        ) / divider
 
     async def set_metadata(self, command) -> tuple[str, datetime]:
         start_date: datetime = self.INTERVALS[command.interval]

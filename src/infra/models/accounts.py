@@ -1,9 +1,10 @@
+from decimal import Decimal
 from typing import TYPE_CHECKING
 
-from sqlalchemy import ForeignKey, UniqueConstraint, CheckConstraint, String
+from sqlalchemy import ForeignKey, UniqueConstraint, CheckConstraint, String, Numeric
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from domain.accounts.values import AccountType, AccountCurrency, Title
+from domain.accounts.values import AccountType, AccountCurrency, Title, Money
 
 if TYPE_CHECKING:
     from . import UserModel
@@ -24,7 +25,7 @@ class AccountModel(Base, DateMixin):
     )
     name: Mapped[str] = mapped_column(String(Title.MAX_LEN), index=True)
     type: Mapped[AccountType]
-    balance: Mapped[float] = mapped_column(default=0.0)
+    balance: Mapped[float]
     currency: Mapped[AccountCurrency]
 
     # Relationships

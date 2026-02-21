@@ -7,7 +7,7 @@ from domain.accounts.entity import Account
 from domain.accounts.exceptions import (
     TooLargeTitleException,
     InvalidLettersTitleException,
-    InvalidInitBalanceException,
+    InvalidBalanceException,
 )
 from domain.accounts.values import Title, AccountCurrency, AccountType
 
@@ -20,14 +20,14 @@ class TestAccountDomain:
         """Тест создания счёта"""
 
         assert test_account.created_at.date() == datetime.now().date()
-        assert test_account.balance > 0
+        assert test_account.balance.as_generic_type() > 0
         assert test_account.type == "Card"
         assert test_account.currency == "RUB"
 
     def test_invalid_initial_balance(self, faker: Faker):
         """Тест создания счёта с невалидным балансом"""
 
-        with pytest.raises(InvalidInitBalanceException):
+        with pytest.raises(InvalidBalanceException):
             Account.create(
                 user_id="user-123",
                 name=faker.word(),
@@ -36,13 +36,13 @@ class TestAccountDomain:
                 balance=faker.pyfloat(positive=False),
             )
 
-    def test_update_balance_success(self, test_account, faker: Faker):
+    def test_update_balance_success(self, test_account):
         """Тест на обновление баланса счёта"""
 
         assert len(test_account.events) == 1
 
-        test_account.update_balance(new_balance=5000)
-        assert test_account.balance == 5000
+        test_account.update_balance(new_balance=5000.3454)
+        assert test_account.balance.as_generic_type() == 5000.345
         assert len(test_account.events) == 2
 
 

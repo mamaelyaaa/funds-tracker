@@ -1,4 +1,4 @@
-from domain.accounts.values import AccountId
+from domain.accounts.values import AccountId, Money
 from domain.histories.dto import HistoryDTO
 from domain.histories.entities import History
 from domain.histories.values import HistoryId
@@ -12,7 +12,8 @@ class HistoryOrmDTO(HistoryDTO):
         return History(
             id=HistoryId(model.id),
             account_id=AccountId(model.account_id),
-            balance=model.balance,
+            delta=float(model.delta),
+            balance=Money(model.balance),
             created_at=model.created_at,
         )
 

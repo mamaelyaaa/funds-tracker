@@ -19,7 +19,12 @@ logger = logging.getLogger(__name__)
 class SQLADatabaseHelper:
 
     def __init__(self, url: str, echo: bool):
-        self._engine = create_async_engine(url=url, echo=echo)
+        self._engine = create_async_engine(
+            url=url,
+            echo=echo,
+            pool_size=20,
+            max_overflow=30,
+        )
         self._session_factory = async_sessionmaker(
             bind=self._engine, expire_on_commit=False
         )

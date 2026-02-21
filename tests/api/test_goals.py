@@ -74,7 +74,7 @@ class TestGoalApi:
 
         detail: dict = response.json()["detail"]
         assert detail.get("accountId") == saved_account.id.as_generic_type()
-        assert detail.get("currentAmount") == saved_account.balance
+        assert detail.get("currentAmount") == saved_account.balance.as_generic_type()
 
     async def test_create_with_unknown_account(
         self,
@@ -180,7 +180,7 @@ class TestGoalApi:
 
         goal: dict = detail[0]
         assert goal.get("id") == goal_id
-        assert goal.get("currentAmount") == exists_goal.current_amount
+        assert goal.get("currentAmount") == exists_goal.current_amount.as_generic_type()
         assert goal.get("title") == exists_goal.title.as_generic_type()
         assert "createdAt" in goal
 

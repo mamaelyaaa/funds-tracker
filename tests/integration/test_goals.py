@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 import pytest
 from faker.proxy import Faker
 
+from domain.accounts.exceptions import InvalidBalanceException
 from domain.goals.command import CreateGoalCommand, UpdateGoalPartiallyCommand
 from domain.goals.entities import Goal
 from domain.goals.exceptions import (
@@ -30,7 +31,7 @@ class TestGoalsService:
         goal = await test_goal_service.create_goal(
             command=CreateGoalCommand(
                 title=test_goal.title.as_generic_type(),
-                target_amount=test_goal.target_amount,
+                target_amount=test_goal.target_amount.as_generic_type(),
                 user_id=test_goal.user_id.as_generic_type(),
             )
         )
@@ -57,7 +58,7 @@ class TestGoalsService:
                 command=CreateGoalCommand(
                     user_id=test_goal.user_id.as_generic_type(),
                     title=test_goal.title.as_generic_type(),
-                    target_amount=test_goal.target_amount,
+                    target_amount=test_goal.target_amount.as_generic_type(),
                 )
             )
 
@@ -79,7 +80,7 @@ class TestGoalsService:
                 command=CreateGoalCommand(
                     user_id=test_goal.user_id.as_generic_type(),
                     title=faker.word(),
-                    target_amount=test_goal.target_amount,
+                    target_amount=test_goal.target_amount.as_generic_type(),
                     savings_percentage=test_goal.savings_percentage.as_generic_type()
                     + 1,
                 )
@@ -91,7 +92,7 @@ class TestGoalsService:
             command=CreateGoalCommand(
                 user_id=test_goal.user_id.as_generic_type(),
                 title=faker.word(),
-                target_amount=test_goal.target_amount,
+                target_amount=test_goal.target_amount.as_generic_type(),
                 savings_percentage=1 - test_goal.savings_percentage.as_generic_type(),
             )
         )
@@ -216,7 +217,7 @@ class TestGoalsService:
         [
             (
                 {"current_amount": -100},
-                InvalidGoalAmountsException,
+                InvalidBalanceException,
             ),  # Отрицательная сумма
             (
                 {"savings_percentage": -0.1},

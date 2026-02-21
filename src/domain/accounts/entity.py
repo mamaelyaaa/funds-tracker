@@ -3,8 +3,7 @@ from dataclasses import dataclass, field
 from core.domain import DomainEntity, DomainEvent
 from domain.users.values import UserId
 from .events import BalanceUpdatedEvent, AccountCreatedEvent
-from .exceptions import InvalidInitBalanceException
-from .values import AccountType, AccountCurrency, AccountId, Title
+from .values import AccountType, AccountCurrency, AccountId, Title, Money
 
 
 @dataclass(kw_only=True)
@@ -16,7 +15,7 @@ class Account(DomainEntity):
     name: Title
     type: AccountType
     currency: AccountCurrency
-    balance: float = field(default=0.0)
+    balance: Money = field(default_factory=Money.zero)
 
     _events: list[DomainEvent] = field(default_factory=list)
 
@@ -33,14 +32,12 @@ class Account(DomainEntity):
         account_type: AccountType,
         currency: AccountCurrency,
     ) -> "Account":
-        if balance < 0:
-            raise InvalidInitBalanceException
 
         account = cls(
             user_id=UserId(user_id),
             name=Title(name),
             type=account_type,
-            balance=balance,
+            balance=Money(balance),
             currency=currency,
         )
         account.events.append(
@@ -58,19 +55,20 @@ class Account(DomainEntity):
         if self.balance == new_balance:
             return
 
-        if new_balance < 0:
-            raise InvalidInitBalanceException
-
         old_balance = self.balance
-        self.balance = new_balance
+        self.balance = Money(new_balance)
+
+        delta = float(
+            f"{self.balance.as_generic_type() - old_balance.as_generic_type():.{Money.MAX_DIGITS}f}"
+        )
 
         self._events.append(
             BalanceUpdatedEvent(
                 user_id=self.user_id.as_generic_type(),
                 account_id=self.id.as_generic_type(),
-                new_balance=self.balance,
-                old_balance=old_balance,
-                delta=self.balance - old_balance,
+                new_balance=new_balance,
+                old_balance=old_balance.as_generic_type(),
+                delta=delta,
                 currency=self.currency,
             )
         )

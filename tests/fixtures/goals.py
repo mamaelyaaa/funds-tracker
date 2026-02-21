@@ -2,9 +2,8 @@ import pytest
 from faker import Faker
 
 from domain.goals.entities import Goal
-from domain.goals.protocols import GoalsRepositoryProtocol, GoalsEventPublisherProtocol
+from domain.goals.protocols import GoalsRepositoryProtocol
 from domain.goals.service import GoalsService
-from infra.publishers.goals import GoalsTaskiqPublisher
 from infra.repositories.goals import InMemoryGoalsRepository
 
 
@@ -20,11 +19,6 @@ def test_goal(test_user, faker: Faker) -> Goal:
 @pytest.fixture
 def test_goal_repo() -> GoalsRepositoryProtocol:
     return InMemoryGoalsRepository()
-
-
-@pytest.fixture
-def test_goal_publisher() -> GoalsEventPublisherProtocol:
-    return GoalsTaskiqPublisher()
 
 
 @pytest.fixture

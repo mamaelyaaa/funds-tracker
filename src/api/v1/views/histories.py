@@ -10,6 +10,7 @@ from api.v1.schemas.histories import (
     HistoryPercentChangeSchema,
 )
 from domain.histories.commands import GetAccountHistoryCommand
+from domain.histories.dto import HistoryDTO
 from domain.histories.service import HistoryServiceDep
 from domain.users.dependencies import get_user
 from .accounts import get_account
@@ -71,7 +72,7 @@ async def get_account_history(
     )
 
     return BaseResponseDetailSchema(
-        detail=[HistoryDetailSchema.from_model(row) for row in history],
+        detail=[HistoryDTO.from_entity_to_dict(row) for row in history],
         message="История счёта успешно получена",
         metadata=HistoryMetadata(**history_service.metadata),
     )

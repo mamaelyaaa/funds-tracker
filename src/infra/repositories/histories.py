@@ -106,8 +106,18 @@ class PostgresHistoryRepository:
 
     async def get_by_id(self, history_id: str) -> Optional[History]:
         query = select(HistoryModel).filter_by(id=history_id)
-        res = await self._session.execute(query)
-        return res.scalar_one_or_none()
+        history = await self._session.scalar(query)
+        return HistoryOrmDTO.from_orm_to_entity(history) if history else None
+
+    async def get_last_history(self, account_id: str) -> Optional[History]:
+        query = (
+            select(HistoryModel)
+            .filter_by(account_id=account_id)
+            .order_by(HistoryModel.created_at.desc())
+            .limit(1)
+        )
+        history = await self._session.scalar(query)
+        return HistoryOrmDTO.from_orm_to_entity(history) if history else None
 
     async def get_history_linked_to_period(
         self,
@@ -154,21 +164,6 @@ class PostgresHistoryRepository:
         )
         history = await self._session.scalar(stmt)
         await self._session.commit()
-        return HistoryOrmDTO.from_orm_to_entity(history) if history else None
-
-    async def get_acc_by_acc_id_with_time_limit(
-        self, account_id: str, time_limit: timedelta
-    ) -> Optional[History]:
-        query = (
-            select(HistoryModel)
-            .filter_by(account_id=account_id)
-            .where(
-                datetime.now() - HistoryModel.created_at < time_limit,
-            )
-            .order_by(HistoryModel.created_at.desc())
-            .limit(1)
-        )
-        history = await self._session.scalar(query)
         return HistoryOrmDTO.from_orm_to_entity(history) if history else None
 
 

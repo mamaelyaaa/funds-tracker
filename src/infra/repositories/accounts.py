@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from domain.accounts.dto import AccountDTO
 from domain.accounts.entity import Account
 from domain.accounts.protocols import AccountRepositoryProtocol
+from domain.accounts.values import Money
 from infra import SessionDep
 from infra.models import AccountModel
 from .base import BaseInMemoryRepository
@@ -112,6 +113,7 @@ class PostgresAccountRepository:
     async def update(
         self, user_id: str, account_id: str, upd_data: dict[str, Any]
     ) -> Optional[Account]:
+        print(upd_data)
         stmt = (
             update(AccountModel)
             .filter_by(id=account_id, user_id=user_id)
