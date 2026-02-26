@@ -15,5 +15,6 @@ class HistoryModel(Base, DateMixin):
     )
     balance: Mapped[float]
     delta: Mapped[float]
+    is_monthly_closing: Mapped[bool] = mapped_column(default=False)
 
     account: Mapped["AccountModel"] = relationship(backref="histories")

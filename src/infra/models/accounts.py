@@ -34,9 +34,9 @@ class AccountModel(Base, DateMixin):
     type: Mapped[AccountType]
     balance: Mapped[float]
     currency: Mapped[AccountCurrency]
-    # updated_at: Mapped[datetime] = mapped_column(
-    #     DateTime(timezone=True), onupdate=func.now()
-    # )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), onupdate=func.now(), server_default=func.now()
+    )
 
     # Relationships
     user: Mapped["UserModel"] = relationship(
