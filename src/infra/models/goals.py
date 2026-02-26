@@ -19,15 +19,17 @@ class GoalModel(Base, DateMixin):
     __tablename__ = "goals"
 
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id"))
-    account_id: Mapped[str | None] = mapped_column(ForeignKey("accounts.id"))
+    # account_id: Mapped[str | None] = mapped_column(ForeignKey("accounts.id"))
 
     title: Mapped[str] = mapped_column(String(Title.MAX_LEN))
     target_amount: Mapped[float]
     current_amount: Mapped[float]
 
     status: Mapped[GoalStatus]
-    savings_percentage: Mapped[float]
-    deadline: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # savings_percentage: Mapped[float]
+    deadline: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
 
     __table_args__ = (
         CheckConstraint("target_amount >= 0", name="target_ge_0"),

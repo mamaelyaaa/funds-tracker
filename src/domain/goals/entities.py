@@ -22,7 +22,6 @@ class Goal(DomainEntity):
     current_amount: Money = field(default=Money.zero)
     status: GoalStatus = field(default=GoalStatus.ACTIVE)
     deadline: Optional[datetime] = field(default=None)
-    savings_percentage: Optional[GoalPercentage]
     _events: list[DomainEvent] = field(default_factory=list)
 
     # TODO Подключить Minio S3
@@ -34,8 +33,7 @@ class Goal(DomainEntity):
         user_id: str,
         title: str,
         target_amount: float,
-        savings_percentage: float = 0.2,
-        account_id: Optional[str] = None,
+        current_amount: float,
         deadline: Optional[datetime] = None,
     ):
         if deadline and deadline.isoformat() < datetime.now().isoformat():
@@ -44,12 +42,10 @@ class Goal(DomainEntity):
         return cls(
             user_id=UserId(user_id),
             title=Title(title),
-            account_id=account_id,
-            current_amount=Money.zero(),
+            current_amount=Money(current_amount),
             target_amount=Money(target_amount),
             status=GoalStatus.ACTIVE,
             deadline=deadline,
-            savings_percentage=GoalPercentage(savings_percentage),
         )
 
     def change_deadline(self, new_date: datetime) -> None:
@@ -62,7 +58,7 @@ class Goal(DomainEntity):
             self._events.append(
                 GoalAlreadyReachedEvent(
                     goal_id=self.id.as_generic_type(),
-                    account_id=self.account_id,
+                    user_id=self.user_id.as_generic_type(),
                 )
             )
         self.current_amount = Money(new_current)
@@ -73,22 +69,22 @@ class Goal(DomainEntity):
     def change_status(self, new_status: GoalStatus) -> None:
         self.status = new_status
 
-    def link_to_account(self, account_id: AccountId) -> None:
-        if self.account_id:
-            self._events.append(
-                GoalLinkedToAccountEvent(
-                    account_id=self.account_id.as_generic_type(),
-                    goal_id=self.id.as_generic_type(),
-                    user_id=self.user_id.as_generic_type(),
-                )
-            )
-        self.account_id = account_id
+    # def link_to_account(self, account_id: AccountId) -> None:
+    #     if self.account_id:
+    #         self._events.append(
+    #             GoalLinkedToAccountEvent(
+    #                 account_id=self.account_id.as_generic_type(),
+    #                 goal_id=self.id.as_generic_type(),
+    #                 user_id=self.user_id.as_generic_type(),
+    #             )
+    #         )
+    #     self.account_id = account_id
 
-    def unlink_account(self) -> None:
-        self.account_id = None
+    # def unlink_account(self) -> None:
+    #     self.account_id = None
 
-    def change_percentage(self, new_percentage: GoalPercentage) -> None:
-        self.savings_percentage = new_percentage
+    # def change_percentage(self, new_percentage: GoalPercentage) -> None:
+    #     self.savings_percentage = new_percentage
 
     def change_title(self, new_title: str) -> None:
         self.title = Title(new_title)

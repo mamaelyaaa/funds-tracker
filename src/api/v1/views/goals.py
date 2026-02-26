@@ -46,18 +46,18 @@ async def create_goal(
     3. Если будет привязан несуществующий счёт пользователя - 404 ошибка
     """
 
-    if schema.account_id:
-        account = await account_service.find_account_by_id(
-            command=GetAccountCommand(user_id=user_id, account_id=schema.account_id)
-        )
-    else:
-        account = None
+    # if schema.account_id:
+    #     account = await account_service.find_account_by_id(
+    #         command=GetAccountCommand(user_id=user_id, account_id=schema.account_id)
+    #     )
+    # else:
+    #     account = None
 
     goal = await goals_service.create_goal(
         command=CreateGoalCommand(
             user_id=user_id,
-            account=account,
-            **schema.model_dump(exclude={"account", "account_id"}),
+            # account=account,
+            **schema.model_dump(exclude={"user_id"}),
         )
     )
     return BaseResponseDetailSchema(
@@ -130,18 +130,17 @@ async def update_user_goal(
     user_id: str,
     goal_id: str,
 ):
-    account = None
-    if schema.account_id:
-        account = await account_service.find_account_by_id(
-            command=GetAccountCommand(user_id=user_id, account_id=schema.account_id)
-        )
+    # account = None
+    # if schema.account_id:
+    #     account = await account_service.find_account_by_id(
+    #         command=GetAccountCommand(user_id=user_id, account_id=schema.account_id)
+    #     )
 
     upd_goal = await goals_service.update_goal_partially(
         command=UpdateGoalPartiallyCommand(
             user_id=user_id,
             goal_id=goal_id,
-            account=account,
-            **schema.model_dump(exclude={"account", "account_id"}),
+            **schema.model_dump(),
         )
     )
     return BaseResponseDetailSchema(

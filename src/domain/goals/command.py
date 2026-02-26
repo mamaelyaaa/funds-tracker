@@ -12,9 +12,8 @@ class CreateGoalCommand:
     title: str
     user_id: str
     target_amount: float
-    account: Optional[Account] = None
+    current_amount: float
     deadline: Optional[datetime] = None
-    savings_percentage: float = 0.2
 
 
 @dataclass(frozen=True)
@@ -22,9 +21,7 @@ class GetUserGoalsCommand:
     """Команда на получение целей пользователя"""
 
     user_id: str
-    account_id: Optional[str] = None
     deadline: Optional[datetime] = None
-    savings_percentage: Optional[float] = None
 
 
 @dataclass(frozen=True)
@@ -36,7 +33,4 @@ class UpdateGoalPartiallyCommand:
     title: Optional[str] = None
     current_amount: Optional[float] = None
     target_amount: Optional[float] = None
-    account: Optional[Account] = None
     deadline: Optional[datetime] = None
-    savings_percentage: Optional[float] = None
-    unlink_account: Optional[bool] = None
