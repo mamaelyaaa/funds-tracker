@@ -49,7 +49,9 @@ class HistoryService:
             account_id=command.account_id,
             balance=command.balance,
             delta=command.delta,
+            is_monthly_closing=command.is_monthly_closing,
         )
+        logger.info(new_history)
 
         history_id = await self._repository.save(new_history)
         logger.info(f"Создана новая история #{history_id}")

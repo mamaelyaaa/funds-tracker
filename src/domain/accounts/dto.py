@@ -23,6 +23,7 @@ class AccountDTO(BaseDTO):
             "currency": model.currency,
             "balance": model.balance.as_generic_type(),
             "created_at": model.created_at,
+            "updated_at": model.updated_at,
         }
         for excluded in excludes:
             data.pop(excluded)
@@ -39,4 +40,5 @@ class AccountDTO(BaseDTO):
             type=data.get("type"),
             currency=data.get("currency"),
             created_at=data.get("created_at"),
+            updated_at=data.get("updated_at"),
         )

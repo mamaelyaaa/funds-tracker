@@ -9,6 +9,7 @@ class SaveHistoryCommand:
     account_id: str
     balance: float
     delta: float
+    is_monthly_closing: bool
 
 
 @dataclass(frozen=True)

@@ -130,7 +130,11 @@ class TestAccountApi:
         response = await client.put(
             url=f"/api/v1/users/{saved_user.id.as_generic_type()}/accounts"
             f"/{saved_account.id.as_generic_type()}/balance",
-            json={"actual_balance": new_balance},
+            json={
+                "actualBalance": new_balance,
+                "isMonthlyClosing": False,
+                "occurredAt": "2026-02-26T13:02:43.297Z",
+            },
         )
 
         assert response.status_code == 200
@@ -147,7 +151,11 @@ class TestAccountApi:
         response = await client.put(
             url=f"/api/v1/users/{saved_user.id.as_generic_type()}/accounts"
             f"/{saved_account.id.as_generic_type()}/balance",
-            json={"actual_balance": new_balance},
+            json={
+                "actualBalance": new_balance,
+                "isMonthlyClosing": False,
+                "occurredAt": "2026-02-26T13:02:43.297Z",
+            },
         )
 
         assert response.status_code == 400

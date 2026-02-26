@@ -29,6 +29,7 @@ class AccountTaskiqPublisher:
     async def _handle_account_update_history(
         self, event: AccountCreatedEvent | BalanceUpdatedEvent
     ) -> None:
+        logger.info(event)
         task: AsyncTaskiqTask = await save_account_history.kiq(event)
         asyncio.create_task(self.track_tasks([task]))
         return

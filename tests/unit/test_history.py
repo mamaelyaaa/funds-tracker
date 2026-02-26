@@ -4,6 +4,7 @@ import pytest
 from faker.proxy import Faker
 
 from domain.accounts.exceptions import InvalidBalanceException
+from domain.accounts.values import Money
 from domain.histories.entities import History
 
 
@@ -14,15 +15,22 @@ class TestHistoryDomain:
         """Успешное создание истории"""
 
         balance = faker.pyfloat(positive=True)
-        history = History.create(account_id="acc-123", balance=balance, delta=0)
+        history = History.create(
+            account_id="acc-123", balance=balance, delta=0, is_monthly_closing=False
+        )
 
         assert history.created_at <= datetime.now()
-        assert history.balance == balance
+        assert history.balance.as_generic_type() == float(
+            f"{balance:.{Money.MAX_DIGITS}f}"
+        )
 
     def test_raise_invalid_balance(self, faker: Faker):
         """Проверка на невалидный баланс"""
 
         with pytest.raises(InvalidBalanceException):
             History.create(
-                account_id="acc-321", balance=faker.pyfloat(positive=False), delta=0
+                account_id="acc-321",
+                balance=faker.pyfloat(positive=False),
+                delta=0,
+                is_monthly_closing=False,
             )

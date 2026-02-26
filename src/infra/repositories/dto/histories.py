@@ -14,6 +14,7 @@ class HistoryOrmDTO(HistoryDTO):
             account_id=AccountId(model.account_id),
             delta=float(model.delta),
             balance=Money(model.balance),
+            is_monthly_closing=model.is_monthly_closing,
             created_at=model.created_at,
         )
 

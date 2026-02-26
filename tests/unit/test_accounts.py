@@ -9,7 +9,7 @@ from domain.accounts.exceptions import (
     InvalidLettersTitleException,
     InvalidBalanceException,
 )
-from domain.accounts.values import Title, AccountCurrency, AccountType
+from domain.accounts.values import Title, AccountCurrency, AccountType, Money
 
 
 @pytest.mark.unit
@@ -41,8 +41,13 @@ class TestAccountDomain:
 
         assert len(test_account.events) == 1
 
-        test_account.update_balance(new_balance=5000.3454)
+        test_account.update_balance(
+            new_balance=Money(5000.3454),
+            is_monthly_closing=True,
+            occurred_at=datetime.now(),
+        )
         assert test_account.balance.as_generic_type() == 5000.345
+        assert test_account.updated_at > test_account.created_at
         assert len(test_account.events) == 2
 
 

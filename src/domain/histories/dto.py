@@ -20,9 +20,11 @@ class HistoryDTO(BaseDTO):
             "id": entity.id.as_generic_type(),
             "account_id": entity.account_id.as_generic_type(),
             "balance": entity.balance.as_generic_type(),
+            "is_monthly_closing": entity.is_monthly_closing,
             "delta": entity.delta,
             "created_at": entity.created_at,
         }
+
         for excluded in excludes:
             data.pop(excluded)
 
@@ -35,5 +37,6 @@ class HistoryDTO(BaseDTO):
             account_id=AccountId(data.get("account_id")),
             balance=Money(data.get("balance")),
             created_at=data.get("created_at"),
-            delta=float(Money.to_decimal(data.get("delta"))),
+            delta=data.get("delta"),
+            is_monthly_closing=data.get("is_monthly_closing"),
         )

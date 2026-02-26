@@ -26,3 +26,4 @@ class AccountDetailSchema(BaseApiModel):
     balance: float
     currency: AccountCurrency
     created_at: datetime
+    updated_at: datetime

@@ -24,6 +24,7 @@ class AccountOrmDTO(AccountDTO):
             currency=model.currency,
             balance=Money(balance_value),
             created_at=model.created_at,
+            updated_at=model.updated_at,
         )
 
     @staticmethod

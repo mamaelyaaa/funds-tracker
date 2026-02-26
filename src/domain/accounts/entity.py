@@ -75,6 +75,7 @@ class Account(DomainEntity):
                 occurred_at=occurred_at,
             )
         )
+        self.updated_at = datetime.now()
 
     # def rename_account(self, new_name: Title) -> None:
     #     """Обновление названия счёта"""

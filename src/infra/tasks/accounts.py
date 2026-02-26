@@ -24,6 +24,11 @@ async def save_account_history(
             account_id=event.account_id,
             user_id=event.user_id,
             delta=event.delta if isinstance(event, BalanceUpdatedEvent) else 0,
+            is_monthly_closing=(
+                event.is_monthly_closing
+                if isinstance(event, BalanceUpdatedEvent)
+                else False
+            ),
         )
     )
     return history_id
