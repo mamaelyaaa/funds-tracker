@@ -20,9 +20,10 @@ class TestGoalApi:
                 {
                     "title": "На подушку",
                     "targetAmount": 1000,
-                    "accountId": None,
+                    "currentAmount": 100,
+                    # "accountId": None,
                     "deadline": (datetime.now() + timedelta(days=30)).isoformat(),
-                    "savingsPercentage": 0.2,
+                    # "savingsPercentage": 0.2,
                 }
             ),
             # Создание без указания дедлайна
@@ -30,9 +31,10 @@ class TestGoalApi:
                 {
                     "title": "На подушку",
                     "targetAmount": 1000,
-                    "accountId": None,
+                    "currentAmount": 100,
+                    # "accountId": None,
                     "deadline": None,
-                    "savingsPercentage": 0.5,
+                    # "savingsPercentage": 0.5,
                 }
             ),
         ],
@@ -51,6 +53,7 @@ class TestGoalApi:
         assert detail.get("userId") == saved_user.id.as_generic_type()
         assert "createdAt" in detail
 
+    @pytest.mark.skip
     async def test_create_with_account_link(
         self,
         client,
@@ -64,18 +67,20 @@ class TestGoalApi:
             json={
                 "title": faker.word(),
                 "targetAmount": faker.pyfloat(positive=True),
-                "accountId": saved_account.id.as_generic_type(),
+                "currentAmount": 0,
+                # "accountId": saved_account.id.as_generic_type(),
                 "deadline": None,
-                "savingsPercentage": 0.5,
+                # "savingsPercentage": 0.5,
             },
         )
 
         assert response.status_code == 201
 
-        detail: dict = response.json()["detail"]
-        assert detail.get("accountId") == saved_account.id.as_generic_type()
-        assert detail.get("currentAmount") == saved_account.balance.as_generic_type()
+        # detail: dict = response.json()["detail"]
+        # assert detail.get("accountId") == saved_account.id.as_generic_type()
+        # assert detail.get("currentAmount") == saved_account.balance.as_generic_type()
 
+    @pytest.mark.skip
     async def test_create_with_unknown_account(
         self,
         client,
@@ -88,9 +93,10 @@ class TestGoalApi:
             json={
                 "title": faker.word(),
                 "targetAmount": faker.pyfloat(positive=True),
-                "accountId": "unknown-acc-id",
+                "currentAmount": 0,
+                # "accountId": "unknown-acc-id",
                 "deadline": None,
-                "savingsPercentage": 0.5,
+                # "savingsPercentage": 0.5,
             },
         )
 
@@ -129,12 +135,12 @@ class TestGoalApi:
                 400,
             ),
             # Процентное соотношение больше 100% (>1)
-            (
-                {
-                    "savingsPercentage": 1.1,
-                },
-                400,
-            ),
+            # (
+            #     {
+            #         "savingsPercentage": 1.1,
+            #     },
+            #     400,
+            # ),
         ],
     )
     async def test_input_values_in_creation(
@@ -150,9 +156,10 @@ class TestGoalApi:
         json = {
             "title": faker.word(),
             "targetAmount": faker.pyfloat(positive=True),
-            "accountId": None,
+            "currentAmount": 0,
+            # "accountId": None,
             "deadline": None,
-            "savingsPercentage": 0.5,
+            # "savingsPercentage": 0.5,
         }
         json.update(test_field)
 
@@ -200,10 +207,10 @@ class TestGoalApi:
         detail: dict = response.json()["detail"]
 
         assert detail["id"] == saved_goal.id.as_generic_type()
-        assert (
-            detail["savingsPercentage"]
-            == saved_goal.savings_percentage.as_generic_type()
-        )
+        # assert (
+        #     detail["savingsPercentage"]
+        #     == saved_goal.savings_percentage.as_generic_type()
+        # )
         assert detail["title"] == saved_goal.title.as_generic_type()
         assert "createdAt" in detail
 

@@ -33,7 +33,7 @@ class Goal(DomainEntity):
         user_id: str,
         title: str,
         target_amount: float,
-        current_amount: float,
+        current_amount: float = 0,
         deadline: Optional[datetime] = None,
     ):
         if deadline and deadline.isoformat() < datetime.now().isoformat():

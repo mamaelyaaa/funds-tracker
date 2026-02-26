@@ -12,7 +12,7 @@ class CreateGoalCommand:
     title: str
     user_id: str
     target_amount: float
-    current_amount: float
+    current_amount: float = 0
     deadline: Optional[datetime] = None
 
 

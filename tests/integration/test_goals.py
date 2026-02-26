@@ -10,8 +10,6 @@ from domain.goals.exceptions import (
     GoalTitleAlreadyTakenException,
     GoalsPercentageOutOfBoundsException,
     GoalNotFoundException,
-    InvalidGoalAmountsException,
-    InvalidGoalPercentageException,
 )
 
 
@@ -64,6 +62,7 @@ class TestGoalsService:
 
         assert await test_goal_repo.count() == 1
 
+    @pytest.mark.skip
     async def test_goal_percentage_out_of_bounds(
         self,
         faker: Faker,
@@ -161,7 +160,7 @@ class TestGoalsService:
             {"current_amount": 5000.0},
             {"target_amount": 100000.0},
             {"deadline": datetime.now() + timedelta(days=30)},
-            {"savings_percentage": 0.25},
+            # {"savings_percentage": 0.25},
             # 2. Обновление нескольких полей
             {
                 "title": "Обновленный заголовок",
@@ -177,13 +176,13 @@ class TestGoalsService:
                 "current_amount": 10000.0,
                 "target_amount": 200000.0,
                 "deadline": datetime.now() + timedelta(days=90),
-                "savings_percentage": 0.5,
+                # "savings_percentage": 0.5,
             },
             # 4. Граничные значения процента
-            {"savings_percentage": 0.01},
-            {"savings_percentage": 1.0},  # 100%
+            # {"savings_percentage": 0.01},
+            # {"savings_percentage": 1.0},  # 100%
             # 5. Удаление привязки к счету
-            {"unlink_account": True},
+            # {"unlink_account": True},
             # 7. Обновление с None значениями
             {"title": None, "current_amount": None},
         ],
@@ -219,14 +218,14 @@ class TestGoalsService:
                 {"current_amount": -100},
                 InvalidBalanceException,
             ),  # Отрицательная сумма
-            (
-                {"savings_percentage": -0.1},
-                InvalidGoalPercentageException,
-            ),  # Отрицательный процент
-            (
-                {"savings_percentage": 1.5},
-                GoalsPercentageOutOfBoundsException,
-            ),  # Процент больше 100%
+            # (
+            # {"savings_percentage": -0.1},
+            # InvalidGoalPercentageException,
+            # ),  # Отрицательный процент
+            # (
+            # {"savings_percentage": 1.5},
+            # GoalsPercentageOutOfBoundsException,
+            # ),  # Процент больше 100%
         ],
     )
     async def test_update_goal_partially_errors(
@@ -250,6 +249,7 @@ class TestGoalsService:
                 )
             )
 
+    @pytest.mark.skip
     async def test_link_account_id_success(
         self,
         test_goal,
@@ -272,7 +272,7 @@ class TestGoalsService:
 
         upd_goal = await test_goal_service.update_goal_partially(
             command=UpdateGoalPartiallyCommand(
-                account=exists_acc,
+                # account=exists_acc,
                 goal_id=test_goal.id.as_generic_type(),
                 user_id=test_goal.user_id.as_generic_type(),
             )

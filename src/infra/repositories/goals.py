@@ -28,7 +28,7 @@ class InMemoryGoalsRepository(BaseInMemoryRepository[str, Goal]):
         return any(
             goal
             for goal in self._storage.values()
-            if goal.name.as_generic_type() == title
+            if goal.title.as_generic_type() == title
             and goal.user_id.as_generic_type() == user_id
         )
 
