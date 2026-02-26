@@ -7,7 +7,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from domain.accounts.dto import AccountDTO
 from domain.accounts.entity import Account
 from domain.accounts.protocols import AccountRepositoryProtocol
-from domain.accounts.values import Money
 from infra import SessionDep
 from infra.models import AccountModel
 from .base import BaseInMemoryRepository

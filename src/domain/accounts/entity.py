@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from datetime import datetime
 
 from core.domain import DomainEntity, DomainEvent
 from domain.users.values import UserId
@@ -16,6 +17,7 @@ class Account(DomainEntity):
     type: AccountType
     currency: AccountCurrency
     balance: Money = field(default_factory=Money.zero)
+    updated_at: datetime = field(default_factory=datetime.now)
 
     _events: list[DomainEvent] = field(default_factory=list)
 
@@ -45,35 +47,36 @@ class Account(DomainEntity):
                 user_id=account.user_id.as_generic_type(),
                 account_id=account.id.as_generic_type(),
                 new_balance=balance,
+                occurred_at=account.updated_at,
             )
         )
         return account
 
-    def update_balance(self, new_balance: float) -> None:
+    def update_balance(
+        self, new_balance: Money, is_monthly_closing: bool, occurred_at: datetime
+    ) -> None:
         """Обновление баланса счета"""
 
         if self.balance == new_balance:
             return
 
-        old_balance = self.balance
-        self.balance = Money(new_balance)
-
         delta = float(
-            f"{self.balance.as_generic_type() - old_balance.as_generic_type():.{Money.MAX_DIGITS}f}"
+            f"{new_balance.as_generic_type() - self.balance.as_generic_type():.{Money.MAX_DIGITS}f}"
         )
+        self.balance = new_balance
 
         self._events.append(
             BalanceUpdatedEvent(
                 user_id=self.user_id.as_generic_type(),
                 account_id=self.id.as_generic_type(),
-                new_balance=new_balance,
-                old_balance=old_balance.as_generic_type(),
+                new_balance=new_balance.as_generic_type(),
                 delta=delta,
-                currency=self.currency,
+                is_monthly_closing=is_monthly_closing,
+                occurred_at=occurred_at,
             )
         )
 
-    def rename_account(self, new_name: Title) -> None:
-        """Обновление названия счёта"""
-        self.name = new_name
-        return
+    # def rename_account(self, new_name: Title) -> None:
+    #     """Обновление названия счёта"""
+    #     self.name = new_name
+    #     return

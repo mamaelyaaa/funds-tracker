@@ -1,5 +1,5 @@
-from domain.users.values import UserId
 from infra.repositories.net_worth import NetWorthRepositoryDep
+from .commands import GetByIntervals
 from .repository import NetWorthRepositoryProtocol
 
 
@@ -9,11 +9,16 @@ class NetWorthService:
         self._nw_repo = nw_repo
 
     async def calculate_total_balance(self, user_id: str) -> float:
-        total_balance = await self._nw_repo.get_user_total_balance(UserId(user_id))
+        total_balance = await self._nw_repo.get_user_total_balance(user_id)
         return total_balance
 
-    async def calculate_monthly_profit(self):
-        pass
+    async def get_user_incomes_by_timeline(self, command: GetByIntervals) -> float:
+        incomes = await self._nw_repo.get_user_incomes(user_id=command.user_id)
+        return incomes
+
+    async def get_user_expenses_by_timeline(self, command: GetByIntervals) -> float:
+        expenses = await self._nw_repo.get_user_expenses(user_id=command.user_id)
+        return expenses
 
 
 def get_net_worth_service(nw_repo: NetWorthRepositoryDep) -> NetWorthService:

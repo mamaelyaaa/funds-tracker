@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from api.schemas import BaseApiModel
-from domain.histories.commands import HistoryInterval
+from domain.histories.values import HistoryInterval
 
 
 class GetHistorySchema(BaseApiModel):
@@ -14,5 +14,11 @@ class HistoryDetailSchema(BaseApiModel):
     created_at: datetime
 
 
-class HistoryPercentChangeSchema(BaseApiModel):
+class HistoryMetadata(BaseApiModel):
+    start_date: datetime
+    period: str
+
+
+class HistoryProfitSchema(BaseApiModel):
     percent_profit: float
+    amount_profit: float

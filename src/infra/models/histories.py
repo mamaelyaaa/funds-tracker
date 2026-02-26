@@ -1,6 +1,4 @@
-from decimal import Decimal
-
-from sqlalchemy import ForeignKey, CheckConstraint, Numeric
+from sqlalchemy import ForeignKey, CheckConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .accounts import AccountModel

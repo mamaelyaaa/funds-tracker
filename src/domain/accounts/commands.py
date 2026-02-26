@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 
 from .values import AccountType, AccountCurrency
 
@@ -22,13 +23,15 @@ class GetAccountCommand:
     account_id: str
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class UpdateAccountBalanceCommand:
     """Команда для обновления баланса счёта"""
 
     user_id: str
     account_id: str
     new_balance: float
+    is_monthly_closing: bool = False
+    occurred_at: datetime = datetime.now()
 
 
 @dataclass(frozen=True)

@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends, status
 
 from api.schemas import BaseResponseDetailSchema, BaseExceptionSchema
 from api.v1.schemas.goals import CreateGoalSchema, GoalDetailSchema, UpdateGoalSchema
+from api.v1.views.accounts import AccountServiceDep
 from domain.accounts.commands import GetAccountCommand
-from domain.accounts.service import AccountServiceDep
 from domain.goals.command import CreateGoalCommand, UpdateGoalPartiallyCommand
 from domain.goals.dto import GoalDTO
 from domain.goals.service import GoalsServiceDep

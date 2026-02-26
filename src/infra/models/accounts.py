@@ -1,10 +1,17 @@
-from decimal import Decimal
+from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import ForeignKey, UniqueConstraint, CheckConstraint, String, Numeric
+from sqlalchemy import (
+    ForeignKey,
+    UniqueConstraint,
+    CheckConstraint,
+    String,
+    DateTime,
+    func,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from domain.accounts.values import AccountType, AccountCurrency, Title, Money
+from domain.accounts.values import AccountType, AccountCurrency, Title
 
 if TYPE_CHECKING:
     from . import UserModel
@@ -27,6 +34,9 @@ class AccountModel(Base, DateMixin):
     type: Mapped[AccountType]
     balance: Mapped[float]
     currency: Mapped[AccountCurrency]
+    # updated_at: Mapped[datetime] = mapped_column(
+    #     DateTime(timezone=True), onupdate=func.now()
+    # )
 
     # Relationships
     user: Mapped["UserModel"] = relationship(

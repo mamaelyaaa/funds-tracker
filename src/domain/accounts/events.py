@@ -10,10 +10,9 @@ class BalanceUpdatedEvent(DomainEvent):
 
     user_id: str
     account_id: str
-    old_balance: float
     new_balance: float
     delta: float
-    currency: AccountCurrency
+    is_monthly_closing: bool
 
 
 @dataclass(kw_only=True, frozen=True)

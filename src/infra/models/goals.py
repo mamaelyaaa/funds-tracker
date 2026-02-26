@@ -1,5 +1,4 @@
 from datetime import datetime
-from decimal import Decimal
 
 from sqlalchemy import (
     ForeignKey,
@@ -7,7 +6,6 @@ from sqlalchemy import (
     UniqueConstraint,
     String,
     DateTime,
-    Numeric,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 

@@ -1,7 +1,4 @@
 import logging
-from typing import Annotated
-
-from fastapi import Depends
 
 from domain.users.entity import User
 from infra.publishers.accounts import AccountEventPublisherDep
@@ -130,7 +127,11 @@ class AccountService(AccountCRUDService):
             logger.info("Баланс счета #%s не изменен", account.id.as_generic_type())
             return
 
-        account.update_balance(command.new_balance)
+        account.update_balance(
+            new_balance=Money(command.new_balance),
+            is_monthly_closing=command.is_monthly_closing,
+            occurred_at=command.occurred_at,
+        )
 
         await self._repository.update(
             account_id=command.account_id,
@@ -150,19 +151,9 @@ class AccountService(AccountCRUDService):
         account.events.clear()
         return
 
-    # async def rename_account(self, command: UpdateAccountNameCommand) -> None:
-    #     account = await self.find_account_by_id(command.account_id)
-    #     account.rename_account(Title(command.new_name))
-    #
-    #     await self._repository.save(account)
-    #     logger.info("Название счета #%s обновлено", account.id.value)
-    #     return
-
 
 def get_account_service(
-    acc_repo: AccountRepositoryDep, acc_publisher: AccountEventPublisherDep
+    acc_repo: AccountRepositoryDep,
+    acc_publisher: AccountEventPublisherDep,
 ) -> AccountService:
     return AccountService(account_repo=acc_repo, account_publisher=acc_publisher)
-
-
-AccountServiceDep = Annotated[AccountService, Depends(get_account_service)]

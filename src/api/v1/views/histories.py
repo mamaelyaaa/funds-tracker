@@ -1,13 +1,13 @@
-from datetime import datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, status
 
-from api.schemas import BaseResponseDetailSchema, BaseApiModel, BaseExceptionSchema
+from api.schemas import BaseResponseDetailSchema, BaseExceptionSchema
 from api.v1.schemas.histories import (
     HistoryDetailSchema,
     GetHistorySchema,
-    HistoryPercentChangeSchema,
+    HistoryMetadata,
+    HistoryProfitSchema,
 )
 from domain.histories.commands import GetAccountHistoryCommand
 from domain.histories.dto import HistoryDTO
@@ -26,11 +26,6 @@ router = APIRouter(
         }
     },
 )
-
-
-class HistoryMetadata(BaseApiModel):
-    start_date: datetime
-    period: str
 
 
 @router.get(
@@ -57,6 +52,8 @@ async def get_account_history(
     несколько записей - выведет *крайнюю* по времени
 
     `Разбиение интервалов`:
+    - **1Day**: период "minutes"
+    - **1Week**: период "hours"
     - **1Month**: период "days"
     - **6Month**: период "weeks"
     - **1Year**: период "months"
@@ -79,12 +76,10 @@ async def get_account_history(
 
 
 @router.get(
-    "/percent-change",
-    response_model=BaseResponseDetailSchema[
-        HistoryPercentChangeSchema, HistoryMetadata
-    ],
+    "/profit",
+    response_model=BaseResponseDetailSchema[HistoryProfitSchema, HistoryMetadata],
 )
-async def get_percent_change_by_time_interval(
+async def get_profit_by_time_interval(
     history_service: HistoryServiceDep,
     schema: Annotated[GetHistorySchema, Depends()],
     account_id: str,
@@ -92,7 +87,7 @@ async def get_percent_change_by_time_interval(
 ):
     """Считает процентный доход счёта за определенный интервал времени"""
 
-    percent_change = await history_service.get_history_percent_change(
+    profit = await history_service.get_history_profit(
         command=GetAccountHistoryCommand(
             interval=schema.interval,
             account_id=account_id,
@@ -101,8 +96,6 @@ async def get_percent_change_by_time_interval(
     )
     return BaseResponseDetailSchema(
         message="Получен доход счёта",
-        detail=HistoryPercentChangeSchema(
-            percent_profit=float(f"{percent_change:.4f}")
-        ),
+        detail=HistoryProfitSchema(**profit),
         metadata=HistoryMetadata(**history_service.metadata),
     )

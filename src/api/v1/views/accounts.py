@@ -10,6 +10,7 @@ from api.schemas import (
 from api.v1.schemas.accounts import (
     CreateAccountSchema,
     AccountDetailSchema,
+    UpdateAccountSchema,
 )
 from domain.accounts.commands import (
     CreateAccountCommand,
@@ -18,7 +19,7 @@ from domain.accounts.commands import (
 )
 from domain.accounts.dto import AccountDTO
 from domain.accounts.entity import Account
-from domain.accounts.service import AccountServiceDep
+from domain.accounts.service import AccountService, get_account_service
 from domain.users.dependencies import get_user
 
 router = APIRouter(
@@ -26,6 +27,8 @@ router = APIRouter(
     tags=["Счета🏦"],
     dependencies=[Depends(get_user)],
 )
+
+AccountServiceDep = Annotated[AccountService, Depends(get_account_service)]
 
 
 @router.post(
@@ -134,9 +137,9 @@ async def get_account_by_id(
 )
 async def update_account_balance(
     account_service: AccountServiceDep,
+    schema: UpdateAccountSchema,
     account_id: str,
     user_id: str,
-    actual_balance: float = Body(default=0, embed=True),
 ):
     """
     Обновление баланса счёта и фоновое обновление полного капитала пользователя
@@ -148,7 +151,9 @@ async def update_account_balance(
         command=UpdateAccountBalanceCommand(
             account_id=account_id,
             user_id=user_id,
-            new_balance=actual_balance,
+            new_balance=schema.actual_balance,
+            occurred_at=schema.occurred_at,
+            is_monthly_closing=schema.is_monthly_closing,
         )
     )
 
