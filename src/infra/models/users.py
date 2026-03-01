@@ -6,10 +6,10 @@ if TYPE_CHECKING:
     from . import AccountModel
 
 from .base import Base
-from .mixin import DateMixin
+from .mixin import CreatedAtMixin
 
 
-class UserModel(Base, DateMixin):
+class UserModel(Base, CreatedAtMixin):
     __tablename__ = "users"
 
     name: Mapped[str]

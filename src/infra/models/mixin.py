@@ -4,10 +4,19 @@ from sqlalchemy import DateTime, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 
-class DateMixin:
+class CreatedAtMixin:
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=func.now()
+        DateTime(timezone=True),
+        default=datetime.now(),
+        server_default=func.now(),
     )
-    # updated_at: Mapped[datetime] = mapped_column(
-    #     DateTime(timezone=True), onupdate=func.now()
-    # )
+
+
+class UpdatedAtMixin:
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), server_onupdate=func.now()
+    )
+
+
+class TimeStampMixin(CreatedAtMixin, UpdatedAtMixin):
+    pass

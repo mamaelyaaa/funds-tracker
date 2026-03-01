@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
@@ -6,21 +5,19 @@ from sqlalchemy import (
     UniqueConstraint,
     CheckConstraint,
     String,
-    DateTime,
-    func,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from domain.accounts.values import AccountType, AccountCurrency, Title
 
 if TYPE_CHECKING:
-    from . import UserModel
+    from . import UserModel, HistoryModel
 
 from .base import Base
-from .mixin import DateMixin
+from .mixin import TimeStampMixin
 
 
-class AccountModel(Base, DateMixin):
+class AccountModel(Base, TimeStampMixin):
     __tablename__ = "accounts"
     __table_args__ = (
         UniqueConstraint("user_id", "name", name="uc_user_id_with_name"),
@@ -34,11 +31,11 @@ class AccountModel(Base, DateMixin):
     type: Mapped[AccountType]
     balance: Mapped[float]
     currency: Mapped[AccountCurrency]
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), onupdate=func.now(), server_default=func.now()
-    )
 
-    # Relationships
+    # Отношения
     user: Mapped["UserModel"] = relationship(
         back_populates="accounts",
+    )
+    histories: Mapped[list["HistoryModel"]] = relationship(
+        back_populates="account", cascade="all, delete-orphan"
     )
