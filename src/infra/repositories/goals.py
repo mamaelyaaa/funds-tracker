@@ -129,6 +129,15 @@ class PostgresGoalsRepository:
         await self._session.commit()
         return GoalOrmDTO.from_orm_to_entity(goal) if goal else None
 
+    async def check_exists_by_id(self, user_id: str, account_id: str) -> bool:
+        query = (
+            select(func.count())
+            .select_from(GoalModel)
+            .filter_by(user_id=user_id, id=account_id)
+        )
+        res = await self._session.scalar(query)
+        return bool(res)
+
 
 def get_goals_repository(session: SessionDep) -> GoalsRepositoryProtocol:
     return PostgresGoalsRepository(session)

@@ -26,6 +26,8 @@ class GoalsRepositoryProtocol(Protocol):
         self, user_id: str, goal_id: str, new_goal: dict[str, Any]
     ) -> Optional[Goal]: ...
 
+    async def check_exists_by_id(self, user_id: str, account_id: str) -> bool: ...
+
 
 class GoalsEventPublisherProtocol(Protocol):
 

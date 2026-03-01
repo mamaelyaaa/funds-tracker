@@ -3,7 +3,12 @@ from datetime import datetime
 
 from core.domain import DomainEntity, DomainEvent
 from domain.users.values import UserId
-from .events import BalanceUpdatedEvent, AccountCreatedEvent
+from .events import (
+    AccountCreatedEvent,
+    BalanceUpdatedEvent,
+    FundCreatedEvent,
+    FundUpdatedEvent,
+)
 from .values import AccountType, AccountCurrency, AccountId, Title, Money
 
 
@@ -42,13 +47,19 @@ class Account(DomainEntity):
             balance=Money(balance),
             currency=currency,
         )
-        account.events.append(
-            AccountCreatedEvent(
-                user_id=account.user_id.as_generic_type(),
-                account_id=account.id.as_generic_type(),
-                new_balance=balance,
-                occurred_at=account.updated_at,
-            )
+        account.events.extend(
+            [
+                AccountCreatedEvent(
+                    user_id=account.user_id.as_generic_type(),
+                    account_id=account.id.as_generic_type(),
+                    new_balance=balance,
+                ),
+                FundCreatedEvent(
+                    user_id=account.user_id.as_generic_type(),
+                    start_date=account.created_at,
+                    end_date=datetime.now(),
+                ),
+            ],
         )
         return account
 
@@ -73,8 +84,18 @@ class Account(DomainEntity):
                 delta=delta,
                 is_monthly_closing=is_monthly_closing,
                 occurred_at=occurred_at,
-            )
+            ),
         )
+
+        if is_monthly_closing:
+            self._events.append(
+                FundUpdatedEvent(
+                    user_id=self.user_id.as_generic_type(),
+                    new_balance=new_balance.as_generic_type(),
+                    end_date=occurred_at,
+                )
+            )
+
         self.updated_at = datetime.now()
 
     # def rename_account(self, new_name: Title) -> None:

@@ -76,6 +76,12 @@ class Money(DomainValueObject[float]):
     def __sub__(self, other: "Money") -> "Money":
         return Money(self._value - other._value)
 
+    def __add__(self, other: float) -> "Money":
+        return Money(self._value + other)
+
+    def __iadd__(self, other: float) -> "Money":
+        return Money(self._value + other)
+
     def as_generic_type(self) -> float:
         return float(f"{self._value:.{self.MAX_DIGITS}f}")
 

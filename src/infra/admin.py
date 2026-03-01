@@ -6,6 +6,7 @@ from infra.models import (
     AccountModel,
     HistoryModel,
     GoalModel,
+    FundModel,
 )
 
 admin = Admin(engine=db_helper.engine)
@@ -14,3 +15,4 @@ admin.add_view(ModelView(UserModel))
 admin.add_view(ModelView(AccountModel))
 admin.add_view(ModelView(HistoryModel))
 admin.add_view(ModelView(GoalModel))
+admin.add_view(ModelView(FundModel))

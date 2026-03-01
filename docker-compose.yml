@@ -89,13 +89,13 @@ services:
     volumes:
       - cache:/data
 
-  redis_gui:
-    container_name: redis-gui
-    image: redis/redisinsight
-    ports:
-      - "5540:5540"
-    volumes:
-      - redisinsight:/db
+#  redis_gui:
+#    container_name: redis-gui
+#    image: redis/redisinsight
+#    ports:
+#      - "5540:5540"
+#    volumes:
+#      - redisinsight:/db
 
 volumes:
   pgdata:
