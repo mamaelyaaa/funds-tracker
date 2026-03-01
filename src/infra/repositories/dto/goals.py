@@ -13,12 +13,12 @@ class GoalOrmDTO:
         return Goal(
             id=GoalId(model.id),
             user_id=UserId(model.user_id),
-            account_id=AccountId(model.account_id) if model.account_id else None,
+            # account_id=AccountId(model.account_id) if model.account_id else None,
             title=Title(model.title),
             target_amount=Money(model.target_amount),
             current_amount=Money(model.current_amount),
             status=model.status,
-            savings_percentage=GoalPercentage(model.savings_percentage),
+            # savings_percentage=GoalPercentage(model.savings_percentage),
             deadline=model.deadline if model.deadline else None,
             created_at=model.created_at,
         )

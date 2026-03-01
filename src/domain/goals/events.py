@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Optional
 
 from core.domain import DomainEvent
 
@@ -9,7 +8,7 @@ class GoalAlreadyReachedEvent(DomainEvent):
     """Цель уже достигнута"""
 
     goal_id: str
-    account_id: Optional[str]
+    user_id: str
 
 
 @dataclass(kw_only=True, frozen=True)

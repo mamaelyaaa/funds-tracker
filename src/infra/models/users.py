@@ -14,9 +14,7 @@ class UserModel(Base, DateMixin):
 
     name: Mapped[str]
 
+    # Отношения
     accounts: Mapped[list["AccountModel"]] = relationship(
-        back_populates="user",
-        cascade="all, delete-orphan",
-        passive_deletes=True,
-        single_parent=True,
+        back_populates="user", cascade="all, delete-orphan"
     )

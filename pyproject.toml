@@ -9,6 +9,7 @@ dependencies = [
     "alembic>=1.18.1",
     "asyncpg>=0.31.0",
     "fastapi>=0.128.0",
+    "fastapi-admin>=1.0.4",
     "orjson>=3.11.5",
     "pydantic>=2.12.5",
     "pydantic-settings>=2.12.0",

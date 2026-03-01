@@ -14,7 +14,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from domain.accounts.values import AccountType, AccountCurrency, Title
 
 if TYPE_CHECKING:
-    from . import UserModel
+    from . import UserModel, HistoryModel
 
 from .base import Base
 from .mixin import DateMixin
@@ -38,7 +38,8 @@ class AccountModel(Base, DateMixin):
         DateTime(timezone=True), onupdate=func.now(), server_default=func.now()
     )
 
-    # Relationships
-    user: Mapped["UserModel"] = relationship(
-        back_populates="accounts",
+    # Отношения
+    user: Mapped["UserModel"] = relationship(back_populates="accounts")
+    histories: Mapped[list["HistoryModel"]] = relationship(
+        back_populates="account", cascade="all, delete-orphan"
     )
