@@ -69,4 +69,4 @@ async def update_fund_task(
             user_id=event.user_id, end_date=event.end_date, new_amount=event.new_balance
         )
     )
-    logger.info("Накопительный остаток обновлен для пользователя #{event.user_id[:8]}")
+    logger.info(f"Накопительный остаток обновлен для пользователя #{event.user_id[:8]}")

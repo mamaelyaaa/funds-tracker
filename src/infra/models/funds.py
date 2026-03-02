@@ -5,10 +5,10 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from domain.funds.values import FundStatus
 from infra.models import Base
-from infra.models.mixin import DateMixin
+from infra.models.mixin import CreatedAtMixin
 
 
-class FundModel(Base, DateMixin):
+class FundModel(Base, CreatedAtMixin):
     __tablename__ = "funds"
 
     user_id: Mapped[str] = mapped_column(
