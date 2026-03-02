@@ -28,7 +28,9 @@ class GoalModel(Base, CreatedAtMixin):
         UniqueConstraint("user_id", "title", name="uq_goals_user_id_title"),
     )
 
-    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    user_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE", name="fk_goal_user")
+    )
     title: Mapped[str] = mapped_column(String(Title.MAX_LEN))
     target_amount: Mapped[float]
     current_amount: Mapped[float]
@@ -38,4 +40,4 @@ class GoalModel(Base, CreatedAtMixin):
     )
 
     # Отношения
-    user: Mapped["UserModel"] = relationship(backref="goals")
+    user: Mapped["UserModel"] = relationship(back_populates="goals")
