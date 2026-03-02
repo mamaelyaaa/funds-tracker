@@ -3,10 +3,10 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .accounts import AccountModel
 from .base import Base
-from .mixin import DateMixin
+from .mixin import CreatedAtMixin
 
 
-class HistoryModel(Base, DateMixin):
+class HistoryModel(Base, CreatedAtMixin):
     __tablename__ = "accounts_history"
     __table_args__ = (CheckConstraint("balance >= 0", name="history_balance_gt_0"),)
 

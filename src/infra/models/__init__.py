@@ -1,6 +1,7 @@
 __all__ = (
     "Base",
     "AccountModel",
+    "AccountCurrency",
     "UserModel",
     "HistoryModel",
     "GoalStatus",
@@ -9,7 +10,7 @@ __all__ = (
     "FundStatus",
 )
 
-from .accounts import AccountModel
+from .accounts import AccountModel, AccountCurrency
 from .base import Base
 from .goals import GoalStatus, GoalModel
 from .histories import HistoryModel
