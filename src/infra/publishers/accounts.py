@@ -8,15 +8,15 @@ from taskiq import AsyncTaskiqTask
 from core.domain import DomainEvent
 from domain.accounts.events import (
     AccountCreatedEvent,
-    FundCreatedEvent,
     FundUpdatedEvent,
     BalanceUpdatedEvent,
 )
 from domain.accounts.protocols import AccountEventPublisherProtocol
 from infra.tasks.accounts import (
     save_account_history,
-    update_fund_task,
-    create_fund_task,
+    # update_fund_task,
+    # create_fund_task,
+    create_or_update_user_fund_task,
 )
 
 logger = logging.getLogger(__name__)
@@ -30,7 +30,8 @@ class AccountTaskiqPublisher:
             BalanceUpdatedEvent: [
                 self._handle_account_update_history,
             ],
-            FundCreatedEvent: [self._create_user_fund],
+            FundUpdatedEvent: [self._create_or_update_user_fund],
+            # FundUpdatedEvent: [self._update_user_fund],
         }
 
     async def publish(self, event: DomainEvent) -> None:
@@ -45,15 +46,15 @@ class AccountTaskiqPublisher:
         asyncio.create_task(self.track_tasks([task]))
         return
 
-    async def _create_user_fund(self, event: FundCreatedEvent) -> None:
-        task: AsyncTaskiqTask = await create_fund_task.kiq(event)
+    async def _create_or_update_user_fund(self, event: FundUpdatedEvent) -> None:
+        task: AsyncTaskiqTask = await create_or_update_user_fund_task.kiq(event)
         asyncio.create_task(self.track_tasks([task]))
         return
 
-    async def _update_user_fund(self, event: FundUpdatedEvent) -> None:
-        task: AsyncTaskiqTask = await update_fund_task.kiq(event)
-        asyncio.create_task(self.track_tasks([task]))
-        return
+    # async def _update_user_fund(self, event: FundUpdatedEvent) -> None:
+    #     task: AsyncTaskiqTask = await update_fund_task.kiq(event)
+    #     asyncio.create_task(self.track_tasks([task]))
+    #     return
 
     @staticmethod
     async def track_tasks(tasks: list[AsyncTaskiqTask]) -> None:

@@ -29,3 +29,8 @@ class HistoryRepositoryProtocol(Protocol):
         self, history_id: str, upd_data: dict[str, Any]
     ) -> Optional[History]:
         pass
+
+    async def get_sum_delta_in_period(
+        self, user_id: str, start_date: datetime, end_date: datetime
+    ) -> int:
+        pass

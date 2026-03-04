@@ -142,13 +142,10 @@ class AccountService(AccountCRUDService):
         )
         logger.info("Баланс счета #%s обновлен", account.id.as_generic_type())
 
-        if len(account.events) > 1:
-            logger.error("Лишние события в доменной модели")
-
         for event in account.events:
             await self._publisher.publish(event)
 
-        account.events.clear()
+        # account.events.clear()
         return
 
 

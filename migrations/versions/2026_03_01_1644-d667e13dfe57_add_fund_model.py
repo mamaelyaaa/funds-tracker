@@ -33,7 +33,7 @@ def upgrade() -> None:
         sa.Column("start_date", sa.DateTime(), nullable=False),
         sa.Column("end_date", sa.DateTime(), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
-        sa.CheckConstraint("start_date < end_date", name="fund_date_validation"),
+        sa.CheckConstraint("start_date <= end_date", name="fund_date_validation"),
         sa.CheckConstraint("total_amount >= 0", name="fund_total_amount_ge_0"),
         sa.ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),

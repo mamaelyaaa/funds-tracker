@@ -33,5 +33,12 @@ class FundCreatedEvent(DomainEvent):
 @dataclass(kw_only=True, frozen=True)
 class FundUpdatedEvent(DomainEvent):
     user_id: str
+    end_date: datetime
+
+
+@dataclass(kw_only=True, frozen=True)
+class FundCreatedOrUpdatedEvent(DomainEvent):
+    user_id: str
     new_balance: float
+    start_date: datetime
     end_date: datetime

@@ -1,12 +1,11 @@
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 
 from core.domain import DomainEntity, DomainEvent
 from domain.users.values import UserId
 from .events import (
     AccountCreatedEvent,
     BalanceUpdatedEvent,
-    FundCreatedEvent,
     FundUpdatedEvent,
 )
 from .values import AccountType, AccountCurrency, AccountId, Title, Money
@@ -54,10 +53,9 @@ class Account(DomainEntity):
                     account_id=account.id.as_generic_type(),
                     new_balance=balance,
                 ),
-                FundCreatedEvent(
+                FundUpdatedEvent(
                     user_id=account.user_id.as_generic_type(),
-                    start_date=account.created_at,
-                    end_date=datetime.now(),
+                    end_date=datetime.now(timezone.utc),
                 ),
             ],
         )
@@ -91,12 +89,11 @@ class Account(DomainEntity):
             self._events.append(
                 FundUpdatedEvent(
                     user_id=self.user_id.as_generic_type(),
-                    new_balance=new_balance.as_generic_type(),
-                    end_date=occurred_at,
+                    end_date=datetime.now(timezone.utc),
                 )
             )
 
-        self.updated_at = datetime.now()
+        self.updated_at = datetime.now(timezone.utc)
 
     # def rename_account(self, new_name: Title) -> None:
     #     """Обновление названия счёта"""

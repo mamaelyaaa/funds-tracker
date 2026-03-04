@@ -6,6 +6,7 @@ from infra.models import (
     AccountModel,
     HistoryModel,
     GoalModel,
+    FundModel,
 )
 
 admin = Admin(engine=db_helper.engine)
@@ -69,7 +70,21 @@ class GoalView(BaseAppModelView):
     sortable_fields = ["user", "status", "created_at", "updated_at"]
 
 
+class FundView(BaseAppModelView):
+    fields = [
+        "id",
+        "user",
+        "total_amount",
+        "status",
+        "start_date",
+        "end_date",
+        "created_at",
+    ]
+    sortable_fields = ["user", "created_at", "updated_at"]
+
+
 admin.add_view(UserView(UserModel))
 admin.add_view(AccountView(AccountModel))
 admin.add_view(HistoryView(HistoryModel))
 admin.add_view(GoalView(GoalModel))
+admin.add_view(FundView(FundModel))

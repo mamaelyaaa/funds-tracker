@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from datetime import datetime
+from typing import Optional
 
 from core.domain import DomainEntity
 from domain.accounts.values import Money, AccountId
@@ -24,7 +25,7 @@ class Fund(DomainEntity):
     total_amount: Money
     status: FundStatus = field(default=FundStatus.OPEN)
     start_date: datetime
-    end_date: datetime
+    end_date: Optional[datetime] = None
 
     @classmethod
     def create(
@@ -47,14 +48,29 @@ class Fund(DomainEntity):
             start_date=start_date,
         )
 
-    def update_status(self, new_status: FundStatus) -> None:
-        if new_status == self.status:
-            return
+    def close(self, end_date: datetime, total_amount: float):
+        """Закрывает распределенный остаток"""
 
-        self.status = new_status
+        if self.status != FundStatus.OPEN:
+            raise ...
 
-    def update_amount(self, new_balance: float) -> None:
-        self.total_amount = Money(new_balance)
+        self.end_date = end_date
+        self.total_amount = Money(total_amount)
+        self.status = FundStatus.CLOSED
+
+    def is_ready_for_distribution(self) -> bool:
+        return (
+            self.status == FundStatus.CLOSED and self.total_amount.as_generic_type() > 0
+        )
+
+    # def update_status(self, new_status: FundStatus) -> None:
+    #     if new_status == self.status:
+    #         return
+    #
+    #     self.status = new_status
+    #
+    # def update_amount(self, new_balance: float) -> None:
+    #     self.total_amount = Money(new_balance)
 
 
 # @dataclass(kw_only=True)

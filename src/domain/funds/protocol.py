@@ -20,6 +20,8 @@ class FundRepositoryProtocol(Protocol):
 
     async def get_last_opened(self, user_id: str) -> Optional[Fund]: ...
 
+    async def get_last_closed(self, user_id: str) -> Optional[Fund]: ...
+
 
 # class FundRuleRepositoryProtocol(Protocol):
 #

@@ -18,7 +18,6 @@ from core.logger import setup_logger
 from core.settings import settings
 from infra import admin, broker, db_helper
 from infra.cache.redis import get_redis_client
-from fastapi_admin.app import app as admin_app
 
 logger = logging.getLogger(__name__)
 setup_logger()
@@ -28,7 +27,6 @@ setup_logger()
 async def lifespan(_: FastAPI, redis: Redis = get_redis_client()):
     if not broker.is_worker_process:
         await broker.startup()
-    admin_app.configure(redis)
 
     yield
 
