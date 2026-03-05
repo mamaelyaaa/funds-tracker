@@ -2,13 +2,13 @@ from datetime import datetime
 from typing import Optional, Annotated, Any
 
 from fastapi import Depends
-from sqlalchemy import select, desc, func, update
+from sqlalchemy import select, desc, func, update, between
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from domain.histories.entities import History
 from domain.histories.protocols import HistoryRepositoryProtocol
 from infra.database import SessionDep
-from infra.models import HistoryModel
+from infra.models import HistoryModel, AccountModel
 from infra.repositories.dto.histories import HistoryOrmDTO
 
 
@@ -84,6 +84,20 @@ class SQLAlchemyHistoryRepository:
         history = await self._session.scalar(stmt)
         await self._session.commit()
         return HistoryOrmDTO.from_orm_to_entity(history) if history else None
+
+    async def get_sum_delta_in_period(
+        self, user_id: str, start_date: datetime, end_date: datetime
+    ) -> int:
+        query = (
+            select(func.sum(HistoryModel.delta))
+            .join(AccountModel, AccountModel.id == HistoryModel.account_id)
+            .filter(
+                AccountModel.user_id == user_id,
+                between(HistoryModel.created_at, start_date, end_date),
+            )
+        )
+        res = await self._session.scalar(query)
+        return res or 0
 
 
 def get_history_repository(session: SessionDep) -> HistoryRepositoryProtocol:

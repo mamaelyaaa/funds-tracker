@@ -1,11 +1,9 @@
-from domain.accounts.dto import AccountDTO
-from domain.accounts.entity import Account
-from domain.accounts.values import AccountId, Title, Money
 from domain.funds.dto import FundDTO
 from domain.funds.entity import Fund
 from domain.funds.values import FundId
 from domain.users.values import UserId
-from infra.models import AccountModel, FundModel
+from domain.values import Money
+from infra.models import FundModel
 
 
 class FundOrmDTO(FundDTO):

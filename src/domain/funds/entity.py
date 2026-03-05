@@ -1,23 +1,22 @@
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Optional
 
-from core.domain import DomainEntity
-from domain.accounts.values import Money, AccountId
+from core.domain import CreatedAtDomainMixin
+from domain.accounts.values import AccountId
 from domain.goals.values import GoalId
 from domain.users.values import UserId
+from domain.values import Money
 from .values import (
     FundId,
     FundDistributionId,
     FundRuleType,
     Percent,
-    FundRulesId,
     FundStatus,
 )
 
 
 @dataclass(kw_only=True)
-class Fund(DomainEntity):
+class Fund(CreatedAtDomainMixin):
     """Доменная модель фиксированных остатков за период"""
 
     id: FundId = field(default_factory=FundId.generate)
@@ -25,7 +24,7 @@ class Fund(DomainEntity):
     total_amount: Money
     status: FundStatus = field(default=FundStatus.OPEN)
     start_date: datetime
-    end_date: Optional[datetime] = None
+    end_date: datetime
 
     @classmethod
     def create(
@@ -48,29 +47,14 @@ class Fund(DomainEntity):
             start_date=start_date,
         )
 
-    def close(self, end_date: datetime, total_amount: float):
-        """Закрывает распределенный остаток"""
+    def update_status(self, new_status: FundStatus) -> None:
+        if new_status == self.status:
+            return
 
-        if self.status != FundStatus.OPEN:
-            raise ...
+        self.status = new_status
 
-        self.end_date = end_date
-        self.total_amount = Money(total_amount)
-        self.status = FundStatus.CLOSED
-
-    def is_ready_for_distribution(self) -> bool:
-        return (
-            self.status == FundStatus.CLOSED and self.total_amount.as_generic_type() > 0
-        )
-
-    # def update_status(self, new_status: FundStatus) -> None:
-    #     if new_status == self.status:
-    #         return
-    #
-    #     self.status = new_status
-    #
-    # def update_amount(self, new_balance: float) -> None:
-    #     self.total_amount = Money(new_balance)
+    def update_amount(self, new_balance: float) -> None:
+        self.total_amount = Money(new_balance)
 
 
 # @dataclass(kw_only=True)
@@ -105,7 +89,7 @@ class Fund(DomainEntity):
 
 
 @dataclass(kw_only=True)
-class FundDistribution(DomainEntity):
+class FundDistribution(CreatedAtDomainMixin):
     """Доменная модель остатка с историей"""
 
     id: FundDistributionId = field(default_factory=FundDistributionId.generate)

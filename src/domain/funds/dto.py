@@ -1,10 +1,10 @@
 from typing import Any
 
-from domain.accounts.values import Money
 from domain.dto import BaseDTO
 from domain.funds.entity import Fund
 from domain.funds.values import FundId
 from domain.users.values import UserId
+from domain.values import Money
 
 
 class FundDTO(BaseDTO):
