@@ -5,6 +5,8 @@ from typing import Optional, Annotated, Any
 from dateutil.relativedelta import relativedelta
 from fastapi import Depends
 
+from domain.accounts.values import AccountId
+from domain.values import Money
 from infra.repositories.histories import HistoryRepositoryDep
 from .commands import (
     SaveHistoryCommand,
@@ -13,9 +15,10 @@ from .commands import (
 from .entities import History
 from .exceptions import HistoryNotExistsException
 from .protocols import HistoryRepositoryProtocol
-from .values import HistoryInterval, HistoryPeriod
+from .values import HistoryInterval, HistoryPeriod, HistoryId
 
 logger = logging.getLogger(__name__)
+
 
 INTERVALS: dict[HistoryInterval, datetime] = {
     HistoryInterval.DAY: datetime.now(UTC) - relativedelta(days=1),
@@ -45,22 +48,22 @@ class HistoryService:
     async def save_account_history(self, command: SaveHistoryCommand) -> str:
         """Сохраняем историю счёта"""
 
-        new_history = History.create(
-            account_id=command.account_id,
-            balance=command.balance,
+        new_history = History(
+            account_id=AccountId(command.account_id),
+            balance=Money(command.balance),
             delta=command.delta,
             is_monthly_closing=command.is_monthly_closing,
         )
-        logger.info(new_history)
 
         history_id = await self._repository.save(new_history)
-        logger.info(f"Создана новая история #{history_id}")
+        logger.info(f"Создана новая история #{HistoryId(history_id).short}")
 
         return history_id
 
     async def get_account_history(
         self, command: GetAccountHistoryCommand
     ) -> list[History]:
+        """Получение истории счета по периодам"""
 
         period, start_date = self.set_metadata(command)
 

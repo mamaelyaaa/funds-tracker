@@ -16,7 +16,6 @@ class CreateAccountSchema(BaseApiModel):
 class UpdateAccountSchema(BaseApiModel):
     actual_balance: float
     is_monthly_closing: bool = False
-    occurred_at: datetime
 
 
 class AccountDetailSchema(BaseApiModel):

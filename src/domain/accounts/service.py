@@ -1,6 +1,8 @@
 import logging
 
 from domain.users.entity import User
+from domain.users.values import UserId
+from domain.values import Money, Title
 from infra.publishers.accounts import AccountEventPublisherDep
 from infra.repositories.accounts import AccountRepositoryDep
 from .commands import (
@@ -16,7 +18,7 @@ from .exceptions import (
     AccountAlreadyCreatedException,
 )
 from .protocols import AccountRepositoryProtocol, AccountEventPublisherProtocol
-from .values import Money
+from .values import AccountId
 
 logger = logging.getLogger(__name__)
 
@@ -58,48 +60,69 @@ class AccountCRUDService:
             raise TooManyAccountsForUserException
 
         new_account = Account.create(
-            user_id=command.user_id,
-            name=command.name,
-            balance=command.balance,
+            user_id=UserId(command.user_id),
+            name=Title(command.name),
+            balance=Money(command.balance),
             account_type=command.account_type,
             currency=command.currency,
         )
         acc_id = await self._repository.save(new_account)
 
-        for event in new_account.events:
-            await self._publisher.publish(event)
+        await self._publish(account=new_account)
 
-        new_account.events.clear()
-
-        logger.info("Новый счёт #%s создан", acc_id)
+        logger.info("Новый счёт #%s создан", AccountId(acc_id).short)
         return new_account
 
     async def find_account_by_id(self, command: GetAccountCommand) -> Account:
+        """
+        Поиск счёта по уникальному id
+        Если счёта нет - ошибка
+        """
+
         if not (
             account := await self._repository.get_by_id(
                 account_id=command.account_id,
                 user_id=command.user_id,
             )
         ):
-            logger.warning("Счёт #%s не найден", command.account_id)
+            logger.warning("Счёт #%s не найден", AccountId(command.account_id).short)
             raise AccountNotFoundException
 
-        logger.info(f"Счёт #{command.account_id} получен")
+        logger.info(f"Счёт #{AccountId(command.account_id).short} получен")
         return account
 
     async def find_accounts_by_user_id(self, user_id: str) -> list[Account]:
+        """Поиск всех счетов пользователя по его уникальному id"""
+
         accounts = await self._repository.get_by_user_id(user_id)
-        logger.info(f"Счёты пользователя #{user_id} получены")
+        logger.info(f"Счёта пользователя #{UserId(user_id).short} получены")
         return accounts
 
     async def delete_account(self, command: GetAccountCommand) -> None:
+        """Удаление счёта по id"""
+
         account = await self.find_account_by_id(command=command)
         await self._repository.delete(
             account_id=account.id.as_generic_type(),
             user_id=account.user_id.as_generic_type(),
         )
-        logger.info("Счёт #%s был удален", account.id.as_generic_type())
+        logger.info("Счёт #%s был удален", account.id.short)
         return
+
+    async def _publish(self, account: Account):
+        """Публикует события"""
+
+        published = []
+        for event in account.events:
+            try:
+                await self._publisher.publish(event)
+                published.append(event)
+            except Exception as e:
+                logger.error(str(e))
+                raise
+
+        for event in published:
+            account.events.remove(event)
 
 
 class AccountService(AccountCRUDService):
@@ -113,7 +136,7 @@ class AccountService(AccountCRUDService):
         super().__init__(account_repo, account_publisher)
 
     async def update_balance(self, command: UpdateAccountBalanceCommand) -> None:
-        """Обновляем баланс счета"""
+        """Обновление баланса счета"""
 
         account = await self.find_account_by_id(
             command=GetAccountCommand(
@@ -121,16 +144,9 @@ class AccountService(AccountCRUDService):
             )
         )
 
-        if abs(command.new_balance - account.balance.as_generic_type()) < 10 ** -(
-            Money.MAX_DIGITS + 1
-        ):
-            logger.info("Баланс счета #%s не изменен", account.id.as_generic_type())
-            return
-
         account.update_balance(
             new_balance=Money(command.new_balance),
             is_monthly_closing=command.is_monthly_closing,
-            occurred_at=command.occurred_at,
         )
 
         await self._repository.update(
@@ -140,20 +156,11 @@ class AccountService(AccountCRUDService):
                 account, excludes=["id", "user_id"]
             ),
         )
-        logger.info("Баланс счета #%s обновлен", account.id.as_generic_type())
-
-        if len(account.events) > 1:
-            logger.error("Лишние события в доменной модели")
-
-        for event in account.events:
-            await self._publisher.publish(event)
-
-        account.events.clear()
-        return
+        logger.info("Баланс счета #%s обновлен", account.id.short)
+        await self._publish(account=account)
 
 
 def get_account_service(
-    acc_repo: AccountRepositoryDep,
-    acc_publisher: AccountEventPublisherDep,
+    acc_repo: AccountRepositoryDep, acc_publisher: AccountEventPublisherDep
 ) -> AccountService:
     return AccountService(account_repo=acc_repo, account_publisher=acc_publisher)

@@ -33,7 +33,7 @@ def downgrade() -> None:
             "savings_percentage",
             sa.DOUBLE_PRECISION(precision=53),
             autoincrement=False,
-            nullable=False,
+            nullable=True,
         ),
     )
     op.add_column(

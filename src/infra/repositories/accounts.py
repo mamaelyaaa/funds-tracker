@@ -112,7 +112,6 @@ class PostgresAccountRepository:
     async def update(
         self, user_id: str, account_id: str, upd_data: dict[str, Any]
     ) -> Optional[Account]:
-        print(upd_data)
         stmt = (
             update(AccountModel)
             .filter_by(id=account_id, user_id=user_id)

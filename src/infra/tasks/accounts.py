@@ -4,6 +4,7 @@ from typing import Annotated
 from taskiq import TaskiqDepends
 
 from domain.accounts.events import AccountCreatedEvent, BalanceUpdatedEvent
+from domain.accounts.values import AccountId
 from domain.histories.commands import SaveHistoryCommand
 from domain.histories.service import get_history_service, HistoryService
 from infra import broker
@@ -16,7 +17,7 @@ async def save_account_history(
     event: AccountCreatedEvent | BalanceUpdatedEvent,
     history_service: Annotated[HistoryService, TaskiqDepends(get_history_service)],
 ) -> str:
-    logger.info(f"Сохраняем историю счёта #{event.account_id[:8]} ...")
+    logger.info(f"Сохраняем историю счёта #{AccountId(event.account_id).short} ...")
 
     history_id: str = await history_service.save_account_history(
         command=SaveHistoryCommand(

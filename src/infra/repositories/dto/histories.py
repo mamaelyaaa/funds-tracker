@@ -1,4 +1,5 @@
-from domain.accounts.values import AccountId, Money
+from domain.accounts.values import AccountId
+from domain.values import Money
 from domain.histories.dto import HistoryDTO
 from domain.histories.entities import History
 from domain.histories.values import HistoryId

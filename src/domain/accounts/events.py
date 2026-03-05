@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from decimal import Decimal
 
 from core.domain import DomainEvent
 from domain.accounts.values import AccountCurrency
@@ -10,8 +11,8 @@ class BalanceUpdatedEvent(DomainEvent):
 
     user_id: str
     account_id: str
-    new_balance: float
-    delta: float
+    new_balance: Decimal
+    delta: Decimal
     is_monthly_closing: bool
 
 
@@ -19,4 +20,4 @@ class BalanceUpdatedEvent(DomainEvent):
 class AccountCreatedEvent(DomainEvent):
     user_id: str
     account_id: str
-    new_balance: float
+    new_balance: Decimal

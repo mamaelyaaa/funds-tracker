@@ -1,4 +1,5 @@
-from domain.accounts.values import AccountId, Title, Money
+from domain.accounts.values import AccountId
+from domain.values import Title, Money
 from domain.goals.dto import GoalDTO
 from domain.goals.entities import Goal
 from domain.goals.values import GoalId, GoalPercentage

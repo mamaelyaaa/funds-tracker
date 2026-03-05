@@ -27,7 +27,7 @@ class UserView(BaseAppModelView):
     ]
 
     sortable_fields = ["name", "created_at"]
-    exclude_fields_from_create = ["created_at", "accounts"]
+    exclude_fields_from_create = ["created_at", "accounts", "goals"]
 
 
 class AccountView(BaseAppModelView):
