@@ -1,16 +1,15 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 
+from core.domain import CreatedAtDomainMixin
 from .values import UserId
 
 
-@dataclass
-class User:
+@dataclass(kw_only=True)
+class User(CreatedAtDomainMixin):
     """Доменная модель пользователя"""
-
-    name: str
 
     MAX_ACCOUNTS: int = 10
 
     id: UserId = field(default_factory=UserId.generate)
-    created_at: datetime = field(default_factory=datetime.now)
+    name: str

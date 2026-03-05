@@ -6,7 +6,7 @@ from .entity import Account
 
 class AccountRepositoryProtocol(Protocol):
 
-    async def save(self, account: Account) -> str:
+    async def save(self, entity: Account) -> str:
         pass
 
     async def get_by_id(self, user_id: str, account_id: str) -> Optional[Account]:

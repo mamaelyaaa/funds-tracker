@@ -4,9 +4,10 @@ from domain.goals.values import GoalId
 from domain.users.values import UserId
 from domain.values import Title, Money
 from infra.models.goals import GoalModel
+from infra.repositories.dto.base import BaseOrmDTO
 
 
-class GoalOrmDTO:
+class GoalOrmDTO(BaseOrmDTO, GoalDTO):
 
     @staticmethod
     def from_orm_to_entity(model: GoalModel) -> Goal:
@@ -17,8 +18,8 @@ class GoalOrmDTO:
             target_amount=Money(model.target_amount),
             current_amount=Money(model.current_amount),
             status=model.status,
-            deadline=model.deadline if model.deadline else None,
-            created_at=model.created_at,
+            deadline=GoalOrmDTO._ensure_utc(model.deadline) if model.deadline else None,
+            created_at=GoalOrmDTO._ensure_utc(model.created_at),
         )
 
     @staticmethod

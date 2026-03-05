@@ -61,9 +61,9 @@ class TestAccountApi:
             url=f"/api/v1/users/{saved_user.id.as_generic_type()}/accounts",
             json={
                 "name": "Новый счет",
-                "initial_balance": 1000,
+                "initialBalance": 1000,
                 "currency": "RUB",
-                "account_type": "Card",
+                "accountType": "Card",
             },
         )
         assert response.status_code == 409
@@ -81,10 +81,10 @@ class TestAccountApi:
                 user_id=UserId(saved_user.id.as_generic_type()),
                 name=Title(faker.word()),
                 account_type=AccountType.CARD,
-                balance=Money(str(faker.pyfloat(positive=True))),
+                balance=Money(faker.pyfloat(positive=True)),
                 currency=AccountCurrency.RUB,
             )
-            await test_account_repo.save(account=new_acc)
+            await test_account_repo.save(new_acc)
 
         response = await client.get(
             url=f"/api/v1/users/{saved_user.id.as_generic_type()}/accounts"
@@ -123,7 +123,7 @@ class TestAccountApi:
         assert "не найден" in response.json()["message"]
 
     async def test_update_account_balance_success(
-        self, client, faker: Faker, saved_user, saved_account
+        self, client, faker: Faker, saved_user, saved_account, test_account_repo
     ):
         new_balance = faker.pyfloat(positive=True)
 
@@ -135,12 +135,17 @@ class TestAccountApi:
             json={
                 "actualBalance": new_balance,
                 "isMonthlyClosing": False,
-                "occurredAt": "2026-02-26T13:02:43.297Z",
             },
         )
 
         assert response.status_code == 200
-        assert saved_account.balance == Money(new_balance)
+
+        exists_account = await test_account_repo.get_by_id(
+            user_id=saved_account.user_id.as_generic_type(),
+            account_id=saved_account.id.as_generic_type(),
+        )
+
+        assert exists_account.balance == Money(new_balance)
 
     async def test_update_account_invalid_balance(
         self, client, faker: Faker, saved_user, saved_account
@@ -154,7 +159,6 @@ class TestAccountApi:
             json={
                 "actualBalance": new_balance,
                 "isMonthlyClosing": False,
-                "occurredAt": "2026-02-26T13:02:43.297Z",
             },
         )
 

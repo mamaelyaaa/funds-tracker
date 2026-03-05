@@ -93,7 +93,7 @@ class InMemoryHistoryRepository(BaseInMemoryRepository[HistoryId, History]):
         return res[-1] if res else None
 
 
-class PostgresHistoryRepository:
+class SQLAlchemyHistoryRepository:
 
     def __init__(self, session: AsyncSession):
         self._session = session
@@ -168,7 +168,7 @@ class PostgresHistoryRepository:
 
 
 def get_history_repository(session: SessionDep) -> HistoryRepositoryProtocol:
-    return PostgresHistoryRepository(session)
+    return SQLAlchemyHistoryRepository(session)
 
 
 HistoryRepositoryDep = Annotated[

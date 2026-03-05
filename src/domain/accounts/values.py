@@ -21,6 +21,4 @@ class AccountCurrency(str, Enum):
 
 @dataclass(frozen=True)
 class AccountId(DomainIdValueObject):
-    """Value-object уникального id счета"""
-
     pass

@@ -4,7 +4,7 @@ from faker.proxy import Faker
 from domain.histories.entities import History
 from domain.histories.protocols import HistoryRepositoryProtocol
 from domain.histories.service import HistoryService
-from infra.repositories.histories import InMemoryHistoryRepository
+from infra.repositories.histories import SQLAlchemyHistoryRepository
 
 
 @pytest.fixture
@@ -17,8 +17,8 @@ def test_history(test_account, faker: Faker) -> History:
 
 
 @pytest.fixture
-def test_history_repo() -> HistoryRepositoryProtocol:
-    return InMemoryHistoryRepository()
+def test_history_repo(test_session) -> HistoryRepositoryProtocol:
+    return SQLAlchemyHistoryRepository(test_session)
 
 
 @pytest.fixture

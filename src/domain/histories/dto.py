@@ -37,7 +37,7 @@ class HistoryDTO(BaseDTO):
             id=HistoryId(data.get("id")),
             account_id=AccountId(data.get("account_id")),
             balance=Money(data.get("balance")),
-            created_at=data.get("created_at"),
             delta=data.get("delta"),
             is_monthly_closing=data.get("is_monthly_closing"),
+            created_at=data.get("created_at"),
         )

@@ -4,69 +4,14 @@ from fastapi import Depends
 from sqlalchemy import select, func, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from domain.accounts.dto import AccountDTO
 from domain.accounts.entity import Account
 from domain.accounts.protocols import AccountRepositoryProtocol
 from infra import SessionDep
 from infra.models import AccountModel
-from .base import BaseInMemoryRepository
 from .dto.accounts import AccountOrmDTO
 
 
-class InMemoryAccountRepository(BaseInMemoryRepository[str, Account]):
-
-    def __init__(self):
-        super().__init__()
-
-    async def save(self, account: Account) -> str:
-        account_id = account.id.as_generic_type()
-        self._storage[account_id] = account
-        return account_id
-
-    async def get_by_id(self, user_id: str, account_id: str) -> Optional[Account]:
-        if account_id in self._storage:
-            if user_id == self._storage[account_id].user_id.as_generic_type():
-                return self._storage[account_id]
-        return None
-
-    async def get_by_user_id(self, user_id: str) -> list[Account]:
-        return [
-            account
-            for account in self._storage.values()
-            if account.user_id.as_generic_type() == user_id
-        ]
-
-    async def delete(self, user_id: str, account_id: str) -> Optional[str]:
-        account = await self.get_by_id(account_id=account_id, user_id=user_id)
-        self._storage.pop(account.id.as_generic_type())
-        return account_id
-
-    async def count_by_user_id(self, user_id: str) -> int:
-        return sum(
-            1
-            for acc in self._storage.values()
-            if acc.user_id.as_generic_type == user_id
-        )
-
-    async def is_name_taken(self, user_id: str, name: str) -> bool:
-        return any(
-            acc.name.as_generic_type() == name
-            and acc.user_id.as_generic_type() == user_id
-            for acc in self._storage.values()
-        )
-
-    async def update(
-        self, user_id: str, account_id: str, upd_data: dict[str, Any]
-    ) -> Optional[Account]:
-        account = await self.get_by_id(account_id=account_id, user_id=user_id)
-        if account:
-            account_dict = AccountDTO.from_entity_to_dict(account)
-            account_dict.update(**upd_data)
-            return AccountDTO.from_dict_to_entity(account_dict)
-        return account
-
-
-class PostgresAccountRepository:
+class SQLAlchemyAccountRepository:
 
     def __init__(self, session: AsyncSession):
         self._session = session
@@ -124,7 +69,7 @@ class PostgresAccountRepository:
 
 
 def get_account_repository(session: SessionDep) -> AccountRepositoryProtocol:
-    return PostgresAccountRepository(session)
+    return SQLAlchemyAccountRepository(session)
 
 
 AccountRepositoryDep = Annotated[

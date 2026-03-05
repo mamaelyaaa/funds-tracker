@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 
 @dataclass(frozen=True)
 class DomainEvent:
-    occurred_at: datetime = field(default_factory=datetime.now)
+    occurred_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 @dataclass(frozen=True)

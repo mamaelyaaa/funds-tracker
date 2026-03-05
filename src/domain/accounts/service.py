@@ -144,10 +144,13 @@ class AccountService(AccountCRUDService):
             )
         )
 
-        account.update_balance(
+        is_updated = account.update_balance(
             new_balance=Money(command.new_balance),
             is_monthly_closing=command.is_monthly_closing,
         )
+        if not is_updated:
+            logger.info("Баланс счёта #%s не изменен", account.id.short)
+            return
 
         await self._repository.update(
             account_id=command.account_id,

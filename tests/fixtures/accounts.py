@@ -12,7 +12,7 @@ from domain.accounts.service import AccountService
 from domain.accounts.values import AccountCurrency, AccountType
 from domain.values import Money, Title
 from infra.publishers.accounts import AccountTaskiqPublisher
-from infra.repositories.accounts import InMemoryAccountRepository
+from infra.repositories.accounts import SQLAlchemyAccountRepository
 
 
 @pytest.fixture
@@ -27,8 +27,8 @@ def test_account(saved_user, faker: Faker) -> Account:
 
 
 @pytest.fixture
-def test_account_repo() -> AccountRepositoryProtocol:
-    return InMemoryAccountRepository()
+def test_account_repo(test_session) -> AccountRepositoryProtocol:
+    return SQLAlchemyAccountRepository(test_session)
 
 
 @pytest.fixture
@@ -40,7 +40,7 @@ async def saved_account(test_account, saved_user, test_account_repo) -> Account:
 @pytest.fixture
 def test_account_publisher() -> AccountEventPublisherProtocol:
     publisher = AccountTaskiqPublisher()
-    publisher.publish = AsyncMock()
+    publisher.publish = AsyncMock(return_value=None)
     return publisher
 
 
