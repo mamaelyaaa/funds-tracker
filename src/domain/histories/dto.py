@@ -1,9 +1,10 @@
 from typing import Any
 
-from domain.accounts.values import AccountId, Money
+from domain.accounts.values import AccountId
 from domain.dto import BaseDTO
 from domain.histories.entities import History
 from domain.histories.values import HistoryId
+from domain.values import Money
 
 
 class HistoryDTO(BaseDTO):
@@ -36,7 +37,7 @@ class HistoryDTO(BaseDTO):
             id=HistoryId(data.get("id")),
             account_id=AccountId(data.get("account_id")),
             balance=Money(data.get("balance")),
-            created_at=data.get("created_at"),
             delta=data.get("delta"),
             is_monthly_closing=data.get("is_monthly_closing"),
+            created_at=data.get("created_at"),
         )

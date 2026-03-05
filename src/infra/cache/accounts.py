@@ -59,7 +59,7 @@ class RedisAccountCache:
     @staticmethod
     def deserialize(data: dict[str, Any]) -> Account:
         from domain.users.values import UserId
-        from domain.accounts.values import Title
+        from domain.values import Title
 
         return Account(
             id=AccountId(data.get("id")),

@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status, Body
+from fastapi import APIRouter, Depends, status
 
 from api.schemas import (
     BaseResponseSchema,
@@ -152,7 +152,6 @@ async def update_account_balance(
             account_id=account_id,
             user_id=user_id,
             new_balance=schema.actual_balance,
-            occurred_at=schema.occurred_at,
             is_monthly_closing=schema.is_monthly_closing,
         )
     )

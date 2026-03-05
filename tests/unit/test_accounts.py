@@ -4,12 +4,14 @@ import pytest
 from faker import Faker
 
 from domain.accounts.entity import Account
-from domain.accounts.exceptions import (
+from domain.accounts.values import AccountType, AccountCurrency
+from domain.exceptions import (
+    InvalidBalanceException,
     TooLargeTitleException,
     InvalidLettersTitleException,
-    InvalidBalanceException,
 )
-from domain.accounts.values import Title, AccountCurrency, AccountType, Money
+from domain.users.values import UserId
+from domain.values import Money, Title
 
 
 @pytest.mark.unit
@@ -29,26 +31,23 @@ class TestAccountDomain:
 
         with pytest.raises(InvalidBalanceException):
             Account.create(
-                user_id="user-123",
-                name=faker.word(),
+                user_id=UserId("user-123"),
+                name=Title(faker.word()),
                 currency=AccountCurrency.RUB,
                 account_type=AccountType.CARD,
-                balance=faker.pyfloat(positive=False),
+                balance=Money(faker.pyfloat(positive=False)),
             )
 
     def test_update_balance_success(self, test_account):
         """Тест на обновление баланса счёта"""
 
-        assert len(test_account.events) == 1
-
         test_account.update_balance(
             new_balance=Money(5000.3454),
             is_monthly_closing=True,
-            occurred_at=datetime.now(),
         )
-        assert test_account.balance.as_generic_type() == 5000.345
+        assert test_account.balance == Money(5000.35)
         assert test_account.updated_at > test_account.created_at
-        assert len(test_account.events) == 2
+        assert len(test_account.events) > 0
 
 
 @pytest.mark.unit

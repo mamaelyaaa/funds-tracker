@@ -3,15 +3,8 @@ from typing import Annotated
 
 from taskiq import TaskiqDepends
 
-from domain.accounts.events import (
-    AccountCreatedEvent,
-    BalanceUpdatedEvent,
-    FundUpdatedEvent,
-)
-from domain.funds.service import (
-    FundService,
-    get_fund_service,
-)
+from domain.accounts.events import AccountCreatedEvent, BalanceUpdatedEvent
+from domain.accounts.values import AccountId
 from domain.histories.commands import SaveHistoryCommand
 from domain.histories.service import get_history_service, HistoryService
 from infra import broker
@@ -24,7 +17,7 @@ async def save_account_history(
     event: AccountCreatedEvent | BalanceUpdatedEvent,
     history_service: Annotated[HistoryService, TaskiqDepends(get_history_service)],
 ) -> str:
-    logger.info(f"Сохраняем историю счёта #{event.account_id[:8]} ...")
+    logger.info(f"Сохраняем историю счёта #{AccountId(event.account_id).short} ...")
 
     history_id: str = await history_service.save_account_history(
         command=SaveHistoryCommand(
@@ -40,41 +33,3 @@ async def save_account_history(
         )
     )
     return history_id
-
-
-@broker.task(retry_on_error=True, max_retries=3)
-async def create_or_update_user_fund_task(
-    event: FundUpdatedEvent,
-    fund_service: Annotated[FundService, TaskiqDepends(get_fund_service)],
-):
-    await fund_service.create_or_update_period(
-        user_id=event.user_id, end_date=event.end_date
-    )
-
-
-# @broker.task(retry_on_error=True, max_retries=3)
-# async def create_fund_task(
-#     event: FundCreatedEvent,
-#     fund_service: Annotated[FundService, TaskiqDepends(get_fund_service)],
-# ):
-#
-#     await fund_service._create_new_fund(
-#         command=CreateFundCommand(
-#             user_id=event.user_id, start_date=event.start_date, end_date=event.end_date
-#         )
-#     )
-#     logger.info(f"Создан накопительный остаток для пользователя #{event.user_id[:8]}")
-#
-#
-# @broker.task(retry_on_error=True, max_retries=3)
-# async def update_fund_task(
-#     event: FundUpdatedEvent,
-#     fund_service: Annotated[FundService, TaskiqDepends(get_fund_service)],
-# ):
-#
-#     await fund_service.update_fund(
-#         command=UpdateFundCommand(
-#             user_id=event.user_id, end_date=event.end_date, new_amount=event.new_balance
-#         )
-#     )
-#     logger.info(f"Накопительный остаток обновлен для пользователя #{event.user_id[:8]}")

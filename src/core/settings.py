@@ -31,6 +31,8 @@ class FilesConfig(BaseModel):
     env: Path = base / ".env"
     env_example: Path = base / ".env.example"
 
+    test_db: Path = base / "tests" / "test.db"
+
 
 class LogsConfig(BaseModel):
     level: Literal["DEBUG", "INFO", "WARNING"] = "INFO"
@@ -53,6 +55,10 @@ class DBConfig(BaseModel):
     @property
     def POSTGRES_DSN(self) -> str:
         return f"postgresql+asyncpg://{self.user}:{self.password}@{self.host}:{self.port}/{self.name}"
+
+    @property
+    def AIOSQLITE_TEST_DSN(self) -> str:
+        return f"sqlite+aiosqlite:///{settings.files.test_db.as_posix()}"
 
 
 class BrokerConfig(BaseModel):

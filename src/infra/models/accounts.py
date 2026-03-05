@@ -8,7 +8,8 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from domain.accounts.values import AccountType, AccountCurrency, Title
+from domain.accounts.values import AccountType, AccountCurrency
+from domain.values import Title
 
 if TYPE_CHECKING:
     from . import UserModel, HistoryModel

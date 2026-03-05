@@ -8,8 +8,8 @@ Create Date: 2026-02-26 18:25:16.793594
 
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "c822ec2e8872"
@@ -33,7 +33,7 @@ def downgrade() -> None:
             "savings_percentage",
             sa.DOUBLE_PRECISION(precision=53),
             autoincrement=False,
-            nullable=False,
+            nullable=True,
         ),
     )
     op.add_column(

@@ -1,11 +1,13 @@
-from domain.accounts.values import AccountId, Money
+from domain.accounts.values import AccountId
 from domain.histories.dto import HistoryDTO
 from domain.histories.entities import History
 from domain.histories.values import HistoryId
+from domain.values import Money
 from infra.models import HistoryModel
+from infra.repositories.dto.base import BaseOrmDTO
 
 
-class HistoryOrmDTO(HistoryDTO):
+class HistoryOrmDTO(BaseOrmDTO, HistoryDTO):
 
     @staticmethod
     def from_orm_to_entity(model: HistoryModel) -> History:
@@ -15,7 +17,7 @@ class HistoryOrmDTO(HistoryDTO):
             delta=float(model.delta),
             balance=Money(model.balance),
             is_monthly_closing=model.is_monthly_closing,
-            created_at=model.created_at,
+            created_at=HistoryOrmDTO._ensure_utc(model.created_at),
         )
 
     @staticmethod

@@ -53,5 +53,12 @@ class SQLADatabaseHelper:
         return self._session_factory
 
 
-db_helper = SQLADatabaseHelper(url=settings.db.POSTGRES_DSN, echo=settings.db.sqla.echo)
+db_helper = SQLADatabaseHelper(
+    url=(
+        settings.db.POSTGRES_DSN
+        if settings.app.env == "DEV"
+        else settings.db.AIOSQLITE_TEST_DSN
+    ),
+    echo=settings.db.sqla.echo,
+)
 SessionDep = Annotated[AsyncSession, Depends(db_helper.session_getter)]
