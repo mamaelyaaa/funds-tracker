@@ -2,6 +2,7 @@ from typing import Annotated
 
 from fastapi import Depends
 
+from domain.values import Money, Title
 from infra.repositories.goals import GoalsRepositoryDep
 from .command import CreateGoalCommand, UpdateGoalPartiallyCommand
 from .dto import GoalDTO
@@ -29,33 +30,15 @@ class GoalsService:
         if exists:
             raise GoalTitleAlreadyTakenException
 
-        # # Если процентное соотношение превышает 100% - ошибка
-        # if command.savings_percentage:
-        #     goals = await self.get_user_goals(user_id=command.user_id)
-        #     if (
-        #         command.savings_percentage
-        #         + sum(goal.savings_percentage.as_generic_type() for goal in goals)
-        #         > 1
-        #     ):
-        #         raise GoalsPercentageOutOfBoundsException
-
         acc_data = {
             "user_id": command.user_id,
-            # "account_id": command.account.id if command.account else None,
             "title": command.title,
             "target_amount": command.target_amount,
             "current_amount": command.current_amount,
-            # "savings_percentage": command.savings_percentage,
             "deadline": command.deadline,
         }
 
         goal = Goal.create(**acc_data)
-
-        # Если цель привязывается к счёту, то текущий баланс берется из баланса счёта
-        # if command.account:
-        #     goal.change_current_amount(
-        #         new_current=command.account.balance.as_generic_type()
-        #     )
 
         await self._goals_repo.save(goal)
         return goal
@@ -82,41 +65,16 @@ class GoalsService:
         )
 
         if command.current_amount:
-            goal.change_current_amount(new_current=command.current_amount)
+            goal.current_amount = Money(command.current_amount)
 
         if command.target_amount:
-            goal.change_target_amount(new_target=command.target_amount)
+            goal.target_amount = Money(command.target_amount)
 
         if command.deadline:
             goal.change_deadline(new_date=command.deadline)
 
-        # if command.savings_percentage:
-        #     goals = await self._goals_repo.get_by_user_id_except_goal_id(
-        #         user_id=command.user_id,
-        #         goal_id=command.goal_id,
-        #     )
-        #     if (
-        #         command.savings_percentage
-        #         + sum(goal.savings_percentage.as_generic_type() for goal in goals)
-        #         > 1
-        #     ):
-        #         raise GoalsPercentageOutOfBoundsException
-        #
-        #     goal.change_percentage(
-        #         new_percentage=GoalPercentage(command.savings_percentage)
-        #     )
-        #
-        # if command.unlink_account:
-        #     goal.unlink_account()
-        #
-        # if command.account:
-        #     goal.link_to_account(account_id=command.account.id)
-        #     goal.change_current_amount(
-        #         new_current=command.account.balance.as_generic_type()
-        #     )
-
         if command.title:
-            goal.change_title(new_title=command.title)
+            goal.title = Title(command.title)
 
         await self._goals_repo.update(
             goal_id=command.goal_id,

@@ -1,28 +1,27 @@
 from dataclasses import dataclass, field
 from datetime import datetime
+from decimal import Decimal
 from typing import Optional
 
-from core.domain import DomainEntity, DomainEvent
-from domain.accounts.values import AccountId, Title, Money
+from core.domain import CreatedAtDomainMixin, EventDomainMixin
 from domain.users.values import UserId
-from .events import GoalAlreadyReachedEvent, GoalLinkedToAccountEvent
+from domain.values import Title, Money
+from .events import GoalAlreadyReachedEvent
 from .exceptions import InvalidGoalDeadlineException
-from .values import GoalId, GoalStatus, GoalPercentage
+from .values import GoalId, GoalStatus
 
 
 @dataclass(kw_only=True)
-class Goal(DomainEntity):
+class Goal(CreatedAtDomainMixin, EventDomainMixin):
     """Доменная модель целей пользователей"""
 
     id: GoalId = field(default_factory=GoalId.generate)
     user_id: UserId
-    account_id: Optional[AccountId] = field(default=None)
     title: Title
     target_amount: Money
     current_amount: Money = field(default=Money.zero)
     status: GoalStatus = field(default=GoalStatus.ACTIVE)
     deadline: Optional[datetime] = field(default=None)
-    _events: list[DomainEvent] = field(default_factory=list)
 
     # TODO Подключить Minio S3
     # img_url: FileUrl
@@ -30,20 +29,20 @@ class Goal(DomainEntity):
     @classmethod
     def create(
         cls,
-        user_id: str,
-        title: str,
-        target_amount: float,
-        current_amount: float = 0,
+        user_id: UserId,
+        title: Title,
+        target_amount: Money,
+        current_amount: Money = Money(0),
         deadline: Optional[datetime] = None,
     ):
         if deadline and deadline.isoformat() < datetime.now().isoformat():
             raise InvalidGoalDeadlineException
 
         return cls(
-            user_id=UserId(user_id),
-            title=Title(title),
-            current_amount=Money(current_amount),
-            target_amount=Money(target_amount),
+            user_id=user_id,
+            title=title,
+            current_amount=current_amount,
+            target_amount=target_amount,
             status=GoalStatus.ACTIVE,
             deadline=deadline,
         )
@@ -53,44 +52,18 @@ class Goal(DomainEntity):
             raise InvalidGoalDeadlineException
         self.deadline = new_date
 
-    def change_current_amount(self, new_current: float) -> None:
-        if new_current > self.target_amount.as_generic_type():
+    def change_current_amount(self, new_current: Money) -> None:
+        if new_current.as_generic_type() > self.target_amount.as_generic_type():
             self._events.append(
                 GoalAlreadyReachedEvent(
                     goal_id=self.id.as_generic_type(),
                     user_id=self.user_id.as_generic_type(),
                 )
             )
-        self.current_amount = Money(new_current)
-
-    def change_target_amount(self, new_target: float) -> None:
-        self.target_amount = Money(new_target)
-
-    def change_status(self, new_status: GoalStatus) -> None:
-        self.status = new_status
-
-    # def link_to_account(self, account_id: AccountId) -> None:
-    #     if self.account_id:
-    #         self._events.append(
-    #             GoalLinkedToAccountEvent(
-    #                 account_id=self.account_id.as_generic_type(),
-    #                 goal_id=self.id.as_generic_type(),
-    #                 user_id=self.user_id.as_generic_type(),
-    #             )
-    #         )
-    #     self.account_id = account_id
-
-    # def unlink_account(self) -> None:
-    #     self.account_id = None
-
-    # def change_percentage(self, new_percentage: GoalPercentage) -> None:
-    #     self.savings_percentage = new_percentage
-
-    def change_title(self, new_title: str) -> None:
-        self.title = Title(new_title)
+        self.current_amount = new_current
 
     @property
-    def progress_percent(self) -> float:
+    def progress_percent(self) -> Decimal:
         return (
             self.current_amount.as_generic_type() / self.target_amount.as_generic_type()
         )

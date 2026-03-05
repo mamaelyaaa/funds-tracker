@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Any
 
-from domain.accounts.values import Title, Money
+from ..values import Title, Money
 from domain.dto import BaseDTO
 from domain.users.values import UserId
 from .entities import Goal
@@ -18,11 +18,7 @@ class GoalDTO(BaseDTO):
         data = {
             "id": model.id.as_generic_type(),
             "user_id": model.user_id.as_generic_type(),
-            # "account_id": (
-            #     model.account_id.as_generic_type() if model.account_id else None
-            # ),
             "title": model.title.as_generic_type(),
-            # "savings_percentage": model.savings_percentage.as_generic_type(),
             "status": model.status,
             "target_amount": model.target_amount.as_generic_type(),
             "current_amount": model.current_amount.as_generic_type(),
@@ -39,16 +35,10 @@ class GoalDTO(BaseDTO):
         return Goal(
             id=GoalId(data.get("id")),
             user_id=UserId(data.get("user_id")),
-            # account_id=(
-            #     AccountId(data.get("account_id")) if data.get("account_id") else None
-            # ),
             title=Title(data.get("title")),
             target_amount=Money(data.get("target_amount")),
             current_amount=Money(data.get("current_amount")),
             status=data.get("status"),
-            # savings_percentage=GoalPercentage(data.get("savings_percentage")),
             deadline=data.get("deadline") if data.get("deadline") else None,
-            created_at=(
-                data.get("created_at") if data.get("created_at") else datetime.now()
-            ),
+            created_at=data.get("created_at"),
         )

@@ -13,5 +13,5 @@ class History(CreatedAtDomainMixin):
     id: HistoryId = field(default_factory=HistoryId.generate)
     account_id: AccountId
     balance: Money
-    delta: float
+    delta: float = field(default=0)
     is_monthly_closing: bool

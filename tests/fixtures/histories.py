@@ -1,20 +1,26 @@
-# @pytest.fixture
-# def test_history(test_account) -> History:
-#     return History.create(
-#         account_id=test_account.id.as_generic_type(), balance=test_account.balance
-#     )
-#
-#
-# @pytest.fixture
-# def test_history_repo() -> HistoryRepositoryProtocol:
-#     return InMemoryHistoryRepository()
-#
-#
-# @pytest.fixture
-# def test_goal_publisher() -> GoalsEventPublisherProtocol:
-#     return GoalsTaskiqPublisher()
-#
-#
-# @pytest.fixture
-# def test_history_service(test_goal_repo) -> GoalsService:
-#     return GoalsService(goals_repo=test_goal_repo)
+import pytest
+from faker.proxy import Faker
+
+from domain.histories.entities import History
+from domain.histories.protocols import HistoryRepositoryProtocol
+from domain.histories.service import HistoryService
+from infra.repositories.histories import InMemoryHistoryRepository
+
+
+@pytest.fixture
+def test_history(test_account, faker: Faker) -> History:
+    return History(
+        account_id=test_account.id,
+        balance=test_account.balance,
+        is_monthly_closing=faker.boolean(),
+    )
+
+
+@pytest.fixture
+def test_history_repo() -> HistoryRepositoryProtocol:
+    return InMemoryHistoryRepository()
+
+
+@pytest.fixture
+def test_history_service(test_history_repo) -> HistoryService:
+    return HistoryService(history_repo=test_history_repo)

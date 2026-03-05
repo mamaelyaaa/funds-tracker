@@ -3,13 +3,13 @@ from datetime import datetime, timedelta
 import pytest
 from faker.proxy import Faker
 
-from domain.accounts.exceptions import InvalidBalanceException
 from domain.accounts.values import AccountId
+from domain.exceptions import InvalidBalanceException
 from domain.goals.entities import Goal
 from domain.goals.exceptions import (
     InvalidGoalDeadlineException,
 )
-from domain.goals.values import GoalStatus, GoalPercentage
+from domain.goals.values import GoalStatus
 
 
 @pytest.mark.unit
@@ -44,10 +44,10 @@ class TestGoalDomain:
         test_goal.change_status(new_status=GoalStatus.FAILED)
         assert test_goal.status == GoalStatus.FAILED
 
-    @pytest.mark.skip
-    def test_change_percentage(self, test_goal):
-        test_goal.change_percentage(new_percentage=GoalPercentage(0.3))
-        assert test_goal.savings_percentage.as_generic_type() == 0.3
+    # @pytest.mark.skip
+    # def test_change_percentage(self, test_goal):
+    # test_goal.change_percentage(new_percentage=GoalPercentage(0.3))
+    # assert test_goal.savings_percentage.as_generic_type() == 0.3
 
     @pytest.mark.skip
     def test_link_to_account(self, test_goal):

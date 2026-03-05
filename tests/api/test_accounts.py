@@ -2,7 +2,9 @@ import pytest
 from faker.proxy import Faker
 
 from domain.accounts.entity import Account
-from domain.accounts.values import AccountCurrency, AccountType, Money
+from domain.accounts.values import AccountCurrency, AccountType
+from domain.users.values import UserId
+from domain.values import Money, Title
 
 
 @pytest.mark.asyncio
@@ -47,9 +49,9 @@ class TestAccountApi:
 
     async def test_account_already_exists(self, client, saved_user, test_account_repo):
         account = Account.create(
-            user_id=saved_user.id.as_generic_type(),
-            name="Новый счет",
-            balance=2000,
+            user_id=UserId(saved_user.id.as_generic_type()),
+            name=Title("Новый счет"),
+            balance=Money("2000"),
             currency=AccountCurrency.RUB,
             account_type=AccountType.CARD,
         )
@@ -76,10 +78,10 @@ class TestAccountApi:
 
         for i in range(5):
             new_acc = Account.create(
-                user_id=saved_user.id.as_generic_type(),
-                name=faker.word(),
+                user_id=UserId(saved_user.id.as_generic_type()),
+                name=Title(faker.word()),
                 account_type=AccountType.CARD,
-                balance=faker.pyfloat(positive=True),
+                balance=Money(str(faker.pyfloat(positive=True))),
                 currency=AccountCurrency.RUB,
             )
             await test_account_repo.save(account=new_acc)
@@ -108,7 +110,7 @@ class TestAccountApi:
         detail: dict = response.json()["detail"]
 
         assert detail["id"] == saved_account.id.as_generic_type()
-        assert detail["balance"] == saved_account.balance.as_generic_type()
+        assert Money(detail["balance"]) == saved_account.balance
         assert detail["name"] == saved_account.name.as_generic_type()
         assert "createdAt" in detail
 
@@ -138,9 +140,7 @@ class TestAccountApi:
         )
 
         assert response.status_code == 200
-        assert saved_account.balance.as_generic_type() == round(
-            new_balance, Money.MAX_DIGITS
-        )
+        assert saved_account.balance == Money(new_balance)
 
     async def test_update_account_invalid_balance(
         self, client, faker: Faker, saved_user, saved_account

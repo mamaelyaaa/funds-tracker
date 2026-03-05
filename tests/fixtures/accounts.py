@@ -10,6 +10,7 @@ from domain.accounts.protocols import (
 )
 from domain.accounts.service import AccountService
 from domain.accounts.values import AccountCurrency, AccountType
+from domain.values import Money, Title
 from infra.publishers.accounts import AccountTaskiqPublisher
 from infra.repositories.accounts import InMemoryAccountRepository
 
@@ -17,11 +18,11 @@ from infra.repositories.accounts import InMemoryAccountRepository
 @pytest.fixture
 def test_account(saved_user, faker: Faker) -> Account:
     return Account.create(
-        user_id=saved_user.id.as_generic_type(),
-        name=faker.word(),
+        user_id=saved_user.id,
+        name=Title(faker.word()),
         currency=AccountCurrency.RUB,
         account_type=AccountType.CARD,
-        balance=faker.pyfloat(positive=True),
+        balance=Money(faker.pyfloat(positive=True)),
     )
 
 

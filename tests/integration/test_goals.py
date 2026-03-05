@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import pytest
 from faker.proxy import Faker
 
-from domain.accounts.exceptions import InvalidBalanceException
+from domain.exceptions import InvalidBalanceException
 from domain.goals.command import CreateGoalCommand, UpdateGoalPartiallyCommand
 from domain.goals.entities import Goal
 from domain.goals.exceptions import (
