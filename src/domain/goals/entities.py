@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Optional
 
@@ -48,7 +48,7 @@ class Goal(CreatedAtDomainMixin, EventDomainMixin):
         )
 
     def change_deadline(self, new_date: datetime) -> None:
-        if new_date < datetime.now():
+        if new_date < datetime.now(timezone.utc):
             raise InvalidGoalDeadlineException
         self.deadline = new_date
 

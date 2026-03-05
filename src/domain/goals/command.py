@@ -2,8 +2,6 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
 
-from domain.accounts.entity import Account
-
 
 @dataclass(frozen=True)
 class CreateGoalCommand:

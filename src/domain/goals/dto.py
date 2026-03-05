@@ -1,9 +1,8 @@
-from datetime import datetime
 from typing import Any
 
-from ..values import Title, Money
 from domain.dto import BaseDTO
 from domain.users.values import UserId
+from domain.values import Title, Money
 from .entities import Goal
 from .values import GoalId
 

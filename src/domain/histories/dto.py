@@ -1,10 +1,10 @@
 from typing import Any
 
 from domain.accounts.values import AccountId
-from domain.values import Money
 from domain.dto import BaseDTO
 from domain.histories.entities import History
 from domain.histories.values import HistoryId
+from domain.values import Money
 
 
 class HistoryDTO(BaseDTO):

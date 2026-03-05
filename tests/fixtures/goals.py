@@ -4,21 +4,22 @@ from faker import Faker
 from domain.goals.entities import Goal
 from domain.goals.protocols import GoalsRepositoryProtocol
 from domain.goals.service import GoalsService
-from infra.repositories.goals import InMemoryGoalsRepository
+from domain.values import Title, Money
+from infra.repositories.goals import SQLAlchemyGoalRepository
 
 
 @pytest.fixture
 def test_goal(test_user, faker: Faker) -> Goal:
     return Goal.create(
-        user_id=test_user.id.as_generic_type(),
-        title=faker.word(),
-        target_amount=faker.pyfloat(positive=True),
+        user_id=test_user.id,
+        title=Title(faker.word()),
+        target_amount=Money(faker.pyfloat(positive=True)),
     )
 
 
 @pytest.fixture
-def test_goal_repo() -> GoalsRepositoryProtocol:
-    return InMemoryGoalsRepository()
+def test_goal_repo(test_session) -> GoalsRepositoryProtocol:
+    return SQLAlchemyGoalRepository(session=test_session)
 
 
 @pytest.fixture

@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from decimal import Decimal
 
 from core.domain import DomainEvent
-from domain.accounts.values import AccountCurrency
 
 
 @dataclass(kw_only=True, frozen=True)

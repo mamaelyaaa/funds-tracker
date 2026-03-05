@@ -9,23 +9,9 @@ from domain.users.repository import UserRepositoryProtocol
 from domain.users.values import UserId
 from infra import SessionDep
 from infra.models import UserModel
-from infra.repositories.base import BaseInMemoryRepository
 
 
-class InMemoryUserRepository(BaseInMemoryRepository[UserId, User]):
-
-    def __init__(self):
-        super().__init__()
-
-    async def save(self, user: User) -> UserId:
-        self._storage[user.id] = user
-        return user.id
-
-    async def get_by_id(self, user_id: UserId) -> Optional[User]:
-        return self._storage.get(user_id, None)
-
-
-class SQLAUserRepository:
+class SQLAlchemyUserRepository:
 
     def __init__(self, session: AsyncSession):
         self._session = session
@@ -47,7 +33,7 @@ class SQLAUserRepository:
 
 
 def get_user_repository(session: SessionDep) -> UserRepositoryProtocol:
-    return SQLAUserRepository(session)
+    return SQLAlchemyUserRepository(session)
 
 
 UserRepositoryDep = Annotated[UserRepositoryProtocol, Depends(get_user_repository)]

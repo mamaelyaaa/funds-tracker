@@ -1,96 +1,15 @@
-from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Optional, Annotated, Any
 
 from fastapi import Depends
 from sqlalchemy import select, desc, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from domain.accounts.values import AccountId
 from domain.histories.entities import History
 from domain.histories.protocols import HistoryRepositoryProtocol
-from domain.histories.values import HistoryId
 from infra.database import SessionDep
 from infra.models import HistoryModel
-from infra.repositories.base import BaseInMemoryRepository
 from infra.repositories.dto.histories import HistoryOrmDTO
-
-
-class InMemoryHistoryRepository(BaseInMemoryRepository[HistoryId, History]):
-    def __init__(self):
-        super().__init__()
-        self._account_index: dict[AccountId, list[History]] = defaultdict(list)
-
-    async def save(self, history: History) -> HistoryId:
-        self._storage[history.id] = history
-        self._account_index[history.account_id].append(history)
-        return history.id
-
-    async def get_by_id(self, history_id: HistoryId) -> Optional[History]:
-        return self._storage.get(history_id, None)
-
-    async def get_history_linked_to_period(
-        self, account_id: AccountId, period: str, start_date: datetime
-    ) -> list[History]:
-
-        account_histories = self._account_index.get(account_id, [])
-        filtered = [h for h in account_histories if h.created_at >= start_date]
-
-        if not filtered:
-            return []
-
-        period_groups: dict[datetime, History] = {}
-
-        for history in filtered:
-            trunc_date = self._truncate_datetime(history.created_at, period)
-
-            if (
-                trunc_date not in period_groups
-                or history.created_at > period_groups[trunc_date].created_at
-            ):
-                period_groups[trunc_date] = history
-
-        result = list(period_groups.values())
-        result.sort(key=lambda x: x.created_at, reverse=True)
-
-        return result
-
-    @staticmethod
-    def _truncate_datetime(dt: datetime, period: str) -> datetime:
-        if period == "minute":
-            return dt.replace(second=0, microsecond=0)
-        elif period == "hour":
-            return dt.replace(minute=0, second=0, microsecond=0)
-        elif period == "day":
-            return dt.replace(hour=0, minute=0, second=0, microsecond=0)
-        elif period == "week":
-            days_since_monday = dt.weekday()
-            start_of_week = dt - timedelta(days=days_since_monday)
-            return start_of_week.replace(hour=0, minute=0, second=0, microsecond=0)
-        elif period == "month":
-            return dt.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        elif period == "year":
-            return dt.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
-        else:
-            return dt.replace(hour=0, minute=0, second=0, microsecond=0)
-
-    async def update(self, history_id: HistoryId, new_history: History) -> History:
-        await self.save(new_history)
-        return new_history
-
-    async def get_acc_by_acc_id_with_time_limit(
-        self, account_id: AccountId, time_limit: timedelta
-    ) -> Optional[History]:
-        history: list[History] = [
-            hist for hist in self._storage.values() if hist.account_id == account_id
-        ]
-        res: list[History] = []
-
-        for row in history:
-            if datetime.now() - row.created_at < time_limit:
-                res.append(row)
-
-        return res[-1] if res else None
 
 
 class SQLAlchemyHistoryRepository:

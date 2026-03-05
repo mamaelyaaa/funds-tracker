@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 from faker.proxy import Faker
@@ -8,9 +8,10 @@ from domain.goals.command import CreateGoalCommand, UpdateGoalPartiallyCommand
 from domain.goals.entities import Goal
 from domain.goals.exceptions import (
     GoalTitleAlreadyTakenException,
-    GoalsPercentageOutOfBoundsException,
     GoalNotFoundException,
 )
+from domain.users.values import UserId
+from domain.values import Title, Money
 
 
 @pytest.mark.asyncio
@@ -18,18 +19,18 @@ from domain.goals.exceptions import (
 @pytest.mark.integration
 class TestGoalsService:
 
-    async def test_goals_service_create_success(
+    async def test_create_success(
         self,
         test_goal,
-        test_goal_service,
         test_goal_repo,
+        test_goal_service,
     ):
         """Успешное создание цели с помощью сервиса"""
 
         goal = await test_goal_service.create_goal(
             command=CreateGoalCommand(
                 title=test_goal.title.as_generic_type(),
-                target_amount=test_goal.target_amount.as_generic_type(),
+                target_amount=float(test_goal.target_amount.as_generic_type()),
                 user_id=test_goal.user_id.as_generic_type(),
             )
         )
@@ -49,54 +50,16 @@ class TestGoalsService:
 
         await test_goal_repo.save(test_goal)
 
-        assert await test_goal_repo.count() == 1
-
         with pytest.raises(GoalTitleAlreadyTakenException):
             await test_goal_service.create_goal(
                 command=CreateGoalCommand(
                     user_id=test_goal.user_id.as_generic_type(),
                     title=test_goal.title.as_generic_type(),
-                    target_amount=test_goal.target_amount.as_generic_type(),
+                    target_amount=float(test_goal.target_amount.as_generic_type()),
                 )
             )
 
         assert await test_goal_repo.count() == 1
-
-    @pytest.mark.skip
-    async def test_goal_percentage_out_of_bounds(
-        self,
-        faker: Faker,
-        test_goal,
-        test_goal_repo,
-        test_goal_service,
-    ):
-        """Пользователю необходимо перераспределить проценты на цели"""
-
-        await test_goal_repo.save(test_goal)
-
-        with pytest.raises(GoalsPercentageOutOfBoundsException):
-            await test_goal_service.create_goal(
-                command=CreateGoalCommand(
-                    user_id=test_goal.user_id.as_generic_type(),
-                    title=faker.word(),
-                    target_amount=test_goal.target_amount.as_generic_type(),
-                    savings_percentage=test_goal.savings_percentage.as_generic_type()
-                    + 1,
-                )
-            )
-
-        assert await test_goal_repo.count() == 1
-
-        await test_goal_service.create_goal(
-            command=CreateGoalCommand(
-                user_id=test_goal.user_id.as_generic_type(),
-                title=faker.word(),
-                target_amount=test_goal.target_amount.as_generic_type(),
-                savings_percentage=1 - test_goal.savings_percentage.as_generic_type(),
-            )
-        )
-
-        assert await test_goal_repo.count() == 2
 
     async def test_user_goal_success(
         self,
@@ -142,9 +105,9 @@ class TestGoalsService:
         for _ in range(5):
             await test_goal_repo.save(
                 Goal.create(
-                    user_id="user-123",
-                    title=faker.word(),
-                    target_amount=faker.pyfloat(positive=True),
+                    user_id=UserId("user-123"),
+                    title=Title(faker.word()),
+                    target_amount=Money(faker.pyfloat(positive=True)),
                 )
             )
 
@@ -159,7 +122,7 @@ class TestGoalsService:
             {"title": "Новое название"},
             {"current_amount": 5000.0},
             {"target_amount": 100000.0},
-            {"deadline": datetime.now() + timedelta(days=30)},
+            {"deadline": datetime.now(timezone.utc) + timedelta(days=30)},
             # {"savings_percentage": 0.25},
             # 2. Обновление нескольких полей
             {
@@ -168,22 +131,16 @@ class TestGoalsService:
             },
             {
                 "target_amount": 150000.0,
-                "deadline": datetime.now() + timedelta(days=60),
+                "deadline": datetime.now(timezone.utc) + timedelta(days=60),
             },
             # 3. Обновление всех полей сразу
             {
                 "title": "Полное обновление",
                 "current_amount": 10000.0,
                 "target_amount": 200000.0,
-                "deadline": datetime.now() + timedelta(days=90),
-                # "savings_percentage": 0.5,
+                "deadline": datetime.now(timezone.utc) + timedelta(days=90),
             },
-            # 4. Граничные значения процента
-            # {"savings_percentage": 0.01},
-            # {"savings_percentage": 1.0},  # 100%
-            # 5. Удаление привязки к счету
-            # {"unlink_account": True},
-            # 7. Обновление с None значениями
+            # 4. Обновление с None значениями
             {"title": None, "current_amount": None},
         ],
     )
@@ -248,36 +205,6 @@ class TestGoalsService:
                     **fields_to_update,
                 )
             )
-
-    @pytest.mark.skip
-    async def test_link_account_id_success(
-        self,
-        test_goal,
-        test_goal_repo,
-        test_goal_service,
-        test_account,
-        test_account_repo,
-    ):
-        """Привязка счета к текущей цели"""
-
-        # Сохраняем цель пользователя
-        await test_goal_repo.save(test_goal)
-
-        acc_id = await test_account_repo.save(test_account)
-        exists_acc = await test_account_repo.get_by_id(
-            account_id=acc_id,
-            user_id=test_account.user_id.as_generic_type(),
-        )
-        assert exists_acc.id.as_generic_type() == acc_id
-
-        upd_goal = await test_goal_service.update_goal_partially(
-            command=UpdateGoalPartiallyCommand(
-                # account=exists_acc,
-                goal_id=test_goal.id.as_generic_type(),
-                user_id=test_goal.user_id.as_generic_type(),
-            )
-        )
-        assert upd_goal.account_id.as_generic_type() == exists_acc.id.as_generic_type()
 
     async def test_goal_delete_success(
         self,

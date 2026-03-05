@@ -10,8 +10,8 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from domain.values import Title
 from domain.goals.values import GoalStatus
+from domain.values import Title
 
 if TYPE_CHECKING:
     from . import UserModel

@@ -1,5 +1,4 @@
 from dataclasses import dataclass, field
-from datetime import datetime
 
 from core.domain import CreatedAtDomainMixin
 from .values import UserId

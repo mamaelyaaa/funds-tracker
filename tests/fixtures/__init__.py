@@ -27,5 +27,5 @@ from .accounts import (
     test_account_service,
 )
 from .goals import test_goal, test_goal_repo, test_goal_service
-from .users import test_user, saved_user, test_user_repo
 from .histories import test_history, test_history_repo, test_history_service
+from .users import test_user, saved_user, test_user_repo

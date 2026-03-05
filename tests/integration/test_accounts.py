@@ -93,3 +93,30 @@ class TestAccountService:
         )
 
         assert exists_account.balance == new_balance
+
+    async def test_update_same_balance(
+        self,
+        faker: Faker,
+        test_account,
+        test_account_repo,
+        test_account_publisher: AsyncMock,
+        test_account_service,
+    ):
+        await test_account_repo.save(test_account)
+
+        await test_account_service.update_balance(
+            command=UpdateAccountBalanceCommand(
+                user_id=test_account.user_id.as_generic_type(),
+                account_id=test_account.id.as_generic_type(),
+                new_balance=float(test_account.balance.as_generic_type()),
+            )
+        )
+
+        test_account_publisher.publish.assert_not_awaited()
+
+        exists_account = await test_account_repo.get_by_id(
+            user_id=test_account.user_id.as_generic_type(),
+            account_id=test_account.id.as_generic_type(),
+        )
+
+        assert exists_account.balance == test_account.balance

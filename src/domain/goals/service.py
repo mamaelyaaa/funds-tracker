@@ -2,6 +2,7 @@ from typing import Annotated
 
 from fastapi import Depends
 
+from domain.users.values import UserId
 from domain.values import Money, Title
 from infra.repositories.goals import GoalsRepositoryDep
 from .command import CreateGoalCommand, UpdateGoalPartiallyCommand
@@ -31,10 +32,10 @@ class GoalsService:
             raise GoalTitleAlreadyTakenException
 
         acc_data = {
-            "user_id": command.user_id,
-            "title": command.title,
-            "target_amount": command.target_amount,
-            "current_amount": command.current_amount,
+            "user_id": UserId(command.user_id),
+            "title": Title(command.title),
+            "target_amount": Money(command.target_amount),
+            "current_amount": Money(command.current_amount),
             "deadline": command.deadline,
         }
 
