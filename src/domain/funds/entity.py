@@ -29,19 +29,19 @@ class Fund(CreatedAtDomainMixin):
     @classmethod
     def create(
         cls,
-        user_id: str,
-        total_amount: float,
-        status: FundStatus,
+        user_id: UserId,
+        total_amount: Money,
         start_date: datetime,
         end_date: datetime,
+        status: FundStatus = FundStatus.OPEN,
     ) -> "Fund":
 
-        if start_date > end_date:
+        if start_date >= end_date:
             raise ...
 
         return cls(
-            user_id=UserId(user_id),
-            total_amount=Money(total_amount),
+            user_id=user_id,
+            total_amount=total_amount,
             status=status,
             end_date=end_date,
             start_date=start_date,
@@ -50,11 +50,6 @@ class Fund(CreatedAtDomainMixin):
     def update_status(self, new_status: FundStatus) -> None:
         if new_status == self.status:
             return
-
-        self.status = new_status
-
-    def update_amount(self, new_balance: float) -> None:
-        self.total_amount = Money(new_balance)
 
 
 # @dataclass(kw_only=True)
@@ -98,24 +93,3 @@ class FundDistribution(CreatedAtDomainMixin):
     reserve_type: FundRuleType
     amount: Money
     percent_applied: Percent
-
-    @classmethod
-    def create(
-        cls,
-        fund_id: str,
-        reserve_id: str,
-        reserve_type: FundRuleType,
-        amount: float,
-        percent_applied: int,
-    ):
-        return cls(
-            fund_id=FundId(fund_id),
-            reserve_id=(
-                AccountId(reserve_id)
-                if reserve_type == FundRuleType.ACCOUNT
-                else GoalId(reserve_id)
-            ),
-            reserve_type=reserve_type,
-            amount=Money(amount),
-            percent_applied=Percent(percent_applied),
-        )

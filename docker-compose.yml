@@ -79,7 +79,7 @@ services:
     command: > 
       sh -c "sleep 10 &&
              cd src && 
-             uv run taskiq worker infra:broker -fsd -tp infra.tasks --ack-type when_executed -w ${BROKER__WORKERS}"
+             uv run taskiq worker infra:broker -fsd -tp infra.tasks --ack-type when_executed --reload"
 
   redis:
     image: redis:7

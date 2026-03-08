@@ -1,14 +1,14 @@
+import logging
+from datetime import datetime, timedelta, timezone
+
+from domain.histories.protocols import HistoryRepositoryProtocol
+from domain.users.values import UserId
+from domain.values import Money
 from infra.repositories.funds import FundRepositoryDep
-from .commands import (
-    CreateFundCommand,
-    UpdateFundCommand,
-)
-from .dto import FundDTO
+from infra.repositories.histories import HistoryRepositoryDep
 from .entity import Fund
-from .protocol import (
-    FundRepositoryProtocol,
-)
-from .values import FundStatus
+from .exceptions import FundNotFoundException
+from .protocol import FundRepositoryProtocol
 
 # class FundRulesService:
 #     """Сервис работы с распределением остатка по процентам"""
@@ -70,114 +70,93 @@ from .values import FundStatus
 #     ):
 #         pass
 
+logger = logging.getLogger(__name__)
+
 
 class FundService:
 
     def __init__(
         self,
         fund_repo: FundRepositoryProtocol,
-        # fund_distribution_repo: FundDistributionRepositoryProtocol,
-        # fund_rule_repo: FundRuleRepositoryProtocol,
-        # account_repo: AccountRepositoryProtocol,
-        # goal_repo: GoalsRepositoryProtocol,
+        history_repo: HistoryRepositoryProtocol,
     ):
-        # super().__init__(
-        #     fund_rule_repo=fund_rule_repo,
-        #     account_repo=account_repo,
-        #     goal_repo=goal_repo,
-        # )
         self._fund_repo = fund_repo
-        # self._fund_distribution_repo = fund_distribution_repo
+        self._history_repo = history_repo
 
-    async def create_fund(self, command: CreateFundCommand) -> None:
+    async def create_or_update_period(self, user_id: str, end_date: datetime) -> str:
+        """Создаем новый период или обновляем существующий"""
+
+        open_fund = await self._fund_repo.get_last_opened(user_id)
+
+        if open_fund:
+            logger.info("Обновляем запись о накопленном остатке")
+            return await self._update_fund(fund=open_fund, end_date=end_date)
+        else:
+            logger.info("Создаем новую запись о накопленном остатке")
+            return await self._create_new_fund(user_id=user_id, end_date=end_date)
+
+    async def _create_new_fund(self, user_id: str, end_date: datetime) -> str:
+        """
+        Создаем новый период для остатка
+
+        Если до этого закрытых периодов не было, то start_date становится значением даты создания первой записи
+        Если до этого был закрытый период, то start_date = last_closed_date + 1
+        """
+
+        last_closed_fund = await self._fund_repo.get_last_closed(user_id)
+        first_history_date = await self._history_repo.get_first_history_date_by_user(
+            user_id
+        )
+
+        start_date = (
+            last_closed_fund.end_date + timedelta(days=1)
+            if last_closed_fund
+            else first_history_date
+        )
+
+        total_amount = await self._history_repo.get_sum_delta_in_period(
+            user_id=user_id,
+            start_date=start_date,
+            end_date=end_date,
+        )
+
         fund = Fund.create(
-            user_id=command.user_id,
-            total_amount=0,
-            start_date=command.start_date,
-            end_date=command.end_date,
-            status=FundStatus.OPEN,
+            user_id=UserId(user_id),
+            total_amount=Money(total_amount),
+            start_date=start_date,
+            end_date=end_date,
         )
-        await self._fund_repo.save(fund)
-        return
+        fund_id = await self._fund_repo.save(fund)
+        return fund_id
 
-    async def update_fund(self, command: UpdateFundCommand) -> None:
-        """Создает или обновляет запись об остатке"""
+    async def _update_fund(self, fund: Fund, end_date: datetime) -> str:
+        """Обновляет существующий остаток"""
 
-        # Проверяем существует ли открытая запись в БД
-        opened_fund = await self._fund_repo.get_by_user_id(
-            user_id=command.user_id, status=FundStatus.OPEN
+        new_total = await self._history_repo.get_sum_delta_in_period(
+            user_id=fund.user_id.as_generic_type(),
+            end_date=end_date,
+            start_date=fund.start_date,
         )
 
-        if not opened_fund:
-            raise ...
-
-        if opened_fund.total_amount != command.new_amount:
-            opened_fund.update_amount(new_balance=command.new_amount)
+        data = {"total_amount": new_total, "end_date": end_date}
 
         await self._fund_repo.update(
-            user_id=command.user_id,
-            fund_id=opened_fund.id.as_generic_type(),
-            upd_data=FundDTO.from_entity_to_dict(
-                opened_fund, excludes=["id", "user_id"]
-            ),
+            fund_id=fund.id.as_generic_type(),
+            user_id=fund.user_id.as_generic_type(),
+            upd_data=data,
         )
+        return fund.id.as_generic_type()
 
-        # for reserve in command.reserves:
-        #
-        #     fund_dist = FundDistribution.create(
-        #         fund_id=fund.id.as_generic_type(),
-        #         reserve_id=reserve.reserve_id,
-        #         reserve_type=reserve.reserve_type,
-        #         amount=reserve.amount,
-        #         percent_applied=reserve.percent_applied,
-        #     )
-        #
-        # return fund
+    async def get_last_opened_fund(self, user_id: str) -> Fund:
+        """Получение крайней нераспределенной записи об остатках"""
 
-    # async def allocate_new_funds(self, command: AllocateFundCommand):
-    #     """Сохраняет распределение об остатке за период"""
-    #
-    #     # 1. Выбираются нужные счета/цели и их проценты
-    #     # 2. Получаем накопленный остаток за текущий период (он создается фоново при обновлении
-    #
-    #     # Получаем крайний накопленный остаток
-    #
-    #     last_fund = await self._fund_repo.get_last_opened(user_id=command.user_id)
-    #
-    #     # if not last_fund:
-    #     #     raise FundNotExistsException
-    #
-    #     # Получаем все резервы с процентами
-    #
-    #     ...
-    #
-    #     # Закрываем текущее распределение остатка и создаем записи в fund-distribution
-    #
-    #     last_fund.update_status(new_status=FundStatus.CLOSED)
-    #     # await self._fund_repo.update(
-    #     #     user_id=command.user_id,
-    #     #     fund_id=last_fund.id.as_generic_type(),
-    #     #     upd_data={"status": FundStatus.CLOSED},
-    #     # )
-    #     ...
-    #
-    # async def get_actual_funds(self, user_id: str) -> Fund:
-    #     """Получает текущий накопленный остаток"""
-    #
-    #     funds = await self._fund_repo.get_by_user_id(user_id)
-    #     if not funds:
-    #         raise
-    #     return funds
+        fund = await self._fund_repo.get_last_opened(user_id)
+        if not fund:
+            raise FundNotFoundException
+        return fund
 
 
 def get_fund_service(
-    # acc_repo: AccountRepositoryDep,
-    # goal_repo: GoalsRepositoryDep,
-    fund_repo: FundRepositoryDep,
+    fund_repo: FundRepositoryDep, history_repo: HistoryRepositoryDep
 ) -> FundService:
-    return FundService(
-        fund_repo=fund_repo
-        # account_repo=acc_repo,
-        # fund_repo=fund_repo,
-        # goal_repo=goal_repo
-    )
+    return FundService(fund_repo=fund_repo, history_repo=history_repo)

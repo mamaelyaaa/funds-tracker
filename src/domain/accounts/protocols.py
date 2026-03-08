@@ -6,7 +6,7 @@ from .entity import Account
 
 class AccountRepositoryProtocol(Protocol):
 
-    async def save(self, entity: Account) -> str:
+    async def save(self, account: Account) -> str:
         pass
 
     async def get_by_id(self, user_id: str, account_id: str) -> Optional[Account]:
@@ -27,9 +27,6 @@ class AccountRepositoryProtocol(Protocol):
     async def update(
         self, user_id: str, account_id: str, upd_data: dict[str, Any]
     ) -> Optional[Account]:
-        pass
-
-    async def check_exists_by_id(self, user_id: str, account_id: str) -> bool:
         pass
 
 

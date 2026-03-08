@@ -15,6 +15,9 @@ class HistoryRepositoryProtocol(Protocol):
     async def get_last_history(self, account_id: str) -> Optional[History]:
         pass
 
+    async def get_first_history_date_by_user(self, user_id: str) -> Optional[datetime]:
+        pass
+
     async def get_history_linked_to_period(
         self,
         account_id: str,
@@ -28,4 +31,9 @@ class HistoryRepositoryProtocol(Protocol):
     async def update(
         self, history_id: str, upd_data: dict[str, Any]
     ) -> Optional[History]:
+        pass
+
+    async def get_sum_delta_in_period(
+        self, user_id: str, start_date: datetime, end_date: datetime
+    ) -> int:
         pass

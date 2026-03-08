@@ -1,5 +1,4 @@
 from dataclasses import dataclass, field
-from datetime import datetime
 from decimal import Decimal
 
 from core.domain import TimestampDomainMixin, EventDomainMixin
@@ -8,7 +7,6 @@ from domain.values import Title, Money
 from .events import (
     AccountCreatedEvent,
     BalanceUpdatedEvent,
-    FundCreatedEvent,
 )
 from .values import AccountType, AccountCurrency, AccountId
 
@@ -41,19 +39,12 @@ class Account(TimestampDomainMixin, EventDomainMixin):
             balance=balance,
             currency=currency,
         )
-        account.events.extend(
-            [
-                AccountCreatedEvent(
-                    user_id=account.user_id.as_generic_type(),
-                    account_id=account.id.as_generic_type(),
-                    new_balance=balance.as_generic_type(),
-                ),
-                FundCreatedEvent(
-                    user_id=account.user_id.as_generic_type(),
-                    start_date=account.created_at,
-                    end_date=datetime.now(),
-                ),
-            ],
+        account.events.append(
+            AccountCreatedEvent(
+                user_id=account.user_id.as_generic_type(),
+                account_id=account.id.as_generic_type(),
+                new_balance=balance.as_generic_type(),
+            ),
         )
         return account
 
@@ -73,7 +64,7 @@ class Account(TimestampDomainMixin, EventDomainMixin):
                 new_balance=self.balance.as_generic_type(),
                 delta=delta,
                 is_monthly_closing=is_monthly_closing,
-            )
+            ),
         )
         self._touch()
         return True

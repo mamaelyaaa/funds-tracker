@@ -9,4 +9,13 @@ class InvalidPercentException(AppException):
 
     @property
     def message(self) -> str:
-        return f"Выбран некорректный процент для вашей цели"
+        return "Выбран некорректный процент для вашей цели"
+
+
+class FundNotFoundException(AppException):
+    status_code: int = status.HTTP_404_NOT_FOUND
+    suggestion: str = "Плохо все, че сказать, брокер не работает"
+
+    @property
+    def message(self) -> str:
+        return "Накопленный остаток отсутствует"

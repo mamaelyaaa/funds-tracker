@@ -4,6 +4,7 @@ from typing import Optional, Annotated, Any
 from fastapi import Depends
 from sqlalchemy import select, desc, func, update, between
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from domain.histories.entities import History
 from domain.histories.protocols import HistoryRepositoryProtocol
@@ -98,6 +99,17 @@ class SQLAlchemyHistoryRepository:
         )
         res = await self._session.scalar(query)
         return res or 0
+
+    async def get_first_history_date_by_user(self, user_id: str) -> Optional[datetime]:
+        query = (
+            select(HistoryModel.created_at)
+            .join(HistoryModel.account)
+            .filter(AccountModel.user_id == user_id)
+            .order_by(HistoryModel.created_at.asc())
+            .limit(1)
+        )
+        res = await self._session.execute(query)
+        return res.scalar_one_or_none()
 
 
 def get_history_repository(session: SessionDep) -> HistoryRepositoryProtocol:

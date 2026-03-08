@@ -8,7 +8,6 @@ from taskiq import AsyncTaskiqTask
 from core.domain import DomainEvent
 from domain.accounts.events import (
     AccountCreatedEvent,
-    FundCreatedEvent,
     BalanceUpdatedEvent,
 )
 from domain.accounts.protocols import AccountEventPublisherProtocol
@@ -27,20 +26,23 @@ class AccountTaskiqPublisher:
             BalanceUpdatedEvent: [
                 self._handle_account_update_history,
             ],
-            FundCreatedEvent: [self._create_user_fund],
         }
 
     async def publish(self, event: DomainEvent) -> None:
+        tasks = []
         for handler in self.handlers.get(type(event)):
-            await handler(event)
-        return
+            task = await handler(event)
+            if task:
+                tasks.append(task)
+        if tasks:
+            await self.track_tasks(tasks)
 
+    @staticmethod
     async def _handle_account_update_history(
-        self, event: AccountCreatedEvent | BalanceUpdatedEvent
+        event: AccountCreatedEvent | BalanceUpdatedEvent,
     ) -> None:
-        task: AsyncTaskiqTask = await save_account_history.kiq(event)
-        asyncio.create_task(self.track_tasks([task]))
-        return
+
+        return await save_account_history.kiq(event)
 
     @staticmethod
     async def track_tasks(tasks: list[AsyncTaskiqTask]) -> None:

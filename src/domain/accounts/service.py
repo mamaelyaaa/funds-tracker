@@ -67,7 +67,6 @@ class AccountCRUDService:
             currency=command.currency,
         )
         acc_id = await self._repository.save(new_account)
-
         await self._publish(account=new_account)
 
         logger.info("Новый счёт #%s создан", AccountId(acc_id).short)
