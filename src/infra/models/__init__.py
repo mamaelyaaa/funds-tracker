@@ -8,6 +8,7 @@ __all__ = (
     "GoalModel",
     "FundModel",
     "FundStatus",
+    "FundDistributionModel",
 )
 
 from .accounts import AccountModel, AccountCurrency
@@ -15,4 +16,4 @@ from .base import Base
 from .goals import GoalStatus, GoalModel
 from .histories import HistoryModel
 from .users import UserModel
-from .funds import FundModel, FundStatus
+from .funds import FundModel, FundStatus, FundDistributionModel

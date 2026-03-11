@@ -40,6 +40,5 @@ class UpdateFundCommand:
 @dataclass(frozen=True)
 class ReserveCreateCommand:
     reserve_id: str
-    user_id: str
     reserve_type: FundRuleType
-    percent: Percent
+    percent: int

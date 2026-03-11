@@ -4,7 +4,7 @@ from core.domain import DomainEvent
 from .entities import Goal
 
 
-class GoalsRepositoryProtocol(Protocol):
+class GoalRepositoryProtocol(Protocol):
 
     async def save(self, goal: Goal) -> str: ...
 
@@ -23,7 +23,7 @@ class GoalsRepositoryProtocol(Protocol):
     async def delete(self, goal: Goal) -> None: ...
 
     async def update(
-        self, user_id: str, goal_id: str, new_goal: dict[str, Any]
+        self, user_id: str, goal_id: str, upd_data: dict[str, Any], commit: bool
     ) -> Optional[Goal]: ...
 
     async def check_exists_by_id(self, user_id: str, account_id: str) -> bool: ...

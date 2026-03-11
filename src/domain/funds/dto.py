@@ -1,10 +1,12 @@
 from typing import Any
 
+from domain.accounts.values import AccountId
 from domain.dto import BaseDTO
-from domain.funds.entity import Fund
-from domain.funds.values import FundId
+from domain.funds.entity import Fund, FundDistribution
+from domain.funds.values import FundId, FundDistributionId, FundRuleType
+from domain.goals.values import GoalId
 from domain.users.values import UserId
-from domain.values import Money
+from domain.values import Money, Percent
 
 
 class FundDTO(BaseDTO):
@@ -37,5 +39,47 @@ class FundDTO(BaseDTO):
         }
         for excluded in excludes:
             data.pop(excluded)
+
+        return data
+
+
+class FundDistDTO(BaseDTO):
+
+    @staticmethod
+    def from_dict_to_entity(data: dict[str, Any]) -> FundDistribution:
+        return FundDistribution(
+            id=FundDistributionId(data.get("id")),
+            fund_id=FundId(data.get("fund_id")),
+            reserve_id=(
+                AccountId(data.get("reserve_id"))
+                if data.get("status") == FundRuleType.ACCOUNT
+                else GoalId(data.get("reserve_id"))
+            ),
+            reserve_type=data.get("reserve_type"),
+            amount=Money(data.get("amount")),
+            percent_applied=Percent(data.get("percent_applied")),
+            created_at=data.get("created_at"),
+        )
+
+    @staticmethod
+    def from_entity_to_dict(
+        model: FundDistribution, excludes: list[str] = None
+    ) -> dict[str, Any]:
+        if not excludes:
+            excludes = []
+
+        data = {
+            "id": model.id.as_generic_type(),
+            "fund_id": model.fund_id.as_generic_type(),
+            "reserve_id": model.reserve_id.as_generic_type(),
+            "reserve_type": model.reserve_type,
+            "amount": model.amount.as_generic_type(),
+            "percent_applied": model.percent_applied.as_generic_type(),
+            "created_at": model.created_at,
+        }
+        for excluded in excludes:
+            data.pop(excluded)
+
+        print(f"{data = }")
 
         return data

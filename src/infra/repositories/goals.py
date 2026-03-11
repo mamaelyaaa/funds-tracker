@@ -5,7 +5,7 @@ from sqlalchemy import select, func, delete, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from domain.goals.entities import Goal
-from domain.goals.protocols import GoalsRepositoryProtocol
+from domain.goals.protocols import GoalRepositoryProtocol
 from infra.database import SessionDep
 from infra.models.goals import GoalModel
 from .dto.goals import GoalOrmDTO
@@ -64,16 +64,19 @@ class SQLAlchemyGoalRepository:
         await self._session.commit()
 
     async def update(
-        self, user_id: str, goal_id: str, new_goal: dict[str, Any]
+        self, user_id: str, goal_id: str, upd_data: dict[str, Any], commit: bool
     ) -> Optional[Goal]:
         stmt = (
             update(GoalModel)
             .filter_by(id=goal_id, user_id=user_id)
-            .values(**new_goal)
+            .values(**upd_data)
             .returning(GoalModel)
         )
         goal = await self._session.scalar(stmt)
-        await self._session.commit()
+        if commit:
+            await self._session.commit()
+        else:
+            await self._session.flush()
         return GoalOrmDTO.from_orm_to_entity(goal) if goal else None
 
     async def check_exists_by_id(self, user_id: str, account_id: str) -> bool:
@@ -86,8 +89,8 @@ class SQLAlchemyGoalRepository:
         return bool(res)
 
 
-def get_goals_repository(session: SessionDep) -> GoalsRepositoryProtocol:
+def get_goal_repository(session: SessionDep) -> GoalRepositoryProtocol:
     return SQLAlchemyGoalRepository(session)
 
 
-GoalsRepositoryDep = Annotated[GoalsRepositoryProtocol, Depends(get_goals_repository)]
+GoalRepositoryDep = Annotated[GoalRepositoryProtocol, Depends(get_goal_repository)]

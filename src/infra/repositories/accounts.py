@@ -55,7 +55,7 @@ class SQLAlchemyAccountRepository:
         return bool(count)
 
     async def update(
-        self, user_id: str, account_id: str, upd_data: dict[str, Any]
+        self, user_id: str, account_id: str, upd_data: dict[str, Any], commit: bool
     ) -> Optional[Account]:
         stmt = (
             update(AccountModel)
@@ -63,12 +63,21 @@ class SQLAlchemyAccountRepository:
             .values(**upd_data)
             .returning(AccountModel)
         )
-        res = await self._session.execute(stmt)
-        await self._session.commit()
-        return res.scalar_one_or_none()
+        account = await self._session.scalar(stmt)
+
+        if commit:
+            await self._session.commit()
+        else:
+            await self._session.flush()
+
+        return AccountOrmDTO.from_orm_to_entity(account) if account else None
 
     async def check_exists_by_id(self, user_id: str, account_id: str) -> bool:
-        query = select(func.count()).filter_by(user_id=user_id, id=account_id)
+        query = (
+            select(func.count())
+            .select_from(AccountModel)
+            .filter_by(user_id=user_id, id=account_id)
+        )
         res = await self._session.scalar(query)
         return bool(res)
 

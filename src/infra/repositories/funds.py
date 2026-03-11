@@ -12,7 +12,7 @@ from infra.models import FundModel
 from infra.repositories.dto.funds import FundOrmDTO
 
 
-class PostgresFundRepository:
+class SQLAlchemyFundRepository:
 
     def __init__(self, session: AsyncSession):
         self._session = session
@@ -24,7 +24,7 @@ class PostgresFundRepository:
         return fund_model.id
 
     async def update(
-        self, user_id: str, fund_id: str, upd_data: dict[str, Any]
+        self, user_id: str, fund_id: str, upd_data: dict[str, Any], commit: bool = True
     ) -> Optional[Fund]:
         stmt = (
             update(FundModel)
@@ -33,11 +33,20 @@ class PostgresFundRepository:
             .returning(FundModel)
         )
         fund = await self._session.scalar(stmt)
-        await self._session.commit()
+        if commit:
+            await self._session.commit()
+        else:
+            await self._session.flush()
+
         return FundOrmDTO.from_orm_to_entity(fund) if fund else None
 
     async def get_by_user_id(self, user_id: str, *args, **filter_by) -> Optional[Fund]:
         query = select(FundModel).filter_by(user_id=user_id, **filter_by)
+        fund = await self._session.scalar(query)
+        return fund
+
+    async def get_by_id(self, fund_id: str) -> Optional[Fund]:
+        query = select(FundModel).filter_by(id=fund_id)
         fund = await self._session.scalar(query)
         return fund
 
@@ -61,10 +70,11 @@ class PostgresFundRepository:
         last_fund = await self._session.scalar(query)
         return FundOrmDTO.from_orm_to_entity(last_fund) if last_fund else None
 
-    async def get_closed(self, user_id: str) -> list[Fund]:
+    async def get_unopened(self, user_id: str) -> list[Fund]:
         query = (
             select(FundModel)
-            .filter_by(user_id=user_id, status=FundStatus.CLOSED)
+            .filter_by(user_id=user_id)
+            .where(FundModel.status != FundStatus.OPEN)
             .order_by(FundModel.end_date.desc())
         )
         funds = await self._session.scalars(query)
@@ -72,7 +82,7 @@ class PostgresFundRepository:
 
 
 def get_fund_repository(session: SessionDep) -> FundRepositoryProtocol:
-    return PostgresFundRepository(session)
+    return SQLAlchemyFundRepository(session)
 
 
 FundRepositoryDep = Annotated[FundRepositoryProtocol, Depends(get_fund_repository)]

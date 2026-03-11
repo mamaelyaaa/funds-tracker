@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, status
 
 from api.schemas import BaseResponseDetailSchema, BaseExceptionSchema
+from api.v1.dependencies.goals import GoalServiceDep
 from api.v1.schemas.goals import CreateGoalSchema, GoalDetailSchema, UpdateGoalSchema
 from api.v1.views.accounts import AccountServiceDep
 from domain.goals.command import CreateGoalCommand, UpdateGoalPartiallyCommand
 from domain.goals.dto import GoalDTO
-from domain.goals.service import GoalsServiceDep
 from domain.users.dependencies import get_user
 
 router = APIRouter(
@@ -34,7 +34,7 @@ router = APIRouter(
 )
 async def create_goal(
     account_service: AccountServiceDep,
-    goals_service: GoalsServiceDep,
+    goals_service: GoalServiceDep,
     schema: CreateGoalSchema,
     user_id: str,
 ):
@@ -72,7 +72,7 @@ async def create_goal(
     response_model=BaseResponseDetailSchema[list[GoalDetailSchema], dict],
 )
 async def get_user_goals(
-    goals_service: GoalsServiceDep,
+    goals_service: GoalServiceDep,
     user_id: str,
 ):
     """Получение всех целей пользователя"""
@@ -96,7 +96,7 @@ async def get_user_goals(
     },
 )
 async def get_user_goal(
-    goals_service: GoalsServiceDep,
+    goals_service: GoalServiceDep,
     user_id: str,
     goal_id: str,
 ):
@@ -124,7 +124,7 @@ async def get_user_goal(
     },
 )
 async def update_user_goal(
-    goals_service: GoalsServiceDep,
+    goals_service: GoalServiceDep,
     account_service: AccountServiceDep,
     schema: UpdateGoalSchema,
     user_id: str,
@@ -162,7 +162,7 @@ async def update_user_goal(
     },
 )
 async def get_user_goal(
-    goals_service: GoalsServiceDep,
+    goals_service: GoalServiceDep,
     user_id: str,
     goal_id: str,
 ):

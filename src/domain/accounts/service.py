@@ -3,8 +3,6 @@ import logging
 from domain.users.entity import User
 from domain.users.values import UserId
 from domain.values import Money, Title
-from infra.publishers.accounts import AccountEventPublisherDep
-from infra.repositories.accounts import AccountRepositoryDep
 from .commands import (
     CreateAccountCommand,
     GetAccountCommand,
@@ -157,12 +155,7 @@ class AccountService(AccountCRUDService):
             upd_data=AccountDTO.from_entity_to_dict(
                 account, excludes=["id", "user_id"]
             ),
+            commit=True,
         )
         logger.info("Баланс счета #%s обновлен", account.id.short)
         await self._publish(account=account)
-
-
-def get_account_service(
-    acc_repo: AccountRepositoryDep, acc_publisher: AccountEventPublisherDep
-) -> AccountService:
-    return AccountService(account_repo=acc_repo, account_publisher=acc_publisher)

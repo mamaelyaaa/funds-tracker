@@ -1,10 +1,5 @@
-from typing import Annotated
-
-from fastapi import Depends
-
 from domain.users.values import UserId
 from domain.values import Money, Title
-from infra.repositories.goals import GoalsRepositoryDep
 from .command import CreateGoalCommand, UpdateGoalPartiallyCommand
 from .dto import GoalDTO
 from .entities import Goal
@@ -12,12 +7,12 @@ from .exceptions import (
     GoalTitleAlreadyTakenException,
     GoalNotFoundException,
 )
-from .protocols import GoalsRepositoryProtocol
+from .protocols import GoalRepositoryProtocol
 
 
-class GoalsService:
+class GoalService:
 
-    def __init__(self, goals_repo: GoalsRepositoryProtocol):
+    def __init__(self, goals_repo: GoalRepositoryProtocol):
         self._goals_repo = goals_repo
 
     async def create_goal(self, command: CreateGoalCommand) -> Goal:
@@ -91,10 +86,3 @@ class GoalsService:
         goal = await self.get_user_goal(goal_id=goal_id, user_id=user_id)
         await self._goals_repo.delete(goal=goal)
         return
-
-
-def get_goals_service(goals_repo: GoalsRepositoryDep) -> GoalsService:
-    return GoalsService(goals_repo=goals_repo)
-
-
-GoalsServiceDep = Annotated[GoalsService, Depends(get_goals_service)]

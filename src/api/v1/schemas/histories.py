@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime
 
 from api.schemas import BaseApiModel

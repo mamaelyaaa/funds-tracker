@@ -1,6 +1,7 @@
 from typing import Protocol, Any, Optional
 
-from domain.funds.entity import Fund
+from core.domain import DomainEvent
+from domain.funds.entity import Fund, FundDistribution
 
 
 class FundRepositoryProtocol(Protocol):
@@ -12,18 +13,32 @@ class FundRepositoryProtocol(Protocol):
         user_id: str,
         fund_id: str,
         upd_data: dict[str, Any],
+        commit: bool = True,
     ) -> Optional[Fund]: ...
 
     async def get_by_user_id(
         self, user_id: str, *args, **filter_by
     ) -> Optional[Fund]: ...
 
+    async def get_by_id(self, fund_id: str) -> Optional[Fund]: ...
+
     async def get_last_opened(self, user_id: str) -> Optional[Fund]: ...
 
     async def get_last_closed(self, user_id: str) -> Optional[Fund]: ...
 
-    async def get_closed(self, user_id: str) -> list[Fund]: ...
+    async def get_unopened(self, user_id: str) -> list[Fund]: ...
 
 
-class FundDistributionRepositoryProtocol(Protocol):
-    pass
+class FundDistRepositoryProtocol(Protocol):
+
+    async def save_all(
+        self, fund_dists: list[FundDistribution], commit: bool
+    ) -> None: ...
+
+    async def get_by_find_id(self, fund_id: str) -> list[FundDistribution]: ...
+
+
+class FundDistPublisherProtocol(Protocol):
+
+    async def publish(self, event: DomainEvent) -> None:
+        pass

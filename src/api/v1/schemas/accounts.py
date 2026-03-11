@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime
 
 from pydantic import Field
@@ -19,7 +20,7 @@ class UpdateAccountSchema(BaseApiModel):
 
 
 class AccountDetailSchema(BaseApiModel):
-    id: str
+    id: uuid.UUID
     name: str
     type: AccountType
     balance: float

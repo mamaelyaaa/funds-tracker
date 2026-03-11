@@ -1,11 +1,9 @@
-from typing import Annotated
+from fastapi import APIRouter, Depends, Path
 
-from fastapi import APIRouter, Depends
-
-from api.schemas import BaseResponseDetailSchema
-from api.v1.schemas.funds import FundDetailSchema
+from api.schemas import BaseResponseDetailSchema, BaseResponseSchema
+from api.v1.dependencies.funds import FundServiceDep
+from api.v1.schemas.funds import FundDetailSchema, FundCloseSchema
 from domain.funds.dto import FundDTO
-from domain.funds.service import FundService, get_fund_service
 from domain.users.dependencies import get_user
 
 router = APIRouter(
@@ -13,8 +11,6 @@ router = APIRouter(
     tags=["Накопительный остаток 🫰"],
     dependencies=[Depends(get_user)],
 )
-
-FundServiceDep = Annotated[FundService, Depends(get_fund_service)]
 
 
 @router.get("", response_model=BaseResponseDetailSchema[list[FundDetailSchema], dict])
@@ -37,6 +33,9 @@ async def get_last_open_fund(fund_service: FundServiceDep, user_id: str):
     )
 
 
-@router.post("/current/close", deprecated=True)
-async def close_current_fund():
-    pass
+@router.post("/current/close", response_model=BaseResponseSchema)
+async def close_current_fund(
+    fund_service: FundServiceDep, schema: FundCloseSchema, user_id: str = Path()
+):
+    await fund_service.close_head_fund(user_id, schema.reserves)
+    return BaseResponseSchema(message="Распределение остатка прошло успешно!")

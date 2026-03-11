@@ -1,13 +1,11 @@
 import logging
 from datetime import datetime, UTC
-from typing import Optional, Annotated, Any
+from typing import Optional, Any
 
 from dateutil.relativedelta import relativedelta
-from fastapi import Depends
 
 from domain.accounts.values import AccountId
 from domain.values import Money
-from infra.repositories.histories import HistoryRepositoryDep
 from .commands import (
     SaveHistoryCommand,
     GetAccountHistoryCommand,
@@ -119,10 +117,3 @@ class HistoryService:
             "period": period,
         }
         return period, start_date
-
-
-def get_history_service(histories_repo: HistoryRepositoryDep) -> HistoryService:
-    return HistoryService(histories_repo)
-
-
-HistoryServiceDep = Annotated[HistoryService, Depends(get_history_service)]

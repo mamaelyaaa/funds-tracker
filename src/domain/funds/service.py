@@ -3,32 +3,43 @@ from datetime import datetime, timedelta
 
 from domain.accounts.exceptions import AccountNotFoundException
 from domain.accounts.protocols import AccountRepositoryProtocol
+from domain.accounts.values import AccountId
 from domain.goals.exceptions import GoalNotFoundException
-from domain.goals.protocols import GoalsRepositoryProtocol
+from domain.goals.protocols import GoalRepositoryProtocol
+from domain.goals.values import GoalId
 from domain.histories.protocols import HistoryRepositoryProtocol
 from domain.users.values import UserId
-from domain.values import Money
-from infra.repositories.funds import FundRepositoryDep
-from infra.repositories.histories import HistoryRepositoryDep
+from domain.values import Money, Percent
 from .commands import ReserveCreateCommand
-from .entity import Fund
+from .dto import FundDTO
+from .entity import Fund, FundDistribution
 from .exceptions import (
     FundNotFoundException,
     ReserveNotImplementedException,
     InvalidFundPercentageException,
 )
-from .protocol import FundRepositoryProtocol
-from .values import FundRuleType
+from .protocol import (
+    FundRepositoryProtocol,
+    FundDistRepositoryProtocol,
+    FundDistPublisherProtocol,
+)
+from .values import FundRuleType, FundStatus
+
+logger = logging.getLogger(__name__)
 
 
-class FundDistributionService:
+class FundDistService:
     """Сервис работы с распределением остатка по процентам"""
 
     def __init__(
         self,
+        fund_dist_repo: FundDistRepositoryProtocol,
+        fund_dist_publisher: FundDistPublisherProtocol,
         account_repo: AccountRepositoryProtocol,
-        goal_repo: GoalsRepositoryProtocol,
+        goal_repo: GoalRepositoryProtocol,
     ):
+        self._fund_dist_repo = fund_dist_repo
+        self._fund_dist_publisher = fund_dist_publisher
         self._account_repo = account_repo
         self._goal_repo = goal_repo
 
@@ -48,36 +59,43 @@ class FundDistributionService:
             raise ReserveNotImplementedException
 
     async def _validate_input_reserves(
-        self, reserves: list[ReserveCreateCommand]
+        self, user_id: str, reserves: list[ReserveCreateCommand]
     ) -> None:
         """Проверка всех входных резервов для распределения остатка"""
         total_percentage = 0
 
         for reserve in reserves:
-            total_percentage += reserve.percent.as_generic_type()
+            total_percentage += reserve.percent
             await self.__check_reserve_id(
                 reserve_id=reserve.reserve_id,
-                user_id=reserve.user_id,
+                user_id=user_id,
                 reserve_type=reserve.reserve_type,
             )
 
         if total_percentage != 100:
+            logger.info(InvalidFundPercentageException.message)
             raise InvalidFundPercentageException
 
+        logger.info("Резервы успешно провалидированы")
 
-logger = logging.getLogger(__name__)
 
-
-class FundService(FundDistributionService):
+class FundService(FundDistService):
 
     def __init__(
         self,
         fund_repo: FundRepositoryProtocol,
+        fund_dist_publisher: FundDistPublisherProtocol,
         history_repo: HistoryRepositoryProtocol,
+        fund_dist_repo: FundDistRepositoryProtocol,
         account_repo: AccountRepositoryProtocol,
-        goal_repo: GoalsRepositoryProtocol,
+        goal_repo: GoalRepositoryProtocol,
     ):
-        super().__init__(account_repo, goal_repo)
+        super().__init__(
+            fund_dist_repo=fund_dist_repo,
+            account_repo=account_repo,
+            goal_repo=goal_repo,
+            fund_dist_publisher=fund_dist_publisher,
+        )
         self._fund_repo = fund_repo
         self._history_repo = history_repo
 
@@ -154,16 +172,107 @@ class FundService(FundDistributionService):
         return fund
 
     async def get_closed_funds(self, user_id: str) -> list[Fund]:
-        funds = await self._fund_repo.get_closed(user_id)
+        funds = await self._fund_repo.get_unopened(user_id)
         return funds
 
-    async def close_head_fund(self, reserves: list[ReserveCreateCommand]):
+    async def close_head_fund(
+        self, user_id: str, reserves: list[ReserveCreateCommand]
+    ) -> None:
         """Закрытие последнего накопленного остатка"""
 
-        await self._validate_input_reserves(reserves)
+        await self._validate_input_reserves(user_id=user_id, reserves=reserves)
 
+        last_open_fund = await self._fund_repo.get_last_opened(user_id)
 
-def get_fund_service(
-    fund_repo: FundRepositoryDep, history_repo: HistoryRepositoryDep
-) -> FundService:
-    return FundService(fund_repo=fund_repo, history_repo=history_repo)
+        if not last_open_fund:
+            logger.error(FundNotFoundException.message)
+            raise FundNotFoundException
+
+        all_fund_dists = []
+
+        for reserve in reserves:
+            amount = float(last_open_fund.total_amount.as_generic_type()) * (
+                reserve.percent / 100
+            )
+
+            fund_dists = FundDistribution(
+                fund_id=last_open_fund.id,
+                reserve_id=(
+                    AccountId(reserve.reserve_id)
+                    if reserve.reserve_type == FundRuleType.ACCOUNT
+                    else GoalId(reserve.reserve_id)
+                ),
+                reserve_type=reserve.reserve_type,
+                percent_applied=Percent(reserve.percent),
+                amount=Money(amount),
+            )
+            all_fund_dists.append(fund_dists)
+
+        await self._fund_dist_repo.save_all(all_fund_dists, commit=False)
+
+        last_open_fund.close()
+        await self._fund_repo.update(
+            user_id=user_id,
+            fund_id=last_open_fund.id.as_generic_type(),
+            upd_data=FundDTO.from_entity_to_dict(
+                last_open_fund, excludes=["id", "user_id"]
+            ),
+            commit=False,
+        )
+
+        await self._distribute_user_fund(
+            user_id, fund_id=last_open_fund.id.as_generic_type()
+        )
+
+    async def _publish(self, fund: Fund):
+        """Публикует события"""
+
+        published = []
+        for event in fund.events:
+            try:
+                await self._fund_dist_publisher.publish(event)
+                published.append(event)
+            except Exception as e:
+                logger.error(str(e))
+                raise
+
+        for event in published:
+            fund.events.remove(event)
+
+    async def _distribute_user_fund(self, user_id: str, fund_id: str) -> None:
+        fund_dists = await self._fund_dist_repo.get_by_find_id(fund_id)
+
+        for fund_dist in fund_dists:
+
+            if fund_dist.reserve_type == FundRuleType.ACCOUNT:
+                await self._account_repo.update(
+                    user_id=user_id,
+                    account_id=fund_dist.reserve_id.as_generic_type(),
+                    upd_data={"balance": fund_dist.amount.as_generic_type()},
+                    commit=False,
+                )
+            elif fund_dist.reserve_type == FundRuleType.GOAL:
+                await self._goal_repo.update(
+                    user_id=user_id,
+                    goal_id=fund_dist.reserve_id.as_generic_type(),
+                    upd_data={"current_amount": fund_dist.amount.as_generic_type()},
+                    commit=False,
+                )
+            else:
+                raise ReserveNotImplementedException
+
+        fund = await self._fund_repo.get_by_id(fund_id)
+        fund.status = FundStatus.DISTRIBUTED
+        await self._fund_repo.update(
+            user_id=user_id,
+            fund_id=fund_id,
+            upd_data={"status": FundStatus.DISTRIBUTED},
+            commit=True,
+        )
+        return
+
+    async def get_fund_by_id(self, user_id: str, fund_id: str) -> Fund:
+        fund = await self._fund_repo.get_by_user_id(user_id, id=fund_id)
+        if not fund:
+            raise FundNotFoundException
+        return fund

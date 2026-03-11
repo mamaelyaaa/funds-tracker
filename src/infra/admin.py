@@ -7,6 +7,7 @@ from infra.models import (
     HistoryModel,
     GoalModel,
     FundModel,
+    FundDistributionModel,
 )
 
 admin = Admin(engine=db_helper.engine)
@@ -83,8 +84,23 @@ class FundView(BaseAppModelView):
     sortable_fields = ["status", "created_at"]
 
 
+class FundDistView(BaseAppModelView):
+    fields = [
+        "id",
+        "fund",
+        "reserve_id",
+        "reserve_type",
+        "amount",
+        "percent_applied",
+        "created_at",
+    ]
+    sortable_fields = ["status", "created_at"]
+    fields_default_sort = [("created_at", True)]
+
+
 admin.add_view(UserView(UserModel))
 admin.add_view(AccountView(AccountModel))
 admin.add_view(HistoryView(HistoryModel))
 admin.add_view(GoalView(GoalModel))
 admin.add_view(FundView(FundModel))
+admin.add_view(FundDistView(FundDistributionModel))

@@ -1,11 +1,12 @@
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
-from core.domain import CreatedAtDomainMixin
+from core.domain import CreatedAtDomainMixin, EventDomainMixin
 from domain.accounts.values import AccountId
 from domain.goals.values import GoalId
 from domain.users.values import UserId
 from domain.values import Money, Percent
+from .events import FundClosedEvent
 from .values import (
     FundId,
     FundDistributionId,
@@ -15,7 +16,7 @@ from .values import (
 
 
 @dataclass(kw_only=True)
-class Fund(CreatedAtDomainMixin):
+class Fund(CreatedAtDomainMixin, EventDomainMixin):
     """Доменная модель фиксированных остатков за период"""
 
     id: FundId = field(default_factory=FundId.generate)
@@ -35,8 +36,8 @@ class Fund(CreatedAtDomainMixin):
         status: FundStatus = FundStatus.OPEN,
     ) -> "Fund":
 
-        if start_date >= end_date:
-            raise ...
+        if start_date > end_date:
+            raise
 
         return cls(
             user_id=user_id,
@@ -49,6 +50,12 @@ class Fund(CreatedAtDomainMixin):
     def close(self) -> None:
         self.status = FundStatus.CLOSED
         self.end_date = datetime.now(timezone.utc)
+        self._events.append(
+            FundClosedEvent(
+                user_id=self.user_id.as_generic_type(),
+                fund_id=self.id.as_generic_type(),
+            )
+        )
 
 
 @dataclass(kw_only=True)

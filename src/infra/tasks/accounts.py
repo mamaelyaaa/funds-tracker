@@ -4,11 +4,13 @@ from typing import Annotated
 
 from taskiq import TaskiqDepends
 
+from api.v1.dependencies.funds import get_fund_service
+from api.v1.dependencies.histories import get_history_service
 from domain.accounts.events import AccountCreatedEvent, BalanceUpdatedEvent
 from domain.accounts.values import AccountId
-from domain.funds.service import FundService, get_fund_service
+from domain.funds.service import FundService
 from domain.histories.commands import SaveHistoryCommand
-from domain.histories.service import get_history_service, HistoryService
+from domain.histories.service import HistoryService
 from infra import broker
 
 logger = logging.getLogger(__name__)

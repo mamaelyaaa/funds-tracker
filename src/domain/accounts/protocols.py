@@ -25,7 +25,7 @@ class AccountRepositoryProtocol(Protocol):
         pass
 
     async def update(
-        self, user_id: str, account_id: str, upd_data: dict[str, Any]
+        self, user_id: str, account_id: str, upd_data: dict[str, Any], commit: bool
     ) -> Optional[Account]:
         pass
 

@@ -7,6 +7,7 @@ from api.schemas import (
     BaseResponseDetailSchema,
     BaseExceptionSchema,
 )
+from api.v1.dependencies.accounts import AccountServiceDep
 from api.v1.schemas.accounts import (
     CreateAccountSchema,
     AccountDetailSchema,
@@ -19,7 +20,6 @@ from domain.accounts.commands import (
 )
 from domain.accounts.dto import AccountDTO
 from domain.accounts.entity import Account
-from domain.accounts.service import AccountService, get_account_service
 from domain.users.dependencies import get_user
 
 router = APIRouter(
@@ -27,8 +27,6 @@ router = APIRouter(
     tags=["Счета🏦"],
     dependencies=[Depends(get_user)],
 )
-
-AccountServiceDep = Annotated[AccountService, Depends(get_account_service)]
 
 
 @router.post(

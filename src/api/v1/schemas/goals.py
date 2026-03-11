@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime
 from typing import Optional
 
@@ -20,8 +21,8 @@ class UpdateGoalSchema(BaseApiModel):
 
 
 class GoalDetailSchema(BaseApiModel):
-    id: str
-    user_id: str
+    id: uuid.UUID
+    user_id: uuid.UUID
     title: str
     target_amount: float
     current_amount: float
