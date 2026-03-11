@@ -30,11 +30,11 @@ class TestAccountDomain:
         """Тест создания счёта с невалидным балансом"""
 
         with pytest.raises(InvalidBalanceException):
-            Account.create(
+            Account(
                 user_id=UserId("user-123"),
                 name=Title(faker.word()),
                 currency=AccountCurrency.RUB,
-                account_type=AccountType.CARD,
+                type=AccountType.CARD,
                 balance=Money(faker.pyfloat(positive=False)),
             )
 

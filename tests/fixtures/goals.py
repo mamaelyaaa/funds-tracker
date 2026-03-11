@@ -2,8 +2,8 @@ import pytest
 from faker import Faker
 
 from domain.goals.entities import Goal
-from domain.goals.protocols import GoalsRepositoryProtocol
-from domain.goals.service import GoalsService
+from domain.goals.protocols import GoalRepositoryProtocol
+from domain.goals.service import GoalService
 from domain.values import Title, Money
 from infra.repositories.goals import SQLAlchemyGoalRepository
 
@@ -18,10 +18,10 @@ def test_goal(test_user, faker: Faker) -> Goal:
 
 
 @pytest.fixture
-def test_goal_repo(test_session) -> GoalsRepositoryProtocol:
+def test_goal_repo(test_session) -> GoalRepositoryProtocol:
     return SQLAlchemyGoalRepository(session=test_session)
 
 
 @pytest.fixture
-def test_goal_service(test_goal_repo) -> GoalsService:
-    return GoalsService(goals_repo=test_goal_repo)
+def test_goal_service(test_goal_repo) -> GoalService:
+    return GoalService(goals_repo=test_goal_repo)

@@ -33,7 +33,7 @@ class AccountDTO(BaseDTO):
 
     @staticmethod
     def from_dict_to_entity(data: dict[str, Any]) -> Account:
-        return Account(
+        account = Account(
             id=AccountId(data.get("id")),
             user_id=UserId(data.get("user_id")),
             name=Title(data.get("name")),
@@ -43,3 +43,5 @@ class AccountDTO(BaseDTO):
             created_at=data.get("created_at"),
             updated_at=data.get("updated_at"),
         )
+        account.events.clear()
+        return account

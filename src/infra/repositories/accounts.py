@@ -1,12 +1,9 @@
-from typing import Optional, Annotated, Any
+from typing import Optional, Any
 
-from fastapi import Depends
 from sqlalchemy import select, func, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from domain.accounts.entity import Account
-from domain.accounts.protocols import AccountRepositoryProtocol
-from infra import SessionDep
 from infra.models import AccountModel
 from .dto.accounts import AccountOrmDTO
 
@@ -80,12 +77,3 @@ class SQLAlchemyAccountRepository:
         )
         res = await self._session.scalar(query)
         return bool(res)
-
-
-def get_account_repository(session: SessionDep) -> AccountRepositoryProtocol:
-    return SQLAlchemyAccountRepository(session)
-
-
-AccountRepositoryDep = Annotated[
-    AccountRepositoryProtocol, Depends(get_account_repository)
-]

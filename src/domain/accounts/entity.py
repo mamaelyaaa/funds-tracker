@@ -12,7 +12,7 @@ from .values import AccountType, AccountCurrency, AccountId
 
 
 @dataclass(kw_only=True)
-class Account(TimestampDomainMixin, EventDomainMixin):
+class Account(EventDomainMixin, TimestampDomainMixin):
     """Доменная модель счета"""
 
     id: AccountId = field(default_factory=AccountId.generate)
@@ -22,31 +22,14 @@ class Account(TimestampDomainMixin, EventDomainMixin):
     type: AccountType
     currency: AccountCurrency
 
-    @classmethod
-    def create(
-        cls,
-        user_id: UserId,
-        name: Title,
-        balance: Money,
-        account_type: AccountType,
-        currency: AccountCurrency,
-    ) -> "Account":
-
-        account: Account = cls(
-            user_id=user_id,
-            name=name,
-            type=account_type,
-            balance=balance,
-            currency=currency,
-        )
-        account.events.append(
+    def __post_init__(self):
+        self._events.append(
             AccountCreatedEvent(
-                user_id=account.user_id.as_generic_type(),
-                account_id=account.id.as_generic_type(),
-                new_balance=balance.as_generic_type(),
+                user_id=self.user_id.as_generic_type(),
+                account_id=self.id.as_generic_type(),
+                new_balance=self.balance.as_generic_type(),
             ),
         )
-        return account
 
     def update_balance(self, new_balance: Money, is_monthly_closing: bool) -> bool:
         """Обновление баланса счета"""

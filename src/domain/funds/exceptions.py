@@ -37,3 +37,12 @@ class InvalidFundPercentageException(AppException):
     @property
     def message(self) -> str:
         return "Некорректное распределение остатка по процентам"
+
+
+class InvalidFundDateException(AppException):
+    status_code: int = status.HTTP_400_BAD_REQUEST
+    suggestion: str = "Дата начала отсчета должна быть не больше чем дата окончания"
+
+    @property
+    def message(self) -> str:
+        return f"Некорректные даты для остатка"

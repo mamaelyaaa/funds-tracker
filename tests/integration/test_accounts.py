@@ -1,11 +1,12 @@
-from copy import copy
 from unittest.mock import AsyncMock
 
 import pytest
 from faker.proxy import Faker
 
 from domain.accounts.commands import CreateAccountCommand, UpdateAccountBalanceCommand
+from domain.accounts.entity import Account
 from domain.accounts.exceptions import AccountAlreadyCreatedException
+from domain.accounts.values import AccountCurrency, AccountType
 from domain.values import Title, Money
 
 
@@ -14,14 +15,10 @@ from domain.values import Title, Money
 @pytest.mark.integration
 class TestAccountService:
 
-    async def test_create(
-        self,
-        test_account,
-        test_account_repo,
-        test_account_publisher: AsyncMock,
-        test_account_service,
-    ):
+    async def test_create(self, test_account, test_account_service):
         """Тест счёт успешно создан"""
+
+        test_account_service.publisher = AsyncMock()
 
         account = await test_account_service.create_account(
             command=CreateAccountCommand(
@@ -33,90 +30,78 @@ class TestAccountService:
             )
         )
 
-        exists_acc = await test_account_repo.get_by_id(
+        exists_acc = await test_account_service.repository.get_by_id(
             user_id=account.user_id.as_generic_type(),
             account_id=account.id.as_generic_type(),
         )
-        assert account == exists_acc
 
-        test_account_publisher.publish.assert_awaited_once()
+        assert account.id == exists_acc.id
+        assert account.balance == exists_acc.balance
+        assert account.currency == exists_acc.currency
+        assert account.type == exists_acc.type
 
-    async def test_name_taken_error(
-        self,
-        test_account,
-        test_account_repo,
-        test_account_publisher: AsyncMock,
-        test_account_service,
-    ):
-        new_account = copy(test_account)
-        new_account.name = Title("Новый счет")
+        test_account_service.publisher.publish.assert_awaited_once()
 
-        await test_account_repo.save(new_account)
+    async def test_name_taken_error(self, saved_user, test_account_service):
+        new_account = Account(
+            user_id=saved_user.id,
+            name=Title("Новый счет"),
+            currency=AccountCurrency.RUB,
+            type=AccountType.CARD,
+            balance=Money(0),
+        )
+        await test_account_service.repository.save(new_account)
 
         with pytest.raises(AccountAlreadyCreatedException):
             await test_account_service.create_account(
                 command=CreateAccountCommand(
-                    user_id=test_account.user_id.as_generic_type(),
+                    user_id=new_account.user_id.as_generic_type(),
                     name="Новый счет",
-                    balance=float(test_account.balance.as_generic_type()),
-                    account_type=test_account.type,
-                    currency=test_account.currency,
+                    balance=float(new_account.balance.as_generic_type()),
+                    account_type=new_account.type,
+                    currency=new_account.currency,
                 )
             )
 
-    async def test_update(
-        self,
-        faker: Faker,
-        test_account,
-        test_account_repo,
-        test_account_publisher: AsyncMock,
-        test_account_service,
-    ):
-        await test_account_repo.save(test_account)
+    async def test_update(self, faker: Faker, saved_account, test_account_service):
+        test_account_service.publisher.publish = AsyncMock()
 
-        balance = float(test_account.balance.as_generic_type())
+        balance = float(saved_account.balance.as_generic_type())
         new_balance = Money(balance + faker.pyfloat(min_value=balance))
 
         await test_account_service.update_balance(
             command=UpdateAccountBalanceCommand(
-                user_id=test_account.user_id.as_generic_type(),
-                account_id=test_account.id.as_generic_type(),
+                user_id=saved_account.user_id.as_generic_type(),
+                account_id=saved_account.id.as_generic_type(),
                 new_balance=float(new_balance.as_generic_type()),
             )
         )
 
-        assert test_account_publisher.publish.await_count == 1
+        assert test_account_service.publisher.publish.await_count == 2
 
-        exists_account = await test_account_repo.get_by_id(
-            user_id=test_account.user_id.as_generic_type(),
-            account_id=test_account.id.as_generic_type(),
+        exists_account = await test_account_service.repository.get_by_id(
+            user_id=saved_account.user_id.as_generic_type(),
+            account_id=saved_account.id.as_generic_type(),
         )
 
         assert exists_account.balance == new_balance
 
-    async def test_update_same_balance(
-        self,
-        faker: Faker,
-        test_account,
-        test_account_repo,
-        test_account_publisher: AsyncMock,
-        test_account_service,
-    ):
-        await test_account_repo.save(test_account)
+    async def test_update_same_balance(self, saved_account, test_account_service):
+        test_account_service.publisher.publish = AsyncMock()
 
         await test_account_service.update_balance(
             command=UpdateAccountBalanceCommand(
-                user_id=test_account.user_id.as_generic_type(),
-                account_id=test_account.id.as_generic_type(),
-                new_balance=float(test_account.balance.as_generic_type()),
+                user_id=saved_account.user_id.as_generic_type(),
+                account_id=saved_account.id.as_generic_type(),
+                new_balance=float(saved_account.balance.as_generic_type()),
             )
         )
 
-        test_account_publisher.publish.assert_not_awaited()
+        test_account_service.publisher.publish.assert_not_awaited()
 
-        exists_account = await test_account_repo.get_by_id(
-            user_id=test_account.user_id.as_generic_type(),
-            account_id=test_account.id.as_generic_type(),
+        exists_account = await test_account_service.repository.get_by_id(
+            user_id=saved_account.user_id.as_generic_type(),
+            account_id=saved_account.id.as_generic_type(),
         )
 
-        assert exists_account.balance == test_account.balance
+        assert exists_account.balance == saved_account.balance

@@ -1,8 +1,6 @@
 __all__ = (
     # Счета
     "test_account",
-    "test_account_repo",
-    "test_account_publisher",
     "test_account_service",
     "saved_account",
     # Цели
@@ -17,15 +15,16 @@ __all__ = (
     "test_history",
     "test_history_repo",
     "test_history_service",
+    # Остатки
+    "test_fund",
 )
 
 from .accounts import (
     test_account,
-    saved_account,
-    test_account_repo,
-    test_account_publisher,
     test_account_service,
+    saved_account,
 )
 from .goals import test_goal, test_goal_repo, test_goal_service
 from .histories import test_history, test_history_repo, test_history_service
 from .users import test_user, saved_user, test_user_repo
+from .funds import test_fund

@@ -47,15 +47,17 @@ class TestAccountApi:
         )
         assert response.status_code == 422
 
-    async def test_account_already_exists(self, client, saved_user, test_account_repo):
-        account = Account.create(
+    async def test_account_already_exists(
+        self, client, saved_user, test_account_service
+    ):
+        account = Account(
             user_id=UserId(saved_user.id.as_generic_type()),
             name=Title("Новый счет"),
             balance=Money("2000"),
             currency=AccountCurrency.RUB,
-            account_type=AccountType.CARD,
+            type=AccountType.CARD,
         )
-        await test_account_repo.save(account)
+        await test_account_service.repository.save(account)
 
         response = await client.post(
             url=f"/api/v1/users/{saved_user.id.as_generic_type()}/accounts",
@@ -73,18 +75,18 @@ class TestAccountApi:
         assert "suggestion" in response_data
 
     async def test_get_accounts_success(
-        self, client, saved_user, test_account_repo, faker: Faker
+        self, client, saved_user, test_account_service, faker: Faker
     ):
 
         for i in range(5):
-            new_acc = Account.create(
+            new_acc = Account(
                 user_id=UserId(saved_user.id.as_generic_type()),
                 name=Title(faker.word()),
-                account_type=AccountType.CARD,
+                type=AccountType.CARD,
                 balance=Money(faker.pyfloat(positive=True)),
                 currency=AccountCurrency.RUB,
             )
-            await test_account_repo.save(new_acc)
+            await test_account_service.repository.save(new_acc)
 
         response = await client.get(
             url=f"/api/v1/users/{saved_user.id.as_generic_type()}/accounts"
@@ -123,7 +125,7 @@ class TestAccountApi:
         assert "не найден" in response.json()["message"]
 
     async def test_update_account_balance_success(
-        self, client, faker: Faker, saved_user, saved_account, test_account_repo
+        self, client, faker: Faker, saved_user, saved_account, test_account_service
     ):
         new_balance = faker.pyfloat(positive=True)
 
@@ -140,7 +142,7 @@ class TestAccountApi:
 
         assert response.status_code == 200
 
-        exists_account = await test_account_repo.get_by_id(
+        exists_account = await test_account_service.repository.get_by_id(
             user_id=saved_account.user_id.as_generic_type(),
             account_id=saved_account.id.as_generic_type(),
         )

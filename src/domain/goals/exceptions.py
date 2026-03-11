@@ -3,15 +3,6 @@ from fastapi import status
 from core.exceptions import AppException
 
 
-class InvalidGoalPercentageException(AppException):
-    status_code: int = status.HTTP_400_BAD_REQUEST
-    suggestion: str = "Значение должно варьироваться от 0 до 1"
-
-    @property
-    def message(self) -> str:
-        return f"Выбран некорректный процент для вашей цели"
-
-
 class InvalidGoalDeadlineException(AppException):
     status_code: int = status.HTTP_400_BAD_REQUEST
     suggestion: str = "Дата не может быть раньше текущего времени"
@@ -19,15 +10,6 @@ class InvalidGoalDeadlineException(AppException):
     @property
     def message(self) -> str:
         return f"Выбрана некорректная дата окончания цели"
-
-
-class InvalidGoalAmountsException(AppException):
-    status_code: int = status.HTTP_400_BAD_REQUEST
-    suggestion: str = "Цена не должна быть меньше 0"
-
-    @property
-    def message(self) -> str:
-        return f"Некорректная цена цели"
 
 
 class GoalTitleAlreadyTakenException(AppException):
@@ -46,14 +28,3 @@ class GoalNotFoundException(AppException):
     @property
     def message(self) -> str:
         return f"Такая цель не найдена"
-
-
-class GoalsPercentageOutOfBoundsException(AppException):
-    status_code: int = status.HTTP_400_BAD_REQUEST
-    suggestion: str = (
-        "Уменьшите проценты других счетов, чтобы добавить новую цель, или уменьшите текущую"
-    )
-
-    @property
-    def message(self) -> str:
-        return f"Требуется повторное распределение процентов для целей"

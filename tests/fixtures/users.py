@@ -2,7 +2,6 @@ import pytest
 
 from domain.users.entity import User
 from domain.users.repository import UserRepositoryProtocol
-from infra.repositories.users import SQLAlchemyUserRepository
 
 
 @pytest.fixture
@@ -12,6 +11,8 @@ async def test_user() -> User:
 
 @pytest.fixture
 def test_user_repo(test_session) -> UserRepositoryProtocol:
+    from infra.repositories.users import SQLAlchemyUserRepository
+
     return SQLAlchemyUserRepository(test_session)
 
 

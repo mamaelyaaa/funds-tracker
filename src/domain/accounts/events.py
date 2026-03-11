@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from decimal import Decimal
-from datetime import datetime, timezone
 
 from core.domain import DomainEvent
 
@@ -21,10 +20,3 @@ class AccountCreatedEvent(DomainEvent):
     user_id: str
     account_id: str
     new_balance: Decimal
-
-
-@dataclass(kw_only=True, frozen=True)
-class FundCreatedOrUpdatedEvent(DomainEvent):
-    user_id: str
-    new_balance: Decimal
-    end_date: datetime

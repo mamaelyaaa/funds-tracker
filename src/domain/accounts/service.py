@@ -28,8 +28,8 @@ class AccountCRUDService:
         account_repo: AccountRepositoryProtocol,
         account_publisher: AccountEventPublisherProtocol,
     ):
-        self._repository = account_repo
-        self._publisher = account_publisher
+        self.repository = account_repo
+        self.publisher = account_publisher
 
     async def create_account(self, command: CreateAccountCommand) -> Account:
         """
@@ -40,7 +40,7 @@ class AccountCRUDService:
         """
 
         # Проверка на существование счёта с таким названием
-        check = await self._repository.is_name_taken(
+        check = await self.repository.is_name_taken(
             user_id=command.user_id, name=command.name
         )
         if check:
@@ -50,22 +50,22 @@ class AccountCRUDService:
             raise AccountAlreadyCreatedException
 
         # Проверка на лимит активных счетов пользователя
-        count = await self._repository.count_by_user_id(command.user_id)
+        count = await self.repository.count_by_user_id(command.user_id)
         if count >= User.MAX_ACCOUNTS:
             logger.warning(
                 f"Пользователь #%s превысил лимит активных счётов", command.user_id[:8]
             )
             raise TooManyAccountsForUserException
 
-        new_account = Account.create(
+        new_account = Account(
             user_id=UserId(command.user_id),
             name=Title(command.name),
             balance=Money(command.balance),
-            account_type=command.account_type,
+            type=command.account_type,
             currency=command.currency,
         )
-        acc_id = await self._repository.save(new_account)
         await self._publish(account=new_account)
+        acc_id = await self.repository.save(new_account)
 
         logger.info("Новый счёт #%s создан", AccountId(acc_id).short)
         return new_account
@@ -77,7 +77,7 @@ class AccountCRUDService:
         """
 
         if not (
-            account := await self._repository.get_by_id(
+            account := await self.repository.get_by_id(
                 account_id=command.account_id,
                 user_id=command.user_id,
             )
@@ -91,7 +91,7 @@ class AccountCRUDService:
     async def find_accounts_by_user_id(self, user_id: str) -> list[Account]:
         """Поиск всех счетов пользователя по его уникальному id"""
 
-        accounts = await self._repository.get_by_user_id(user_id)
+        accounts = await self.repository.get_by_user_id(user_id)
         logger.info(f"Счёта пользователя #{UserId(user_id).short} получены")
         return accounts
 
@@ -99,7 +99,7 @@ class AccountCRUDService:
         """Удаление счёта по id"""
 
         account = await self.find_account_by_id(command=command)
-        await self._repository.delete(
+        await self.repository.delete(
             account_id=account.id.as_generic_type(),
             user_id=account.user_id.as_generic_type(),
         )
@@ -112,7 +112,7 @@ class AccountCRUDService:
         published = []
         for event in account.events:
             try:
-                await self._publisher.publish(event)
+                await self.publisher.publish(event)
                 published.append(event)
             except Exception as e:
                 logger.error(str(e))
@@ -149,7 +149,7 @@ class AccountService(AccountCRUDService):
             logger.info("Баланс счёта #%s не изменен", account.id.short)
             return
 
-        await self._repository.update(
+        await self.repository.update(
             account_id=command.account_id,
             user_id=command.user_id,
             upd_data=AccountDTO.from_entity_to_dict(
