@@ -61,6 +61,15 @@ class PostgresFundRepository:
         last_fund = await self._session.scalar(query)
         return FundOrmDTO.from_orm_to_entity(last_fund) if last_fund else None
 
+    async def get_closed(self, user_id: str) -> list[Fund]:
+        query = (
+            select(FundModel)
+            .filter_by(user_id=user_id, status=FundStatus.CLOSED)
+            .order_by(FundModel.end_date.desc())
+        )
+        funds = await self._session.scalars(query)
+        return [FundOrmDTO.from_orm_to_entity(fund) for fund in funds]
+
 
 def get_fund_repository(session: SessionDep) -> FundRepositoryProtocol:
     return PostgresFundRepository(session)

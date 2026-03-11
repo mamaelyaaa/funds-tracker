@@ -18,6 +18,7 @@ class FundDTO(BaseDTO):
             status=data.get("status"),
             start_date=data.get("start_date"),
             end_date=data.get("end_date"),
+            created_at=data.get("created_at"),
         )
 
     @staticmethod
@@ -32,6 +33,7 @@ class FundDTO(BaseDTO):
             "status": model.status,
             "start_date": model.start_date,
             "end_date": model.end_date,
+            "created_at": model.created_at,
         }
         for excluded in excludes:
             data.pop(excluded)

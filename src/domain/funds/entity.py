@@ -1,16 +1,15 @@
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 
 from core.domain import CreatedAtDomainMixin
 from domain.accounts.values import AccountId
 from domain.goals.values import GoalId
 from domain.users.values import UserId
-from domain.values import Money
+from domain.values import Money, Percent
 from .values import (
     FundId,
     FundDistributionId,
     FundRuleType,
-    Percent,
     FundStatus,
 )
 
@@ -47,40 +46,9 @@ class Fund(CreatedAtDomainMixin):
             start_date=start_date,
         )
 
-    def update_status(self, new_status: FundStatus) -> None:
-        if new_status == self.status:
-            return
-
-
-# @dataclass(kw_only=True)
-# class FundRule(DomainEntity):
-#     """Доменная модель правил распределения остатка по процентам"""
-#
-#     id: FundRulesId = field(default_factory=FundRulesId.generate)
-#     user_id: UserId
-#     reserve_id: AccountId | GoalId
-#     reserve_type: FundRuleType
-#     percent: Percent
-#     updated_at: datetime = field(default_factory=datetime.now)
-#
-#     @classmethod
-#     def create(
-#         cls,
-#         user_id: str,
-#         reserve_id: str,
-#         reserve_type: FundRuleType,
-#         percent: int,
-#     ) -> "FundRule":
-#         return cls(
-#             user_id=UserId(user_id),
-#             reserve_type=reserve_type,
-#             reserve_id=(
-#                 AccountId(reserve_id)
-#                 if reserve_type == FundRuleType.ACCOUNT
-#                 else GoalId(reserve_id)
-#             ),
-#             percent=Percent(percent),
-#         )
+    def close(self) -> None:
+        self.status = FundStatus.CLOSED
+        self.end_date = datetime.now(timezone.utc)
 
 
 @dataclass(kw_only=True)

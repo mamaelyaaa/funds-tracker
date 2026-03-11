@@ -85,7 +85,7 @@ class TestAccountService:
             )
         )
 
-        test_account_publisher.publish.assert_awaited_once()
+        assert test_account_publisher.publish.await_count == 1
 
         exists_account = await test_account_repo.get_by_id(
             user_id=test_account.user_id.as_generic_type(),

@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from domain.funds.values import FundRuleType
+from domain.values import Percent
 
 
 @dataclass(frozen=True)
@@ -34,3 +35,11 @@ class UpdateFundCommand:
     user_id: str
     new_amount: float
     end_date: datetime
+
+
+@dataclass(frozen=True)
+class ReserveCreateCommand:
+    reserve_id: str
+    user_id: str
+    reserve_type: FundRuleType
+    percent: Percent

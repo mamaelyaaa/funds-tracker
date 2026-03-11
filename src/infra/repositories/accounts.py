@@ -1,7 +1,7 @@
 from typing import Optional, Annotated, Any
 
 from fastapi import Depends
-from sqlalchemy import select, func, update, delete, insert
+from sqlalchemy import select, func, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from domain.accounts.entity import Account
@@ -66,6 +66,11 @@ class SQLAlchemyAccountRepository:
         res = await self._session.execute(stmt)
         await self._session.commit()
         return res.scalar_one_or_none()
+
+    async def check_exists_by_id(self, user_id: str, account_id: str) -> bool:
+        query = select(func.count()).filter_by(user_id=user_id, id=account_id)
+        res = await self._session.scalar(query)
+        return bool(res)
 
 
 def get_account_repository(session: SessionDep) -> AccountRepositoryProtocol:

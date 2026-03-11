@@ -8,6 +8,7 @@ from domain.exceptions import (
     InvalidLettersTitleException,
     InvalidBalanceException,
 )
+from domain.funds.exceptions import InvalidPercentException
 
 alphabet = (
     string.ascii_letters
@@ -39,28 +40,6 @@ class Title(DomainValueObject[str]):
                 raise InvalidLettersTitleException
 
 
-# @dataclass(frozen=True)
-# class Money(DomainValueObject[float]):
-#     MAX_DIGITS = 3
-#
-#     def __post_init__(self):
-#         rounded = float(f"{self._value:.{self.MAX_DIGITS}f}")
-#         object.__setattr__(self, "_value", rounded)
-#
-#         if self._value < 0:
-#             raise InvalidBalanceException
-#
-#     def __sub__(self, other: "Money") -> "Money":
-#         return Money(self._value - other._value)
-#
-#     def as_generic_type(self) -> float:
-#         return float(f"{self._value:.{self.MAX_DIGITS}f}")
-#
-#     @classmethod
-#     def zero(cls) -> "Money":
-#         return cls(_value=0)
-
-
 @dataclass(frozen=True)
 class Money(DomainValueObject[Decimal]):
     ROUND_DIGITS = 2
@@ -85,3 +64,11 @@ class Money(DomainValueObject[Decimal]):
     @classmethod
     def zero(cls) -> "Money":
         return cls(_value=Decimal("0"))
+
+
+@dataclass(frozen=True)
+class Percent(DomainValueObject[int]):
+
+    def __post_init__(self):
+        if not 0 <= self._value <= 100:
+            raise InvalidPercentException

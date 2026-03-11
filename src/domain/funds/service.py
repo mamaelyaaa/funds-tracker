@@ -1,89 +1,87 @@
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 
+from domain.accounts.exceptions import AccountNotFoundException
+from domain.accounts.protocols import AccountRepositoryProtocol
+from domain.goals.exceptions import GoalNotFoundException
+from domain.goals.protocols import GoalsRepositoryProtocol
 from domain.histories.protocols import HistoryRepositoryProtocol
 from domain.users.values import UserId
 from domain.values import Money
 from infra.repositories.funds import FundRepositoryDep
 from infra.repositories.histories import HistoryRepositoryDep
+from .commands import ReserveCreateCommand
 from .entity import Fund
-from .exceptions import FundNotFoundException
+from .exceptions import (
+    FundNotFoundException,
+    ReserveNotImplementedException,
+    InvalidFundPercentageException,
+)
 from .protocol import FundRepositoryProtocol
+from .values import FundRuleType
 
-# class FundRulesService:
-#     """Сервис работы с распределением остатка по процентам"""
-#
-#     def __init__(
-#         self,
-#         fund_rule_repo: FundRuleRepositoryProtocol,
-#         account_repo: AccountRepositoryProtocol,
-#         goal_repo: GoalsRepositoryProtocol,
-#     ):
-#         self._fund_rule_repo = fund_rule_repo
-#         self._account_repo = account_repo
-#         self._goal_repo = goal_repo
-#
-#     async def _check_reserve_id(
-#         self, reserve_id: str, user_id: str, reserve_type: FundRuleType
-#     ) -> None:
-#         """Получает необходимый резерв для остатка благодаря типу"""
-#
-#         if reserve_type == FundRuleType.ACCOUNT:
-#             if not await self._account_repo.check_exists_by_id(user_id, reserve_id):
-#                 raise AccountNotFoundException
-#
-#         elif reserve_type == FundRuleType.GOAL:
-#             if not await self._goal_repo.check_exists_by_id(user_id, reserve_id):
-#                 raise GoalNotFoundException
-#         else:
-#             raise ...
-#
-#     async def _create_or_update_funds_rules(
-#         self, command: CreateAllocationCommand
-#     ) -> FundRule:
-#         """Создает распределение для резерва с процентами"""
-#
-#         # Проверка на корректность "резерва"
-#
-#         await self._check_reserve_id(
-#             user_id=command.user_id,
-#             reserve_type=command.reserve_type,
-#             reserve_id=command.reserve_id,
-#         )
-#
-#         exists_fund_rule = await self._fund_rule_repo.get_by_user_and_reserve_id(
-#             user_id=command.user_id, reserve_id=command.reserve_id
-#         )
-#         if exists_fund_rule:
-#             pass
-#
-#         fund = FundRule.create(
-#             user_id=command.user_id,
-#             reserve_id=command.reserve_id,
-#             reserve_type=command.reserve_type,
-#             percent=command.percent,
-#         )
-#         return fund
-#
-#     async def allocate_reserves_with_percentage(
-#         self, command: CreateManyAllocationsCommand
-#     ):
-#         pass
+
+class FundDistributionService:
+    """Сервис работы с распределением остатка по процентам"""
+
+    def __init__(
+        self,
+        account_repo: AccountRepositoryProtocol,
+        goal_repo: GoalsRepositoryProtocol,
+    ):
+        self._account_repo = account_repo
+        self._goal_repo = goal_repo
+
+    async def __check_reserve_id(
+        self, reserve_id: str, user_id: str, reserve_type: FundRuleType
+    ) -> None:
+        """Получает необходимый резерв для остатка благодаря типу"""
+
+        if reserve_type == FundRuleType.ACCOUNT:
+            if not await self._account_repo.check_exists_by_id(user_id, reserve_id):
+                raise AccountNotFoundException
+
+        elif reserve_type == FundRuleType.GOAL:
+            if not await self._goal_repo.check_exists_by_id(user_id, reserve_id):
+                raise GoalNotFoundException
+        else:
+            raise ReserveNotImplementedException
+
+    async def _validate_input_reserves(
+        self, reserves: list[ReserveCreateCommand]
+    ) -> None:
+        """Проверка всех входных резервов для распределения остатка"""
+        total_percentage = 0
+
+        for reserve in reserves:
+            total_percentage += reserve.percent.as_generic_type()
+            await self.__check_reserve_id(
+                reserve_id=reserve.reserve_id,
+                user_id=reserve.user_id,
+                reserve_type=reserve.reserve_type,
+            )
+
+        if total_percentage != 100:
+            raise InvalidFundPercentageException
+
 
 logger = logging.getLogger(__name__)
 
 
-class FundService:
+class FundService(FundDistributionService):
 
     def __init__(
         self,
         fund_repo: FundRepositoryProtocol,
         history_repo: HistoryRepositoryProtocol,
+        account_repo: AccountRepositoryProtocol,
+        goal_repo: GoalsRepositoryProtocol,
     ):
+        super().__init__(account_repo, goal_repo)
         self._fund_repo = fund_repo
         self._history_repo = history_repo
 
-    async def create_or_update_period(self, user_id: str, end_date: datetime) -> str:
+    async def create_or_update_fund(self, user_id: str, end_date: datetime) -> str:
         """Создаем новый период или обновляем существующий"""
 
         open_fund = await self._fund_repo.get_last_opened(user_id)
@@ -154,6 +152,15 @@ class FundService:
         if not fund:
             raise FundNotFoundException
         return fund
+
+    async def get_closed_funds(self, user_id: str) -> list[Fund]:
+        funds = await self._fund_repo.get_closed(user_id)
+        return funds
+
+    async def close_head_fund(self, reserves: list[ReserveCreateCommand]):
+        """Закрытие последнего накопленного остатка"""
+
+        await self._validate_input_reserves(reserves)
 
 
 def get_fund_service(

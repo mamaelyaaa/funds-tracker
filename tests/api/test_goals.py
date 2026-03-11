@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import pytest
@@ -20,9 +20,10 @@ class TestGoalApi:
                 {
                     "title": "На подушку",
                     "targetAmount": 1000,
-                    "accountId": None,
-                    "deadline": (datetime.now() + timedelta(days=30)).isoformat(),
-                    "savingsPercentage": 0.2,
+                    "currentAmount": 0,
+                    "deadline": (
+                        datetime.now(timezone.utc) + timedelta(days=30)
+                    ).isoformat(),
                 }
             ),
             # Создание без указания дедлайна
@@ -30,9 +31,8 @@ class TestGoalApi:
                 {
                     "title": "На подушку",
                     "targetAmount": 1000,
-                    "accountId": None,
+                    "currentAmount": 0,
                     "deadline": None,
-                    "savingsPercentage": 0.5,
                 }
             ),
         ],
@@ -50,52 +50,6 @@ class TestGoalApi:
         detail: dict = response.json()["detail"]
         assert detail.get("userId") == saved_user.id.as_generic_type()
         assert "createdAt" in detail
-
-    async def test_create_with_account_link(
-        self,
-        client,
-        faker: Faker,
-        saved_account,
-    ):
-        """Тест успешное создание с привязкой счёта"""
-
-        response = await client.post(
-            url=f"/api/v1/users/{saved_account.user_id.as_generic_type()}/goals",
-            json={
-                "title": faker.word(),
-                "targetAmount": faker.pyfloat(positive=True),
-                "accountId": saved_account.id.as_generic_type(),
-                "deadline": None,
-                "savingsPercentage": 0.5,
-            },
-        )
-
-        assert response.status_code == 201
-
-        detail: dict = response.json()["detail"]
-        assert detail.get("accountId") == saved_account.id.as_generic_type()
-        assert detail.get("currentAmount") == saved_account.balance.as_generic_type()
-
-    async def test_create_with_unknown_account(
-        self,
-        client,
-        faker: Faker,
-        saved_account,
-    ):
-        """Тест создание цели с привязкой к несуществующему счёту"""
-        response = await client.post(
-            url=f"/api/v1/users/{saved_account.user_id.as_generic_type()}/goals",
-            json={
-                "title": faker.word(),
-                "targetAmount": faker.pyfloat(positive=True),
-                "accountId": "unknown-acc-id",
-                "deadline": None,
-                "savingsPercentage": 0.5,
-            },
-        )
-
-        assert response.status_code == 404
-        assert "не найден" in response.json().get("message")
 
     @pytest.mark.parametrize(
         "test_field, expected_status",
@@ -117,7 +71,9 @@ class TestGoalApi:
             # Дедлайн до текущей даты
             (
                 {
-                    "deadline": (datetime.now() - timedelta(days=30)).isoformat(),
+                    "deadline": (
+                        datetime.now(timezone.utc) - timedelta(days=30)
+                    ).isoformat(),
                 },
                 400,
             ),
@@ -125,13 +81,6 @@ class TestGoalApi:
             (
                 {
                     "targetAmount": -1,
-                },
-                400,
-            ),
-            # Процентное соотношение больше 100% (>1)
-            (
-                {
-                    "savingsPercentage": 1.1,
                 },
                 400,
             ),
@@ -150,9 +99,8 @@ class TestGoalApi:
         json = {
             "title": faker.word(),
             "targetAmount": faker.pyfloat(positive=True),
-            "accountId": None,
+            "currentAmount": 0,
             "deadline": None,
-            "savingsPercentage": 0.5,
         }
         json.update(test_field)
 
@@ -200,10 +148,6 @@ class TestGoalApi:
         detail: dict = response.json()["detail"]
 
         assert detail["id"] == saved_goal.id.as_generic_type()
-        assert (
-            detail["savingsPercentage"]
-            == saved_goal.savings_percentage.as_generic_type()
-        )
         assert detail["title"] == saved_goal.title.as_generic_type()
         assert "createdAt" in detail
 

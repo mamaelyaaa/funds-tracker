@@ -12,6 +12,7 @@ router = APIRouter(
     prefix="/users/{user_id}/goals",
     tags=["Цели🎯"],
     dependencies=[Depends(get_user)],
+    deprecated=True,
 )
 
 

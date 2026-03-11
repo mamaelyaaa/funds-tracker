@@ -53,7 +53,7 @@ async def create_or_update_user_fund_task(
     end_date: datetime,
     fund_service: Annotated[FundService, TaskiqDepends(get_fund_service)],
 ) -> str:
-    fund_id = await fund_service.create_or_update_period(
+    fund_id = await fund_service.create_or_update_fund(
         user_id=user_id, end_date=end_date
     )
     return fund_id
