@@ -46,11 +46,18 @@ class HistoryService:
     async def save_account_history(self, command: SaveHistoryCommand) -> str:
         """Сохраняем историю счёта"""
 
+        last_history = await self._repository.get_last_history(command.account_id)
+        if last_history:
+            delta = Money(last_history.balance.as_generic_type() - command.balance)
+        else:
+            delta = command.balance
+
         new_history = History(
             account_id=AccountId(command.account_id),
             balance=Money(command.balance),
-            delta=command.delta,
+            delta=delta,
             is_monthly_closing=command.is_monthly_closing,
+            created_at=command.created_at,
         )
 
         history_id = await self._repository.save(new_history)

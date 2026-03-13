@@ -4,7 +4,6 @@ from typing import Optional, Annotated, Any
 from fastapi import Depends
 from sqlalchemy import select, desc, func, update, between
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload
 
 from domain.histories.entities import History
 from domain.histories.protocols import HistoryRepositoryProtocol
@@ -91,9 +90,9 @@ class SQLAlchemyHistoryRepository:
     ) -> int:
         query = (
             select(func.sum(HistoryModel.delta))
-            .join(AccountModel, AccountModel.id == HistoryModel.account_id)
+            .join(HistoryModel.account)
+            .filter_by(user_id=user_id)
             .filter(
-                AccountModel.user_id == user_id,
                 between(HistoryModel.created_at, start_date, end_date),
             )
         )
@@ -108,8 +107,8 @@ class SQLAlchemyHistoryRepository:
             .order_by(HistoryModel.created_at.asc())
             .limit(1)
         )
-        res = await self._session.execute(query)
-        return res.scalar_one_or_none()
+        res = await self._session.scalar(query)
+        return HistoryOrmDTO.ensure_utc(res) if res else None
 
 
 def get_history_repository(session: SessionDep) -> HistoryRepositoryProtocol:

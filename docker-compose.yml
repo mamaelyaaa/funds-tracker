@@ -4,6 +4,8 @@ services:
     container_name: funds-app
     env_file:
       - .env
+    environment:
+      APP__ENV: DEV
     ports:
       - "${RUN__PORT}:8000"
     volumes:

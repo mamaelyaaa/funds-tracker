@@ -22,7 +22,7 @@ class FundDistOrmDTO(FundDistDTO):
             reserve_type=model.reserve_type,
             amount=Money(model.amount),
             percent_applied=Percent(model.percent_applied),
-            created_at=FundDistDTO._ensure_utc(model.created_at),
+            created_at=FundDistDTO.ensure_utc(model.created_at),
         )
 
     @staticmethod

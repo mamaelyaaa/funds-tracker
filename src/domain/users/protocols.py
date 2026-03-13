@@ -6,8 +6,8 @@ from .values import UserId
 
 class UserRepositoryProtocol(Protocol):
 
-    async def save(self, user: User) -> UserId:
+    async def save(self, user: User) -> str:
         pass
 
-    async def get_by_id(self, user_id: UserId) -> Optional[User]:
+    async def get_by_id(self, user_id: str) -> Optional[User]:
         pass

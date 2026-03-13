@@ -12,7 +12,7 @@ from api.v1.schemas.histories import (
 )
 from domain.histories.commands import GetAccountHistoryCommand
 from domain.histories.dto import HistoryDTO
-from domain.users.dependencies import get_user
+from ..dependencies.users import get_user
 from .accounts import get_account
 
 router = APIRouter(

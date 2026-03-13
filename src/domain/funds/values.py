@@ -15,11 +15,6 @@ class FundRuleType(str, Enum):
 
 
 @dataclass(frozen=True)
-class FundRulesId(DomainIdValueObject):
-    pass
-
-
-@dataclass(frozen=True)
 class FundDistributionId(DomainIdValueObject):
     pass
 

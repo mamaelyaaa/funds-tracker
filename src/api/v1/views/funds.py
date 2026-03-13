@@ -4,7 +4,7 @@ from api.schemas import BaseResponseDetailSchema, BaseResponseSchema
 from api.v1.dependencies.funds import FundServiceDep
 from api.v1.schemas.funds import FundDetailSchema, FundCloseSchema
 from domain.funds.dto import FundDTO
-from domain.users.dependencies import get_user
+from api.v1.dependencies.users import get_user
 
 router = APIRouter(
     prefix="/users/{user_id}/funds",
@@ -15,7 +15,7 @@ router = APIRouter(
 
 @router.get("", response_model=BaseResponseDetailSchema[list[FundDetailSchema], dict])
 async def get_user_distributed_funds(fund_service: FundServiceDep, user_id: str):
-    funds = await fund_service.get_closed_funds(user_id)
+    funds = await fund_service.get_unopened_funds(user_id)
     return BaseResponseDetailSchema(
         message="Получена история распределенных остатков пользователя",
         detail=[FundDTO.from_entity_to_dict(fund) for fund in funds],

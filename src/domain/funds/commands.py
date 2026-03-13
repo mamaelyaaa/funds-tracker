@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from domain.funds.values import FundRuleType
-from domain.values import Percent
 
 
 @dataclass(frozen=True)

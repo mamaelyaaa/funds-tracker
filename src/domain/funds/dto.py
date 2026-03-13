@@ -80,6 +80,4 @@ class FundDistDTO(BaseDTO):
         for excluded in excludes:
             data.pop(excluded)
 
-        print(f"{data = }")
-
         return data

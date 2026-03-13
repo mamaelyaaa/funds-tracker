@@ -64,8 +64,8 @@ class AccountCRUDService:
             type=command.account_type,
             currency=command.currency,
         )
-        await self._publish(account=new_account)
         acc_id = await self.repository.save(new_account)
+        await self._publish(account=new_account)
 
         logger.info("Новый счёт #%s создан", AccountId(acc_id).short)
         return new_account
@@ -157,5 +157,5 @@ class AccountService(AccountCRUDService):
             ),
             commit=True,
         )
-        logger.info("Баланс счета #%s обновлен", account.id.short)
         await self._publish(account=account)
+        logger.info("Баланс счета #%s обновлен", account.id.short)

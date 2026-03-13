@@ -1,14 +1,11 @@
-from typing import Optional, Annotated
+from typing import Optional
 
-from fastapi import Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from domain.users.entity import User
-from domain.users.repository import UserRepositoryProtocol
-from domain.users.values import UserId
-from infra import SessionDep
 from infra.models import UserModel
+from infra.repositories.dto.users import UserOrmDTO
 
 
 class SQLAlchemyUserRepository:
@@ -16,24 +13,13 @@ class SQLAlchemyUserRepository:
     def __init__(self, session: AsyncSession):
         self._session = session
 
-    async def save(self, user: User) -> UserId:
-        user_model = UserModel(
-            id=user.id.as_generic_type(),
-            name=user.name,
-            created_at=user.created_at,
-        )
+    async def save(self, user: User) -> str:
+        user_model = UserOrmDTO.from_entity_to_orm(user)
         self._session.add(user_model)
         await self._session.commit()
-        return user.id
+        return user_model.id
 
-    async def get_by_id(self, user_id: UserId) -> Optional[User]:
-        query = select(UserModel).filter_by(id=user_id.as_generic_type())
-        res = await self._session.execute(query)
-        return res.scalar_one_or_none()
-
-
-def get_user_repository(session: SessionDep) -> UserRepositoryProtocol:
-    return SQLAlchemyUserRepository(session)
-
-
-UserRepositoryDep = Annotated[UserRepositoryProtocol, Depends(get_user_repository)]
+    async def get_by_id(self, user_id: str) -> Optional[User]:
+        query = select(UserModel).filter_by(id=user_id)
+        user = await self._session.scalar(query)
+        return UserOrmDTO.from_orm_to_entity(user) if user else None

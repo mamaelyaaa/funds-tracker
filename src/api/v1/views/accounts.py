@@ -20,7 +20,7 @@ from domain.accounts.commands import (
 )
 from domain.accounts.dto import AccountDTO
 from domain.accounts.entity import Account
-from domain.users.dependencies import get_user
+from api.v1.dependencies.users import get_user
 
 router = APIRouter(
     prefix="/users/{user_id}/accounts",

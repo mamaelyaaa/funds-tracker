@@ -11,16 +11,18 @@ class AccountOrmDTO(BaseOrmDTO, AccountDTO):
 
     @staticmethod
     def from_orm_to_entity(model: AccountModel) -> Account:
-        return Account(
+        account = Account(
             id=AccountId(model.id),
             user_id=UserId(model.user_id),
             name=Title(model.name),
             type=model.type,
             currency=model.currency,
             balance=Money(model.balance),
-            created_at=AccountOrmDTO._ensure_utc(model.created_at),
-            updated_at=AccountOrmDTO._ensure_utc(model.updated_at),
+            created_at=AccountOrmDTO.ensure_utc(model.created_at),
+            updated_at=AccountOrmDTO.ensure_utc(model.updated_at),
         )
+        account.events.clear()
+        return account
 
     @staticmethod
     def from_entity_to_orm(entity: Account) -> AccountModel:

@@ -36,5 +36,4 @@ async def saved_account(test_account, test_account_service) -> Account:
     """Тестовый сохраненный в БД счёт"""
 
     await test_account_service.repository.save(account=test_account)
-    test_account_service.publisher.publish = AsyncMock()
     return test_account

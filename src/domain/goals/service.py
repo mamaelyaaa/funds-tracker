@@ -75,7 +75,8 @@ class GoalService:
         await self._goals_repo.update(
             goal_id=command.goal_id,
             user_id=command.user_id,
-            new_goal=GoalDTO.from_entity_to_dict(goal, excludes=["id", "user_id"]),
+            upd_data=GoalDTO.from_entity_to_dict(goal, excludes=["id", "user_id"]),
+            commit=True,
         )
 
         return goal

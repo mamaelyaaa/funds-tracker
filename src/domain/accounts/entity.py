@@ -23,7 +23,7 @@ class Account(EventDomainMixin, TimestampDomainMixin):
     currency: AccountCurrency
 
     def __post_init__(self):
-        self._events.append(
+        self.events.append(
             AccountCreatedEvent(
                 user_id=self.user_id.as_generic_type(),
                 account_id=self.id.as_generic_type(),
@@ -40,7 +40,7 @@ class Account(EventDomainMixin, TimestampDomainMixin):
         delta: Decimal = new_balance.as_generic_type() - self.balance.as_generic_type()
         self.balance = new_balance
 
-        self._events.append(
+        self.events.append(
             BalanceUpdatedEvent(
                 user_id=self.user_id.as_generic_type(),
                 account_id=self.id.as_generic_type(),

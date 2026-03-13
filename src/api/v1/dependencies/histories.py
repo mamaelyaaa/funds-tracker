@@ -4,9 +4,7 @@ from fastapi import Depends
 
 from domain.histories.service import HistoryService
 from infra import SessionDep
-from infra.repositories.histories import (
-    SQLAlchemyHistoryRepository,
-)
+from infra.repositories.histories import SQLAlchemyHistoryRepository
 
 
 def get_history_service(session: SessionDep) -> HistoryService:

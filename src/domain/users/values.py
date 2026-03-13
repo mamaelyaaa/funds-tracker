@@ -7,6 +7,4 @@ from core.domain import DomainIdValueObject
 class UserId(DomainIdValueObject):
     """Value-obj уникального id пользователя"""
 
-    @property
-    def short(self) -> str:
-        return self._value[:8]
+    pass

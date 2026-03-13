@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 
 from domain.histories.values import HistoryInterval
 
@@ -8,8 +9,8 @@ class SaveHistoryCommand:
     user_id: str
     account_id: str
     balance: float
-    delta: float
     is_monthly_closing: bool
+    created_at: datetime
 
 
 @dataclass(frozen=True)

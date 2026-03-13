@@ -18,8 +18,8 @@ class GoalOrmDTO(BaseOrmDTO, GoalDTO):
             target_amount=Money(model.target_amount),
             current_amount=Money(model.current_amount),
             status=model.status,
-            deadline=GoalOrmDTO._ensure_utc(model.deadline) if model.deadline else None,
-            created_at=GoalOrmDTO._ensure_utc(model.created_at),
+            deadline=GoalOrmDTO.ensure_utc(model.deadline) if model.deadline else None,
+            created_at=GoalOrmDTO.ensure_utc(model.created_at),
         )
 
     @staticmethod

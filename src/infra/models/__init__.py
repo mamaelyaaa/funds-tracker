@@ -13,7 +13,7 @@ __all__ = (
 
 from .accounts import AccountModel, AccountCurrency
 from .base import Base
+from .funds import FundModel, FundStatus, FundDistributionModel
 from .goals import GoalStatus, GoalModel
 from .histories import HistoryModel
 from .users import UserModel
-from .funds import FundModel, FundStatus, FundDistributionModel

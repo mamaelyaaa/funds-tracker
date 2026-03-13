@@ -1,7 +1,7 @@
 import pytest
 
 from domain.users.entity import User
-from domain.users.repository import UserRepositoryProtocol
+from domain.users.protocols import UserRepositoryProtocol
 
 
 @pytest.fixture

@@ -4,7 +4,7 @@ from fastapi import Depends
 
 from domain.funds.service import FundService
 from infra import SessionDep
-from infra.publishers.fund_distribution import FundDistTaskiqPublisher
+
 from infra.repositories.accounts import SQLAlchemyAccountRepository
 from infra.repositories.fund_distribution import SQLAlchemyFundDistRepository
 from infra.repositories.funds import SQLAlchemyFundRepository
@@ -19,7 +19,6 @@ def get_fund_service(session: SessionDep) -> FundService:
         history_repo=SQLAlchemyHistoryRepository(session),
         account_repo=SQLAlchemyAccountRepository(session),
         goal_repo=SQLAlchemyGoalRepository(session),
-        fund_dist_publisher=FundDistTaskiqPublisher(),
     )
 
 

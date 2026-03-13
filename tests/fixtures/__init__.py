@@ -17,6 +17,7 @@ __all__ = (
     "test_history_service",
     # Остатки
     "test_fund",
+    "test_fund_service",
 )
 
 from .accounts import (
@@ -27,4 +28,4 @@ from .accounts import (
 from .goals import test_goal, test_goal_repo, test_goal_service
 from .histories import test_history, test_history_repo, test_history_service
 from .users import test_user, saved_user, test_user_repo
-from .funds import test_fund
+from .funds import test_fund, test_fund_service

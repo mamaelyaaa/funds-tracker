@@ -17,7 +17,7 @@ class HistoryOrmDTO(BaseOrmDTO, HistoryDTO):
             delta=float(model.delta),
             balance=Money(model.balance),
             is_monthly_closing=model.is_monthly_closing,
-            created_at=HistoryOrmDTO._ensure_utc(model.created_at),
+            created_at=HistoryOrmDTO.ensure_utc(model.created_at),
         )
 
     @staticmethod

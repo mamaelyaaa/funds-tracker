@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from datetime import timezone
+from datetime import timezone, datetime
 from typing import Any
 
 
@@ -16,7 +16,7 @@ class BaseDTO[M](ABC):
         pass
 
     @staticmethod
-    def _ensure_utc(dt):
+    def ensure_utc(dt) -> datetime:
         """Приводит naive datetime к UTC, если часовой пояс не указан"""
         if dt and dt.tzinfo is None:
             return dt.replace(tzinfo=timezone.utc)

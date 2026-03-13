@@ -43,12 +43,12 @@ class SQLAlchemyFundRepository:
     async def get_by_user_id(self, user_id: str, *args, **filter_by) -> Optional[Fund]:
         query = select(FundModel).filter_by(user_id=user_id, **filter_by)
         fund = await self._session.scalar(query)
-        return fund
+        return FundOrmDTO.from_orm_to_entity(fund) if fund else None
 
     async def get_by_id(self, fund_id: str) -> Optional[Fund]:
         query = select(FundModel).filter_by(id=fund_id)
         fund = await self._session.scalar(query)
-        return fund
+        return FundOrmDTO.from_orm_to_entity(fund) if fund else None
 
     async def get_last_opened(self, user_id: str) -> Optional[Fund]:
         query = (

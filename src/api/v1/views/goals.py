@@ -6,7 +6,7 @@ from api.v1.schemas.goals import CreateGoalSchema, GoalDetailSchema, UpdateGoalS
 from api.v1.views.accounts import AccountServiceDep
 from domain.goals.command import CreateGoalCommand, UpdateGoalPartiallyCommand
 from domain.goals.dto import GoalDTO
-from domain.users.dependencies import get_user
+from api.v1.dependencies.users import get_user
 
 router = APIRouter(
     prefix="/users/{user_id}/goals",

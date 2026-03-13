@@ -7,17 +7,14 @@ from sqlalchemy import (
     Index,
     CheckConstraint,
     DateTime,
-    and_,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from domain.funds.values import FundStatus, FundRuleType
-from domain.values import Percent
-
 from . import Base
 
 if TYPE_CHECKING:
-    from . import UserModel, AccountModel
+    from . import UserModel
 
 from infra.models.mixin import CreatedAtMixin
 
