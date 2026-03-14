@@ -65,6 +65,9 @@ class Money(DomainValueObject[Decimal]):
     def zero(cls) -> "Money":
         return cls(_value=Decimal("0"))
 
+    def to_float(self) -> float:
+        return float(self.as_generic_type())
+
 
 @dataclass(frozen=True)
 class Percent(DomainValueObject[int]):

@@ -3,7 +3,7 @@ from typing import Any
 from domain.accounts.values import AccountId
 from domain.dto import BaseDTO
 from domain.funds.entity import Fund, FundDistribution
-from domain.funds.values import FundId, FundDistributionId, FundRuleType
+from domain.funds.values import FundId, FundDistributionId, FundReserveType
 from domain.goals.values import GoalId
 from domain.users.values import UserId
 from domain.values import Money, Percent
@@ -52,7 +52,7 @@ class FundDistDTO(BaseDTO):
             fund_id=FundId(data.get("fund_id")),
             reserve_id=(
                 AccountId(data.get("reserve_id"))
-                if data.get("status") == FundRuleType.ACCOUNT
+                if data.get("status") == FundReserveType.ACCOUNT
                 else GoalId(data.get("reserve_id"))
             ),
             reserve_type=data.get("reserve_type"),

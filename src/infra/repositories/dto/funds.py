@@ -14,6 +14,7 @@ class FundOrmDTO(FundDTO):
             id=FundId(model.id),
             user_id=UserId(model.user_id),
             total_amount=Money(model.total_amount),
+            status=model.status,
             start_date=FundDTO.ensure_utc(model.start_date),
             end_date=FundDTO.ensure_utc(model.end_date),
             created_at=FundDTO.ensure_utc(model.created_at),

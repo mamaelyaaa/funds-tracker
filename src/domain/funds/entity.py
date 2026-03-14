@@ -6,12 +6,11 @@ from domain.accounts.values import AccountId
 from domain.goals.values import GoalId
 from domain.users.values import UserId
 from domain.values import Money, Percent
-from .events import FundClosedEvent
 from .exceptions import InvalidFundDateException
 from .values import (
     FundId,
     FundDistributionId,
-    FundRuleType,
+    FundReserveType,
     FundStatus,
 )
 
@@ -34,12 +33,6 @@ class Fund(CreatedAtDomainMixin, EventDomainMixin):
     def close(self) -> None:
         self.status = FundStatus.CLOSED
         self.end_date = datetime.now(timezone.utc)
-        # self.events.append(
-        #     FundClosedEvent(
-        #         user_id=self.user_id.as_generic_type(),
-        #         fund_id=self.id.as_generic_type(),
-        #     )
-        # )
 
 
 @dataclass(kw_only=True)
@@ -49,6 +42,6 @@ class FundDistribution(CreatedAtDomainMixin):
     id: FundDistributionId = field(default_factory=FundDistributionId.generate)
     fund_id: FundId
     reserve_id: AccountId | GoalId
-    reserve_type: FundRuleType
+    reserve_type: FundReserveType
     amount: Money
     percent_applied: Percent

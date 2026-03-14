@@ -19,7 +19,7 @@ from .exceptions import (
     InvalidFundPercentageException,
 )
 from .protocol import FundRepositoryProtocol, FundDistRepositoryProtocol
-from .values import FundRuleType, FundStatus
+from .values import FundReserveType, FundStatus
 
 logger = logging.getLogger(__name__)
 
@@ -38,16 +38,16 @@ class FundDistService:
         self._goal_repo = goal_repo
 
     async def __check_reserve_id(
-        self, reserve_id: str, user_id: str, reserve_type: FundRuleType
+        self, reserve_id: str, user_id: str, reserve_type: FundReserveType
     ) -> None:
         """Получает необходимый резерв для остатка благодаря типу"""
 
-        if reserve_type == FundRuleType.ACCOUNT:
+        if reserve_type == FundReserveType.ACCOUNT:
             if not await self._account_repo.check_exists_by_id(user_id, reserve_id):
                 # TODO Возможно добавить чуть подробные ошибки
                 raise AccountNotFoundException
 
-        elif reserve_type == FundRuleType.GOAL:
+        elif reserve_type == FundReserveType.GOAL:
             if not await self._goal_repo.check_exists_by_id(user_id, reserve_id):
                 raise GoalNotFoundException
         else:
@@ -122,6 +122,7 @@ class FundService(FundDistService):
 
         if last_unopened_fund:
             start_date = last_unopened_fund.end_date + timedelta(days=1)
+            logger.info(start_date)
 
             if start_date > datetime.now(timezone.utc):
                 logger.error("Накопленный остаток был сегодня уже распределен")
@@ -132,16 +133,11 @@ class FundService(FundDistService):
             )
             start_date = account.created_at
 
-        print(f"{start_date = }")
-        print(f"{end_date = }")
-
         total_amount = await self._history_repo.get_sum_delta_in_period(
             user_id=user_id,
             start_date=start_date,
             end_date=end_date,
         )
-
-        print(total_amount)
 
         fund = Fund(
             user_id=UserId(user_id),
@@ -179,6 +175,8 @@ class FundService(FundDistService):
         return fund
 
     async def get_unopened_funds(self, user_id: str) -> list[Fund]:
+        """Получение распределенных остатков"""
+
         funds = await self._fund_repo.get_unopened(user_id)
         return funds
 
@@ -198,15 +196,13 @@ class FundService(FundDistService):
         all_fund_dists = []
 
         for reserve in reserves:
-            amount = float(last_open_fund.total_amount.as_generic_type()) * (
-                reserve.percent / 100
-            )
+            amount = last_open_fund.total_amount.to_float() * (reserve.percent / 100)
 
             fund_dists = FundDistribution(
                 fund_id=last_open_fund.id,
                 reserve_id=(
                     AccountId(reserve.reserve_id)
-                    if reserve.reserve_type == FundRuleType.ACCOUNT
+                    if reserve.reserve_type == FundReserveType.ACCOUNT
                     else GoalId(reserve.reserve_id)
                 ),
                 reserve_type=reserve.reserve_type,
@@ -231,38 +227,35 @@ class FundService(FundDistService):
             user_id, fund_id=last_open_fund.id.as_generic_type()
         )
 
-    # async def _publish(self, fund: Fund):
-    #     """Публикует события"""
-    #
-    #     published = []
-    #     for event in fund.events:
-    #         try:
-    #             await self._fund_dist_publisher.publish(event)
-    #             published.append(event)
-    #         except Exception as e:
-    #             logger.error(str(e))
-    #             raise
-    #
-    #     for event in published:
-    #         fund.events.remove(event)
-
     async def _distribute_user_fund(self, user_id: str, fund_id: str) -> None:
         fund_dists = await self._fund_dist_repo.get_by_find_id(fund_id)
 
         for fund_dist in fund_dists:
 
-            if fund_dist.reserve_type == FundRuleType.ACCOUNT:
+            if fund_dist.reserve_type == FundReserveType.ACCOUNT:
+                account = await self._account_repo.get_by_id(
+                    user_id=user_id, account_id=fund_dist.reserve_id.as_generic_type()
+                )
                 await self._account_repo.update(
                     user_id=user_id,
                     account_id=fund_dist.reserve_id.as_generic_type(),
-                    upd_data={"balance": fund_dist.amount.as_generic_type()},
+                    upd_data={
+                        "balance": account.balance.as_generic_type()
+                        + fund_dist.amount.as_generic_type()
+                    },
                     commit=False,
                 )
-            elif fund_dist.reserve_type == FundRuleType.GOAL:
+            elif fund_dist.reserve_type == FundReserveType.GOAL:
+                goal = await self._goal_repo.get_by_id(
+                    user_id=user_id, goal_id=fund_dist.reserve_id.as_generic_type()
+                )
                 await self._goal_repo.update(
                     user_id=user_id,
                     goal_id=fund_dist.reserve_id.as_generic_type(),
-                    upd_data={"current_amount": fund_dist.amount.as_generic_type()},
+                    upd_data={
+                        "current_amount": goal.current_amount.as_generic_type()
+                        + fund_dist.amount.as_generic_type()
+                    },
                     commit=False,
                 )
             else:

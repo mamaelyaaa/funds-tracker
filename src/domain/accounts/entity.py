@@ -31,11 +31,8 @@ class Account(EventDomainMixin, TimestampDomainMixin):
             ),
         )
 
-    def update_balance(self, new_balance: Money, is_monthly_closing: bool) -> bool:
+    def update_balance(self, new_balance: Money, is_monthly_closing: bool) -> None:
         """Обновление баланса счета"""
-
-        if self.balance == new_balance:
-            return False
 
         delta: Decimal = new_balance.as_generic_type() - self.balance.as_generic_type()
         self.balance = new_balance
@@ -50,4 +47,3 @@ class Account(EventDomainMixin, TimestampDomainMixin):
             ),
         )
         self._touch()
-        return True

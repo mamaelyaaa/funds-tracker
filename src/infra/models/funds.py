@@ -10,7 +10,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from domain.funds.values import FundStatus, FundRuleType
+from domain.funds.values import FundStatus, FundReserveType
 from . import Base
 
 if TYPE_CHECKING:
@@ -50,7 +50,7 @@ class FundDistributionModel(Base, CreatedAtMixin):
 
     fund_id: Mapped[str] = mapped_column(ForeignKey("funds.id"))
     reserve_id: Mapped[str]
-    reserve_type: Mapped[FundRuleType]
+    reserve_type: Mapped[FundReserveType]
     amount: Mapped[float]
     percent_applied: Mapped[int]
 

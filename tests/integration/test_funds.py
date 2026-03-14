@@ -1,3 +1,4 @@
+import asyncio
 from datetime import timezone, datetime, timedelta
 
 import pytest
@@ -38,6 +39,7 @@ class TestFundService:
                 currency=test_account.currency,
             )
         )
+        await asyncio.sleep(0.5)
 
         fund = await test_fund_service._fund_repo.get_by_user_id(
             user_id=account.user_id.as_generic_type()
@@ -84,6 +86,7 @@ class TestFundService:
                 currency=test_account.currency,
             )
         )
+        await asyncio.sleep(0.5)
 
         assert (
             last_closed_fund := await test_fund_service._fund_repo.get_last_closed(
@@ -131,6 +134,7 @@ class TestFundService:
                 is_monthly_closing=True,
             )
         )
+        await asyncio.sleep(0.5)
 
         new_fund = await test_fund_service._fund_repo.get_last_opened(
             user_id=saved_account.user_id.as_generic_type()

@@ -9,7 +9,7 @@ class FundId(DomainIdValueObject):
     pass
 
 
-class FundRuleType(str, Enum):
+class FundReserveType(str, Enum):
     GOAL = "Goal"
     ACCOUNT = "Account"
 

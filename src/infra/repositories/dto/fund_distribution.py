@@ -1,7 +1,7 @@
 from domain.accounts.values import AccountId
 from domain.funds.dto import FundDistDTO
 from domain.funds.entity import FundDistribution
-from domain.funds.values import FundId, FundDistributionId, FundRuleType
+from domain.funds.values import FundId, FundDistributionId, FundReserveType
 from domain.goals.values import GoalId
 from domain.values import Money, Percent
 from infra.models.funds import FundDistributionModel
@@ -16,7 +16,7 @@ class FundDistOrmDTO(FundDistDTO):
             fund_id=FundId(model.fund_id),
             reserve_id=(
                 AccountId(model.reserve_id)
-                if model.reserve_type == FundRuleType.ACCOUNT
+                if model.reserve_type == FundReserveType.ACCOUNT
                 else GoalId(model.reserve_id)
             ),
             reserve_type=model.reserve_type,

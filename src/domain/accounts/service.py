@@ -141,13 +141,14 @@ class AccountService(AccountCRUDService):
             )
         )
 
-        is_updated = account.update_balance(
+        if account.balance == Money(command.new_balance):
+            logger.info("Баланс счёта #%s не изменен", account.id.short)
+            return
+
+        account.update_balance(
             new_balance=Money(command.new_balance),
             is_monthly_closing=command.is_monthly_closing,
         )
-        if not is_updated:
-            logger.info("Баланс счёта #%s не изменен", account.id.short)
-            return
 
         await self.repository.update(
             account_id=command.account_id,
@@ -155,7 +156,6 @@ class AccountService(AccountCRUDService):
             upd_data=AccountDTO.from_entity_to_dict(
                 account, excludes=["id", "user_id"]
             ),
-            commit=True,
         )
         await self._publish(account=account)
         logger.info("Баланс счета #%s обновлен", account.id.short)

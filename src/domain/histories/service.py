@@ -48,7 +48,7 @@ class HistoryService:
 
         last_history = await self._repository.get_last_history(command.account_id)
         if last_history:
-            delta = Money(last_history.balance.as_generic_type() - command.balance)
+            delta = command.balance - last_history.balance.to_float()
         else:
             delta = command.balance
 

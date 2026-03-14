@@ -1,7 +1,7 @@
 from typing import Any, Optional, Annotated
 
 from fastapi import Depends
-from sqlalchemy import select, update
+from sqlalchemy import select, update, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from domain.funds.entity import Fund
@@ -74,7 +74,12 @@ class SQLAlchemyFundRepository:
         query = (
             select(FundModel)
             .filter_by(user_id=user_id)
-            .where(FundModel.status != FundStatus.OPEN)
+            .where(
+                or_(
+                    FundModel.status == FundStatus.CLOSED,
+                    FundModel.status == FundStatus.DISTRIBUTED,
+                )
+            )
             .order_by(FundModel.end_date.desc())
         )
         funds = await self._session.scalars(query)
