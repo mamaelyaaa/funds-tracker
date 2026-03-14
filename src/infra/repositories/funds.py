@@ -60,10 +60,16 @@ class SQLAlchemyFundRepository:
         last_fund = await self._session.scalar(query)
         return FundOrmDTO.from_orm_to_entity(last_fund) if last_fund else None
 
-    async def get_last_closed(self, user_id: str) -> Optional[Fund]:
+    async def get_last_unopened(self, user_id: str) -> Optional[Fund]:
         query = (
             select(FundModel)
-            .filter_by(user_id=user_id, status=FundStatus.CLOSED)
+            .filter_by(user_id=user_id)
+            .where(
+                or_(
+                    FundModel.status == FundStatus.CLOSED,
+                    FundModel.status == FundStatus.DISTRIBUTED,
+                )
+            )
             .order_by(FundModel.created_at.desc())
             .limit(1)
         )

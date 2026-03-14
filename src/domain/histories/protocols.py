@@ -6,7 +6,7 @@ from domain.histories.entities import History
 
 class HistoryRepositoryProtocol(Protocol):
 
-    async def save(self, history: History) -> str:
+    async def save(self, history: History, commit: bool = True) -> str:
         pass
 
     async def get_by_id(self, history_id: str) -> Optional[History]:

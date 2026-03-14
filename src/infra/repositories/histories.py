@@ -17,10 +17,13 @@ class SQLAlchemyHistoryRepository:
     def __init__(self, session: AsyncSession):
         self._session = session
 
-    async def save(self, history: History) -> str:
+    async def save(self, history: History, commit: bool = True) -> str:
         history_model: HistoryModel = HistoryOrmDTO.from_entity_to_orm(history)
         self._session.add(history_model)
-        await self._session.commit()
+        if commit:
+            await self._session.commit()
+        else:
+            await self._session.flush()
         return history_model.id
 
     async def get_by_id(self, history_id: str) -> Optional[History]:

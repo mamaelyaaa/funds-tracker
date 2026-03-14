@@ -28,7 +28,7 @@ def upgrade() -> None:
         sa.Column("reserve_id", sa.String(), nullable=False),
         sa.Column(
             "reserve_type",
-            sa.Enum("GOAL", "ACCOUNT", name="fundruletype"),
+            sa.Enum("GOAL", "ACCOUNT", name="fundreservetype"),
             nullable=False,
         ),
         sa.Column("amount", sa.Float(), nullable=False),
@@ -86,4 +86,5 @@ def downgrade() -> None:
         existing_nullable=False,
     )
     op.drop_table("funds_distribution")
-    op.execute("DROP TYPE fundruletype")
+    op.execute("DROP TYPE IF EXISTS fundruletype")
+    op.execute("DROP TYPE fundreservetype")

@@ -20,6 +20,7 @@ from .exceptions import (
 )
 from .protocol import FundRepositoryProtocol, FundDistRepositoryProtocol
 from .values import FundReserveType, FundStatus
+from ..histories.entities import History
 
 logger = logging.getLogger(__name__)
 
@@ -118,7 +119,7 @@ class FundService(FundDistService):
         Если до этого был закрытый период, то start_date = last_closed_date + 1
         """
 
-        last_unopened_fund = await self._fund_repo.get_last_closed(user_id=user_id)
+        last_unopened_fund = await self._fund_repo.get_last_unopened(user_id=user_id)
 
         if last_unopened_fund:
             start_date = last_unopened_fund.end_date + timedelta(days=1)
@@ -224,7 +225,7 @@ class FundService(FundDistService):
         )
 
         await self._distribute_user_fund(
-            user_id, fund_id=last_open_fund.id.as_generic_type()
+            user_id=user_id, fund_id=last_open_fund.id.as_generic_type()
         )
 
     async def _distribute_user_fund(self, user_id: str, fund_id: str) -> None:
@@ -240,22 +241,23 @@ class FundService(FundDistService):
                     user_id=user_id,
                     account_id=fund_dist.reserve_id.as_generic_type(),
                     upd_data={
-                        "balance": account.balance.as_generic_type()
-                        + fund_dist.amount.as_generic_type()
+                        "balance": (new_balance := fund_dist.amount.as_generic_type())
                     },
                     commit=False,
                 )
-            elif fund_dist.reserve_type == FundReserveType.GOAL:
-                goal = await self._goal_repo.get_by_id(
-                    user_id=user_id, goal_id=fund_dist.reserve_id.as_generic_type()
+                history = History(
+                    account_id=account.id,
+                    balance=Money(new_balance),
+                    delta=float(new_balance),
+                    is_monthly_closing=False,
                 )
+                await self._history_repo.save(history, commit=False)
+
+            elif fund_dist.reserve_type == FundReserveType.GOAL:
                 await self._goal_repo.update(
                     user_id=user_id,
                     goal_id=fund_dist.reserve_id.as_generic_type(),
-                    upd_data={
-                        "current_amount": goal.current_amount.as_generic_type()
-                        + fund_dist.amount.as_generic_type()
-                    },
+                    upd_data={"current_amount": fund_dist.amount.as_generic_type()},
                     commit=False,
                 )
             else:
