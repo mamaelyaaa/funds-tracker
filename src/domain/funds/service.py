@@ -45,7 +45,6 @@ class FundDistService:
 
         if reserve_type == FundReserveType.ACCOUNT:
             if not await self._account_repo.check_exists_by_id(user_id, reserve_id):
-                # TODO Возможно добавить чуть подробные ошибки
                 raise AccountNotFoundException
 
         elif reserve_type == FundReserveType.GOAL:
@@ -245,10 +244,13 @@ class FundService(FundDistService):
                     },
                     commit=False,
                 )
+                last_history = await self._history_repo.get_last_history(
+                    account_id=account.id.as_generic_type()
+                )
                 history = History(
                     account_id=account.id,
                     balance=Money(new_balance),
-                    delta=float(new_balance),
+                    delta=last_history.balance.to_float() - float(new_balance),
                     is_monthly_closing=False,
                 )
                 await self._history_repo.save(history, commit=False)
