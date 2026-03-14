@@ -1,6 +1,9 @@
 from typing import Annotated
 
-from fastapi import Depends
+from fastapi import Depends, Path
+
+from domain.accounts.commands import GetAccountCommand
+from domain.accounts.entity import Account
 
 from domain.accounts.service import AccountService
 from infra import SessionDep
@@ -16,3 +19,18 @@ def get_account_service(session: SessionDep) -> AccountService:
 
 
 AccountServiceDep = Annotated[AccountService, Depends(get_account_service)]
+
+
+async def get_account(
+    account_service: AccountServiceDep, account_id: str = Path(), user_id: str = Path()
+) -> Account:
+    account = await account_service.find_account_by_id(
+        command=GetAccountCommand(
+            account_id=account_id,
+            user_id=user_id,
+        )
+    )
+    return account
+
+
+AccountDep = Annotated[Account, Depends(get_account)]

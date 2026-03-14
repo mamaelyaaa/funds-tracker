@@ -3,8 +3,10 @@ from dataclasses import dataclass, field
 
 @dataclass(frozen=True)
 class PaginationCommand:
+    """Команда для пагинации"""
+
     page: int = field(default=1)
-    limit: int = field(default=10)
+    limit: int = field(default=5)
 
     @property
     def page_offset(self) -> int:

@@ -1,30 +1,29 @@
-from typing import Optional, Annotated, Any
+from typing import Optional, Any
 
-from fastapi import Depends
 from sqlalchemy import select, func, delete, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from domain.goals.entities import Goal
-from domain.goals.protocols import GoalRepositoryProtocol
-from infra.database import SessionDep
+from infra.database.specification import SpecificationProtocol
 from infra.models.goals import GoalModel
+from .base import SQLAlchemyBaseRepository
 from .dto.goals import GoalOrmDTO
 
 
-class SQLAlchemyGoalRepository:
+class SQLAlchemyGoalRepository(SQLAlchemyBaseRepository):
 
     def __init__(self, session: AsyncSession):
-        self._session = session
+        super().__init__(session)
 
     async def save(self, goal: Goal) -> str:
         goal_model: GoalModel = GoalOrmDTO.from_entity_to_orm(goal)
-        self._session.add(goal_model)
-        await self._session.commit()
+        self.session.add(goal_model)
+        await self.session.commit()
         return goal_model.id
 
     async def get_by_id(self, user_id: str, goal_id: str) -> Optional[Goal]:
         query = select(GoalModel).filter_by(id=goal_id, user_id=user_id)
-        goal = await self._session.scalar(query)
+        goal = await self.session.scalar(query)
         return GoalOrmDTO.from_orm_to_entity(goal) if goal else None
 
     async def is_title_taken(self, title: str, user_id: str) -> bool:
@@ -33,17 +32,25 @@ class SQLAlchemyGoalRepository:
             .select_from(GoalModel)
             .filter_by(title=title, user_id=user_id)
         )
-        res = await self._session.execute(query)
+        res = await self.session.execute(query)
         return bool(res.scalar_one())
+
+    async def count_by_user_id(self, user_id: str) -> int:
+        query = select(func.count()).select_from(GoalModel).filter_by(user_id=user_id)
+        res = await self.session.execute(query)
+        return res.scalar_one()
 
     async def count(self) -> int:
         query = select(func.count()).select_from(GoalModel)
-        res = await self._session.execute(query)
+        res = await self.session.execute(query)
         return res.scalar_one()
 
-    async def get_by_user_id(self, user_id: str) -> list[Goal]:
+    async def get_by_user_id(
+        self, user_id: str, *specs: SpecificationProtocol
+    ) -> list[Goal]:
         query = select(GoalModel).filter_by(user_id=user_id)
-        res = await self._session.execute(query)
+        query = self._apply_specs(query, specs)
+        res = await self.session.execute(query)
         return [GoalOrmDTO.from_orm_to_entity(row) for row in res.scalars()]
 
     async def get_by_user_id_except_goal_id(
@@ -52,7 +59,7 @@ class SQLAlchemyGoalRepository:
         query = (
             select(GoalModel).filter_by(user_id=user_id).where(GoalModel.id != goal_id)
         )
-        res = await self._session.execute(query)
+        res = await self.session.execute(query)
         return [GoalOrmDTO.from_orm_to_entity(row) for row in res.scalars()]
 
     async def delete(self, goal: Goal) -> None:
@@ -60,8 +67,8 @@ class SQLAlchemyGoalRepository:
             id=goal.id.as_generic_type(),
             user_id=goal.user_id.as_generic_type(),
         )
-        await self._session.execute(stmt)
-        await self._session.commit()
+        await self.session.execute(stmt)
+        await self.session.commit()
 
     async def update(
         self, user_id: str, goal_id: str, upd_data: dict[str, Any], commit: bool
@@ -72,11 +79,9 @@ class SQLAlchemyGoalRepository:
             .values(**upd_data)
             .returning(GoalModel)
         )
-        goal = await self._session.scalar(stmt)
+        goal = await self.session.scalar(stmt)
         if commit:
-            await self._session.commit()
-        else:
-            await self._session.flush()
+            await self.session.commit()
         return GoalOrmDTO.from_orm_to_entity(goal) if goal else None
 
     async def check_exists_by_id(self, user_id: str, account_id: str) -> bool:
@@ -85,12 +90,5 @@ class SQLAlchemyGoalRepository:
             .select_from(GoalModel)
             .filter_by(user_id=user_id, id=account_id)
         )
-        res = await self._session.scalar(query)
+        res = await self.session.scalar(query)
         return bool(res)
-
-
-def get_goal_repository(session: SessionDep) -> GoalRepositoryProtocol:
-    return SQLAlchemyGoalRepository(session)
-
-
-GoalRepositoryDep = Annotated[GoalRepositoryProtocol, Depends(get_goal_repository)]

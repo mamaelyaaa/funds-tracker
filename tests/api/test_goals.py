@@ -4,8 +4,6 @@ from typing import Any
 import pytest
 from faker.proxy import Faker
 
-from domain.goals.entities import Goal
-
 
 @pytest.mark.asyncio
 @pytest.mark.goals
@@ -120,8 +118,10 @@ class TestGoalApi:
         )
 
         response = await client.get(
-            url=f"/api/v1/users/{saved_user.id.as_generic_type()}/goals"
+            url=f"/api/v1/users/{saved_user.id.as_generic_type()}/goals",
         )
+
+        print(response.json())
 
         assert response.status_code == 200
         detail: list[dict] = response.json()["detail"]
@@ -132,17 +132,14 @@ class TestGoalApi:
         assert goal.get("title") == exists_goal.title.as_generic_type()
         assert "createdAt" in goal
 
-    @pytest.fixture
-    async def saved_goal(self, saved_user, test_goal, test_goal_repo) -> Goal:
-        await test_goal_repo.save(test_goal)
-        return test_goal
-
-    async def test_get_goal_success(self, client, saved_goal):
+    async def test_get_goal_success(self, client, saved_user, saved_goal):
         """Тест цель найдена"""
 
         response = await client.get(
-            url=f"/api/v1/users/{saved_goal.user_id.as_generic_type()}/goals/{saved_goal.id.as_generic_type()}"
+            url=f"/api/v1/users/{saved_user.id.as_generic_type()}/goals/{saved_goal.id.as_generic_type()}"
         )
+
+        print(response.json())
 
         assert response.status_code == 200
         detail: dict = response.json()["detail"]
@@ -151,19 +148,18 @@ class TestGoalApi:
         assert detail["title"] == saved_goal.title.as_generic_type()
         assert "createdAt" in detail
 
-    async def test_get_goal_by_id_not_found(self, client, saved_goal):
+    async def test_get_goal_by_id_not_found(self, client, saved_user):
         """Тест цель не найдена"""
 
         response = await client.get(
-            url=f"/api/v1/users/{saved_goal.user_id.as_generic_type()}/goals/unknown-goal-id"
+            url=f"/api/v1/users/{saved_user.id.as_generic_type()}/goals/unknown-goal-id"
         )
-
         assert response.status_code == 404
         assert "не найден" in response.json()["message"]
 
-    async def test_delete_success(self, client, saved_goal):
+    async def test_delete_success(self, client, saved_user, saved_goal):
         """Тест удаление цели"""
         response = await client.delete(
-            url=f"/api/v1/users/{saved_goal.user_id.as_generic_type()}/goals/{saved_goal.id.as_generic_type()}"
+            url=f"/api/v1/users/{saved_user.id.as_generic_type()}/goals/{saved_goal.id.as_generic_type()}"
         )
         assert response.status_code == 204

@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 import pytest
 from faker.proxy import Faker
 
+from domain.commands import PaginationCommand
 from domain.exceptions import InvalidBalanceException
 from domain.goals.command import CreateGoalCommand, UpdateGoalPartiallyCommand
 from domain.goals.entities import Goal
@@ -111,7 +112,10 @@ class TestGoalsService:
                 )
             )
 
-        saved_goals = await test_goal_service.get_user_goals(user_id="user-123")
+        saved_goals, _ = await test_goal_service.get_user_goals(
+            user_id="user-123",
+            pagination=PaginationCommand(page=1, limit=10),
+        )
 
         assert len(saved_goals) == 5
 

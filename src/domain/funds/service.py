@@ -1,6 +1,8 @@
+import asyncio
 import logging
 from datetime import datetime, timedelta, timezone
 
+from api.schemas import PaginationMetaSchema
 from domain.accounts.exceptions import AccountNotFoundException
 from domain.accounts.protocols import AccountRepositoryProtocol
 from domain.accounts.values import AccountId
@@ -10,6 +12,7 @@ from domain.goals.values import GoalId
 from domain.histories.protocols import HistoryRepositoryProtocol
 from domain.users.values import UserId
 from domain.values import Money, Percent
+from infra.database.specification import PaginationSpecification
 from .commands import ReserveCreateCommand
 from .dto import FundDTO
 from .entity import Fund, FundDistribution
@@ -20,6 +23,7 @@ from .exceptions import (
 )
 from .protocol import FundRepositoryProtocol, FundDistRepositoryProtocol
 from .values import FundReserveType, FundStatus
+from ..commands import PaginationCommand
 from ..histories.entities import History
 
 logger = logging.getLogger(__name__)
@@ -174,11 +178,24 @@ class FundService(FundDistService):
             raise FundNotFoundException
         return fund
 
-    async def get_unopened_funds(self, user_id: str) -> list[Fund]:
+    async def get_unopened_funds(
+        self,
+        user_id: str,
+        pagination: PaginationCommand,
+    ) -> tuple[list[Fund], PaginationMetaSchema]:
         """Получение распределенных остатков"""
 
-        funds = await self._fund_repo.get_unopened(user_id)
-        return funds
+        funds, funds_count = await asyncio.gather(
+            self._fund_repo.get_unopened(
+                user_id,
+                PaginationSpecification.from_pagination_command(pagination),
+            ),
+            self._fund_repo.get_count_by_user_id(user_id),
+        )
+
+        return funds, PaginationMetaSchema(
+            page=pagination.page, limit=pagination.limit, total_found=funds_count
+        )
 
     async def close_head_fund(
         self, user_id: str, reserves: list[ReserveCreateCommand]

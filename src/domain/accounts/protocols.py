@@ -1,6 +1,7 @@
 from typing import Protocol, Optional, Any
 
 from core.domain import DomainEvent
+from infra.database.specification import SpecificationProtocol
 from .entity import Account
 
 
@@ -12,7 +13,9 @@ class AccountRepositoryProtocol(Protocol):
     async def get_by_id(self, user_id: str, account_id: str) -> Optional[Account]:
         pass
 
-    async def get_by_user_id(self, user_id: str) -> list[Account]:
+    async def get_by_user_id(
+        self, user_id: str, *specs: SpecificationProtocol
+    ) -> list[Account]:
         pass
 
     async def delete(self, user_id: str, account_id: str) -> Optional[str]:
@@ -25,11 +28,7 @@ class AccountRepositoryProtocol(Protocol):
         pass
 
     async def update(
-        self,
-        user_id: str,
-        account_id: str,
-        upd_data: dict[str, Any],
-        commit: bool = True,
+        self, user_id: str, account_id: str, upd_data: dict[str, Any]
     ) -> Optional[Account]:
         pass
 

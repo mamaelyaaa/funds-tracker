@@ -1,12 +1,16 @@
+import asyncio
 import logging
 
+from api.schemas import PaginationMetaSchema
 from domain.users.entity import User
 from domain.users.values import UserId
 from domain.values import Money, Title
+from infra.database.specification import PaginationSpecification
 from .commands import (
     CreateAccountCommand,
     GetAccountCommand,
     UpdateAccountBalanceCommand,
+    GetAccountsCommand,
 )
 from .dto import AccountDTO
 from .entity import Account
@@ -88,12 +92,29 @@ class AccountCRUDService:
         logger.info(f"Счёт #{AccountId(command.account_id).short} получен")
         return account
 
-    async def find_accounts_by_user_id(self, user_id: str) -> list[Account]:
-        """Поиск всех счетов пользователя по его уникальному id"""
+    async def find_accounts_by_user_id(
+        self,
+        command: GetAccountsCommand,
+    ) -> tuple[list[Account], PaginationMetaSchema]:
+        """
+        Поиск всех счетов пользователя по его уникальному id с пагинацией
+        """
 
-        accounts = await self.repository.get_by_user_id(user_id)
-        logger.info(f"Счёта пользователя #{UserId(user_id).short} получены")
-        return accounts
+        accounts, account_count = await asyncio.gather(
+            self.repository.get_by_user_id(
+                command.user_id,
+                PaginationSpecification.from_pagination_command(command.pagination),
+            ),
+            self.repository.count_by_user_id(user_id=command.user_id),
+        )
+
+        logger.info(f"Счёта пользователя #{UserId(command.user_id).short} получены")
+
+        return accounts, PaginationMetaSchema(
+            page=command.pagination.page,
+            limit=command.pagination.limit,
+            total_found=account_count,
+        )
 
     async def delete_account(self, command: GetAccountCommand) -> None:
         """Удаление счёта по id"""

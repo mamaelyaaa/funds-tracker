@@ -1,34 +1,32 @@
 from datetime import datetime
-from typing import Optional, Annotated, Any
+from typing import Optional, Any
 
-from fastapi import Depends
 from sqlalchemy import select, desc, func, update, between
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from domain.histories.entities import History
-from domain.histories.protocols import HistoryRepositoryProtocol
-from infra.database import SessionDep
 from infra.models import HistoryModel, AccountModel
+from infra.repositories.base import SQLAlchemyBaseRepository
 from infra.repositories.dto.histories import HistoryOrmDTO
 
 
-class SQLAlchemyHistoryRepository:
+class SQLAlchemyHistoryRepository(SQLAlchemyBaseRepository):
 
     def __init__(self, session: AsyncSession):
-        self._session = session
+        super().__init__(session)
 
     async def save(self, history: History, commit: bool = True) -> str:
         history_model: HistoryModel = HistoryOrmDTO.from_entity_to_orm(history)
-        self._session.add(history_model)
+        self.session.add(history_model)
+
         if commit:
-            await self._session.commit()
-        else:
-            await self._session.flush()
+            await self.session.commit()
+
         return history_model.id
 
     async def get_by_id(self, history_id: str) -> Optional[History]:
         query = select(HistoryModel).filter_by(id=history_id)
-        history = await self._session.scalar(query)
+        history = await self.session.scalar(query)
         return HistoryOrmDTO.from_orm_to_entity(history) if history else None
 
     async def get_last_history(self, account_id: str) -> Optional[History]:
@@ -38,7 +36,7 @@ class SQLAlchemyHistoryRepository:
             .order_by(HistoryModel.created_at.desc())
             .limit(1)
         )
-        history = await self._session.scalar(query)
+        history = await self.session.scalar(query)
         return HistoryOrmDTO.from_orm_to_entity(history) if history else None
 
     async def get_history_linked_to_period(
@@ -72,7 +70,7 @@ class SQLAlchemyHistoryRepository:
         if limit:
             query = query.limit(limit)
 
-        res = await self._session.execute(query)
+        res = await self.session.execute(query)
         return [HistoryOrmDTO.from_orm_to_entity(row) for row in res.scalars().all()]
 
     async def update(
@@ -84,8 +82,8 @@ class SQLAlchemyHistoryRepository:
             .values(**upd_data)
             .returning(HistoryModel)
         )
-        history = await self._session.scalar(stmt)
-        await self._session.commit()
+        history = await self.session.scalar(stmt)
+        await self.session.commit()
         return HistoryOrmDTO.from_orm_to_entity(history) if history else None
 
     async def get_sum_delta_in_period(
@@ -99,7 +97,7 @@ class SQLAlchemyHistoryRepository:
                 between(HistoryModel.created_at, start_date, end_date),
             )
         )
-        res = await self._session.scalar(query)
+        res = await self.session.scalar(query)
         return res or 0
 
     async def get_first_history_date_by_user(self, user_id: str) -> Optional[datetime]:
@@ -110,14 +108,5 @@ class SQLAlchemyHistoryRepository:
             .order_by(HistoryModel.created_at.asc())
             .limit(1)
         )
-        res = await self._session.scalar(query)
+        res = await self.session.scalar(query)
         return HistoryOrmDTO.ensure_utc(res) if res else None
-
-
-def get_history_repository(session: SessionDep) -> HistoryRepositoryProtocol:
-    return SQLAlchemyHistoryRepository(session)
-
-
-HistoryRepositoryDep = Annotated[
-    HistoryRepositoryProtocol, Depends(get_history_repository)
-]

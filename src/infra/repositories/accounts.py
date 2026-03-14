@@ -4,42 +4,48 @@ from sqlalchemy import select, func, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from domain.accounts.entity import Account
+from infra.database.specification import SpecificationProtocol
 from infra.models import AccountModel
+from .base import SQLAlchemyBaseRepository
 from .dto.accounts import AccountOrmDTO
 
 
-class SQLAlchemyAccountRepository:
+class SQLAlchemyAccountRepository(SQLAlchemyBaseRepository):
 
     def __init__(self, session: AsyncSession):
-        self._session = session
+        super().__init__(session)
 
     async def save(self, account: Account) -> str:
         acc: AccountModel = AccountOrmDTO.from_entity_to_orm(account)
-        self._session.add(acc)
-        await self._session.commit()
+        self.session.add(acc)
+        await self.session.commit()
         return acc.id
 
     async def get_by_id(self, user_id: str, account_id: str) -> Optional[Account]:
         query = select(AccountModel).filter_by(id=account_id, user_id=user_id)
-        account = await self._session.scalar(query)
+        account = await self.session.scalar(query)
         return AccountOrmDTO.from_orm_to_entity(account) if account else None
 
-    async def get_by_user_id(self, user_id: str) -> list[Account]:
+    async def get_by_user_id(
+        self, user_id: str, *specs: SpecificationProtocol
+    ) -> list[Account]:
         query = select(AccountModel).filter_by(user_id=user_id)
-        accounts = await self._session.scalars(query)
+        query = self._apply_specs(query, specs)
+
+        accounts = await self.session.scalars(query)
         return [AccountOrmDTO.from_orm_to_entity(account) for account in accounts.all()]
 
     async def delete(self, user_id: str, account_id: str) -> None:
         stmt = delete(AccountModel).filter_by(id=account_id, user_id=user_id)
-        await self._session.execute(stmt)
-        await self._session.commit()
+        await self.session.execute(stmt)
+        await self.session.commit()
         return
 
     async def count_by_user_id(self, user_id: str) -> int:
         query = (
             select(func.count()).select_from(AccountModel).filter_by(user_id=user_id)
         )
-        res = await self._session.scalar(query)
+        res = await self.session.scalar(query)
         return res or 0
 
     async def is_name_taken(self, user_id: str, name: str) -> bool:
@@ -48,7 +54,7 @@ class SQLAlchemyAccountRepository:
             .select_from(AccountModel)
             .filter_by(user_id=user_id, name=name)
         )
-        count = await self._session.scalar(query)
+        count = await self.session.scalar(query)
         return bool(count)
 
     async def update(
@@ -64,12 +70,10 @@ class SQLAlchemyAccountRepository:
             .values(**upd_data)
             .returning(AccountModel)
         )
-        account = await self._session.scalar(stmt)
+        account = await self.session.scalar(stmt)
 
         if commit:
-            await self._session.commit()
-        else:
-            await self._session.flush()
+            await self.session.commit()
 
         return AccountOrmDTO.from_orm_to_entity(account) if account else None
 
@@ -79,5 +83,5 @@ class SQLAlchemyAccountRepository:
             .select_from(AccountModel)
             .filter_by(user_id=user_id, id=account_id)
         )
-        res = await self._session.scalar(query)
+        res = await self.session.scalar(query)
         return bool(res)

@@ -1,10 +1,16 @@
 from fastapi import APIRouter, Depends, Path
 
-from api.schemas import BaseResponseDetailSchema, BaseResponseSchema
+from api.schemas import (
+    BaseResponseDetailSchema,
+    BaseResponseSchema,
+    PaginationMetaSchema,
+    PaginationDep,
+)
 from api.v1.dependencies.funds import FundServiceDep
-from api.v1.schemas.funds import FundDetailSchema, FundCloseSchema
-from domain.funds.dto import FundDTO
 from api.v1.dependencies.users import get_user
+from api.v1.schemas.funds import FundDetailSchema, FundCloseSchema
+from domain.commands import PaginationCommand
+from domain.funds.dto import FundDTO
 
 router = APIRouter(
     prefix="/users/{user_id}/funds",
@@ -13,13 +19,25 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=BaseResponseDetailSchema[list[FundDetailSchema], dict])
-async def get_user_distributed_funds(fund_service: FundServiceDep, user_id: str):
-    funds = await fund_service.get_unopened_funds(user_id)
+@router.get(
+    "",
+    response_model=BaseResponseDetailSchema[
+        list[FundDetailSchema], PaginationMetaSchema
+    ],
+)
+async def get_user_distributed_funds(
+    fund_service: FundServiceDep,
+    user_id: str,
+    pagination: PaginationDep,
+):
+    funds, pagination_meta = await fund_service.get_unopened_funds(
+        user_id=user_id,
+        pagination=PaginationCommand(**pagination.model_dump()),
+    )
     return BaseResponseDetailSchema(
         message="Получена история распределенных остатков пользователя",
         detail=[FundDTO.from_entity_to_dict(fund) for fund in funds],
-        metadata={},
+        metadata=pagination_meta,
     )
 
 

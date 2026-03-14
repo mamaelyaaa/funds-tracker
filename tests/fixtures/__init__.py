@@ -7,6 +7,7 @@ __all__ = (
     "test_goal",
     "test_goal_repo",
     "test_goal_service",
+    "saved_goal",
     # Пользователи
     "test_user",
     "test_user_repo",
@@ -25,7 +26,7 @@ from .accounts import (
     test_account_service,
     saved_account,
 )
-from .goals import test_goal, test_goal_repo, test_goal_service
+from .goals import test_goal, test_goal_repo, test_goal_service, saved_goal
 from .histories import test_history, test_history_repo, test_history_service
 from .users import test_user, saved_user, test_user_repo
 from .funds import test_fund, test_fund_service

@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+from domain.commands import PaginationCommand
 from .values import AccountType, AccountCurrency
 
 
@@ -20,6 +21,14 @@ class GetAccountCommand:
 
     user_id: str
     account_id: str
+
+
+@dataclass(frozen=True)
+class GetAccountsCommand:
+    """Команда для получения баланса счёта"""
+
+    user_id: str
+    pagination: PaginationCommand
 
 
 @dataclass(frozen=True, kw_only=True)

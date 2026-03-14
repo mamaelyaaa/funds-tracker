@@ -3,6 +3,8 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, status
 
 from api.schemas import BaseResponseDetailSchema, BaseExceptionSchema
+from api.v1.dependencies.accounts import get_account
+from api.v1.dependencies.users import get_user
 from api.v1.dependencies.histories import HistoryServiceDep
 from api.v1.schemas.histories import (
     HistoryDetailSchema,
@@ -12,8 +14,6 @@ from api.v1.schemas.histories import (
 )
 from domain.histories.commands import GetAccountHistoryCommand
 from domain.histories.dto import HistoryDTO
-from ..dependencies.users import get_user
-from .accounts import get_account
 
 router = APIRouter(
     prefix="/users/{user_id}/accounts/{account_id}/history",

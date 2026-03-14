@@ -1,42 +1,38 @@
 from decimal import Decimal
-from typing import Annotated, Any
 
-from fastapi import Depends
-from sqlalchemy import select, update
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import InstrumentedAttribute
 
 from domain.funds.entity import FundDistribution
-from domain.funds.protocol import FundDistRepositoryProtocol
 from domain.funds.values import FundReserveType
-from infra import SessionDep
-from infra.models import AccountModel, GoalModel, Base
+from infra.models import AccountModel, GoalModel
 from infra.models.funds import FundDistributionModel
+from infra.repositories.base import SQLAlchemyBaseRepository
 from infra.repositories.dto.fund_distribution import FundDistOrmDTO
 
 
-class SQLAlchemyFundDistRepository:
+class SQLAlchemyFundDistRepository(SQLAlchemyBaseRepository):
 
     def __init__(self, session: AsyncSession):
-        self._session = session
+        super().__init__(session)
 
     async def save_all(self, fund_dists: list[FundDistribution], commit: bool) -> None:
         fund_dists_models = [
             FundDistOrmDTO.from_entity_to_orm(fund_dist) for fund_dist in fund_dists
         ]
 
-        self._session.add_all(fund_dists_models)
+        self.session.add_all(fund_dists_models)
 
         if commit:
-            await self._session.commit()
+            await self.session.commit()
         else:
-            await self._session.flush()
+            await self.session.flush()
 
         return
 
     async def get_by_find_id(self, fund_id: str) -> list[FundDistribution]:
         query = select(FundDistributionModel).filter_by(fund_id=fund_id)
-        fund_dists = await self._session.scalars(query)
+        fund_dists = await self.session.scalars(query)
         return [
             FundDistOrmDTO.from_orm_to_entity(fund_dist)
             for fund_dist in fund_dists.all()
@@ -57,7 +53,7 @@ class SQLAlchemyFundDistRepository:
             .select_from(model)
             .filter_by(id=reserve_id, user_id=user_id)
         )
-        reserve = await self._session.scalar(query)
+        reserve = await self.session.scalar(query)
         if not reserve:
             return
 
@@ -66,7 +62,6 @@ class SQLAlchemyFundDistRepository:
         elif reserve_type == FundReserveType.GOAL:
             reserve.current_amount += balance
 
-        await self._session.commit()
         return
 
     @staticmethod
@@ -79,12 +74,3 @@ class SQLAlchemyFundDistRepository:
             return model, model.current_amount
         else:
             raise
-
-
-def get_fund_dist_repository(session: SessionDep) -> FundDistRepositoryProtocol:
-    return SQLAlchemyFundDistRepository(session)
-
-
-FundDistRepositoryDep = Annotated[
-    FundDistRepositoryProtocol, Depends(get_fund_dist_repository)
-]

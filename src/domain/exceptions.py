@@ -39,3 +39,12 @@ class InvalidBalanceException(AppException):
     @property
     def message(self) -> str:
         return f"Невалидный первоначальный баланс для счёта"
+
+
+class UnknownPageException(AppException):
+    status_code: int = status.HTTP_404_NOT_FOUND
+    suggestion: str = "Убедитесь что вы ввели нужную страницу и не вышли за границы"
+
+    @property
+    def message(self) -> str:
+        return f"Страница не найдена"

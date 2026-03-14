@@ -15,7 +15,6 @@ class FundRepositoryProtocol(Protocol):
         user_id: str,
         fund_id: str,
         upd_data: dict[str, Any],
-        commit: bool = True,
     ) -> Optional[Fund]: ...
 
     async def get_by_user_id(
@@ -28,7 +27,9 @@ class FundRepositoryProtocol(Protocol):
 
     async def get_last_unopened(self, user_id: str) -> Optional[Fund]: ...
 
-    async def get_unopened(self, user_id: str) -> list[Fund]: ...
+    async def get_unopened(self, user_id: str, *specs) -> list[Fund]: ...
+
+    async def get_count_by_user_id(self, user_id: str) -> int: ...
 
 
 class FundDistRepositoryProtocol(Protocol):

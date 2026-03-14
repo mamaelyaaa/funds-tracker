@@ -1,6 +1,7 @@
 from typing import Protocol, Optional, Any
 
 from core.domain import DomainEvent
+from infra.database.specification import SpecificationProtocol
 from .entities import Goal
 
 
@@ -14,7 +15,11 @@ class GoalRepositoryProtocol(Protocol):
 
     async def count(self) -> int: ...
 
-    async def get_by_user_id(self, user_id: str) -> list[Goal]: ...
+    async def count_by_user_id(self, user_id: str) -> int: ...
+
+    async def get_by_user_id(
+        self, user_id: str, *specs: SpecificationProtocol
+    ) -> list[Goal]: ...
 
     async def get_by_user_id_except_goal_id(
         self, user_id: str, goal_id: str

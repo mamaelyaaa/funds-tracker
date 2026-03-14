@@ -39,7 +39,7 @@ class TestFundService:
                 currency=test_account.currency,
             )
         )
-        await asyncio.sleep(0.1)
+        await asyncio.sleep(0.5)
 
         fund = await test_fund_service._fund_repo.get_by_user_id(
             user_id=account.user_id.as_generic_type()
@@ -66,7 +66,7 @@ class TestFundService:
             total_amount=Money(faker.pyfloat(positive=True)),
             status=FundStatus.CLOSED,
             start_date=datetime(year=2026, month=3, day=1, tzinfo=timezone.utc),
-            end_date=datetime.now(timezone.utc),
+            end_date=datetime(year=2026, month=3, day=2, tzinfo=timezone.utc),
         )
 
         await test_fund_service._fund_repo.save(test_closed_fund)
@@ -86,7 +86,7 @@ class TestFundService:
                 currency=test_account.currency,
             )
         )
-        await asyncio.sleep(0.1)
+        await asyncio.sleep(0.5)
 
         assert (
             last_closed_fund := await test_fund_service._fund_repo.get_last_unopened(
@@ -134,7 +134,7 @@ class TestFundService:
                 is_monthly_closing=True,
             )
         )
-        await asyncio.sleep(0.1)
+        await asyncio.sleep(0.5)
 
         new_fund = await test_fund_service._fund_repo.get_last_opened(
             user_id=saved_account.user_id.as_generic_type()

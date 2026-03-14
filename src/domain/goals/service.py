@@ -1,5 +1,11 @@
+import asyncio
+from dataclasses import asdict
+
+from api.schemas import PaginationMetaSchema
+from domain.commands import PaginationCommand
 from domain.users.values import UserId
 from domain.values import Money, Title
+from infra.database.specification import PaginationSpecification
 from .command import CreateGoalCommand, UpdateGoalPartiallyCommand
 from .dto import GoalDTO
 from .entities import Goal
@@ -39,11 +45,22 @@ class GoalService:
         await self._goals_repo.save(goal)
         return goal
 
-    async def get_user_goals(self, user_id: str) -> list[Goal]:
+    async def get_user_goals(
+        self, user_id: str, pagination: PaginationCommand
+    ) -> tuple[list[Goal], PaginationMetaSchema]:
         """Получение всех целей пользователя"""
 
-        goals = await self._goals_repo.get_by_user_id(user_id)
-        return goals
+        goals, goals_count = await asyncio.gather(
+            self._goals_repo.get_by_user_id(
+                user_id, PaginationSpecification.from_pagination_command(pagination)
+            ),
+            self._goals_repo.count_by_user_id(user_id),
+        )
+
+        return goals, PaginationMetaSchema(
+            total_found=goals_count,
+            **asdict(pagination),
+        )
 
     async def get_user_goal(self, user_id: str, goal_id: str) -> Goal:
         """Получение конкретной цели пользователя"""

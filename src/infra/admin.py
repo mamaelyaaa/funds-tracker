@@ -1,6 +1,6 @@
 from starlette_admin.contrib.sqla import Admin, ModelView
 
-from infra.database import db_helper
+from infra.database.db_helper import db_helper
 from infra.models import (
     UserModel,
     AccountModel,
@@ -37,6 +37,7 @@ class AccountView(BaseAppModelView):
         "id",
         "user",
         "name",
+        "type",
         "balance",
         "currency",
         "created_at",

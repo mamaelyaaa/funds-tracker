@@ -1,13 +1,14 @@
-from typing import Annotated
-
 from fastapi import APIRouter, Depends, status
 
 from api.schemas import (
     BaseResponseSchema,
     BaseResponseDetailSchema,
     BaseExceptionSchema,
+    PaginationMetaSchema,
+    PaginationDep,
 )
 from api.v1.dependencies.accounts import AccountServiceDep
+from api.v1.dependencies.users import get_user
 from api.v1.schemas.accounts import (
     CreateAccountSchema,
     AccountDetailSchema,
@@ -17,10 +18,10 @@ from domain.accounts.commands import (
     CreateAccountCommand,
     GetAccountCommand,
     UpdateAccountBalanceCommand,
+    GetAccountsCommand,
 )
 from domain.accounts.dto import AccountDTO
-from domain.accounts.entity import Account
-from api.v1.dependencies.users import get_user
+from domain.commands import PaginationCommand
 
 router = APIRouter(
     prefix="/users/{user_id}/accounts",
@@ -74,20 +75,28 @@ async def create_account(
 
 @router.get(
     "",
-    response_model=BaseResponseDetailSchema[list[AccountDetailSchema], dict],
+    response_model=BaseResponseDetailSchema[
+        list[AccountDetailSchema], PaginationMetaSchema
+    ],
 )
 async def get_accounts(
     account_service: AccountServiceDep,
     user_id: str,
+    pagination: PaginationDep,
 ):
     """Получение счетов пользователя"""
 
-    accounts = await account_service.find_accounts_by_user_id(user_id=user_id)
+    accounts, pagination_meta = await account_service.find_accounts_by_user_id(
+        command=GetAccountsCommand(
+            user_id=user_id,
+            pagination=PaginationCommand(**pagination.model_dump()),
+        )
+    )
 
     return BaseResponseDetailSchema(
         message=f"Получение счётов пользователя",
         detail=[AccountDTO.from_entity_to_dict(account) for account in accounts],
-        metadata={},
+        metadata=pagination_meta,
     )
 
 
@@ -178,20 +187,3 @@ async def delete_balance(
         command=GetAccountCommand(account_id=account_id, user_id=user_id)
     )
     return BaseResponseSchema(message="Счёт удален")
-
-
-async def get_account(
-    account_service: AccountServiceDep,
-    account_id: str,
-    user_id: str,
-) -> Account:
-    account = await account_service.find_account_by_id(
-        command=GetAccountCommand(
-            account_id=account_id,
-            user_id=user_id,
-        )
-    )
-    return account
-
-
-AccountDep = Annotated[Account, Depends(get_account)]

@@ -1,18 +1,23 @@
 from fastapi import APIRouter, Depends, status
 
-from api.schemas import BaseResponseDetailSchema, BaseExceptionSchema
+from api.schemas import (
+    BaseResponseDetailSchema,
+    BaseExceptionSchema,
+    PaginationMetaSchema,
+    PaginationDep,
+)
 from api.v1.dependencies.goals import GoalServiceDep
+from api.v1.dependencies.users import get_user
 from api.v1.schemas.goals import CreateGoalSchema, GoalDetailSchema, UpdateGoalSchema
 from api.v1.views.accounts import AccountServiceDep
+from domain.commands import PaginationCommand
 from domain.goals.command import CreateGoalCommand, UpdateGoalPartiallyCommand
 from domain.goals.dto import GoalDTO
-from api.v1.dependencies.users import get_user
 
 router = APIRouter(
     prefix="/users/{user_id}/goals",
     tags=["Цели🎯"],
     dependencies=[Depends(get_user)],
-    deprecated=True,
 )
 
 
@@ -69,18 +74,25 @@ async def create_goal(
 
 @router.get(
     "",
-    response_model=BaseResponseDetailSchema[list[GoalDetailSchema], dict],
+    response_model=BaseResponseDetailSchema[
+        list[GoalDetailSchema], PaginationMetaSchema
+    ],
 )
 async def get_user_goals(
     goals_service: GoalServiceDep,
     user_id: str,
+    pagination: PaginationDep,
 ):
     """Получение всех целей пользователя"""
-    goals = await goals_service.get_user_goals(user_id=user_id)
+    goals, pagination_meta = await goals_service.get_user_goals(
+        user_id=user_id,
+        pagination=PaginationCommand(**pagination.model_dump()),
+    )
+
     return BaseResponseDetailSchema(
         detail=[GoalDTO.from_entity_to_dict(goal) for goal in goals],
         message="Получен список целей пользователя",
-        metadata={},
+        metadata=pagination_meta,
     )
 
 

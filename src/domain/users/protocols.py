@@ -1,7 +1,6 @@
 from typing import Protocol, Optional
 
 from .entity import User
-from .values import UserId
 
 
 class UserRepositoryProtocol(Protocol):
