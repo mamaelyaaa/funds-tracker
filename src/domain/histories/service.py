@@ -1,7 +1,6 @@
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any
 
 from core.settings import settings
 from domain.accounts.values import AccountId
@@ -28,6 +27,12 @@ logger = logging.getLogger("history.service")
 class HistoryMetadata:
     start_date: datetime
     period: str
+
+
+@dataclass(frozen=True)
+class HistoryProfit:
+    percent_profit: float
+    amount_profit: float
 
 
 class HistoryService:
@@ -62,9 +67,11 @@ class HistoryService:
 
         return history_id
 
-    async def get_account_history(
-        self, command: GetAccountHistoryCommand
-    ) -> tuple[list[History], HistoryMetadata]:
+    async def get_account_history(self, command: GetAccountHistoryCommand) -> tuple[
+        list[History],
+        HistoryProfit,
+        HistoryMetadata,
+    ]:
         """Получение истории счета по периодам"""
 
         period = settings.db.sqla.period(command.interval)
@@ -76,39 +83,23 @@ class HistoryService:
             OrderBySpecification(field="created_at", direction="asc"),
             account_id=command.account_id,
         )
-        return history, HistoryMetadata(start_date=start_date, period=period)
 
-    async def get_history_profit(
-        self, command: GetAccountHistoryCommand
-    ) -> dict[str, Any]:
-        """Получение дохода по истории"""
+        last_history, first_history = history[-1], history[0]
+        amount_profit = (
+            last_history.balance.to_float() - first_history.balance.to_float()
+        )
 
-        # first_history, *_ = await self._repository.get_history_linked_to_period(
-        #     command.account_id,
-        #     period,
-        #     start_date,
-        #     PaginationSpecification(offset=0, limit=1),
-        #     OrderBySpecification(field="created_at", direction=False),
-        # )
-        # if not first_history:
-        #     raise HistoryNotExistsException
-        #
-        # last_history, *_ = await self._repository.get_history_linked_to_period(
-        #     command.account_id,
-        #     period,
-        #     start_date,
-        #     PaginationSpecification(offset=0, limit=1),
-        #     OrderBySpecification(field="created_at", direction=False),
-        # )
-        # if not last_history:
-        #     raise HistoryNotExistsException
+        percent_profit = Money(
+            (last_history.balance.to_float() - first_history.balance.to_float())
+            / last_history.balance.to_float()
+            * 100
+        )
 
-        # divider = (
-        #     first_history.balance.as_generic_type() if first_history.balance != 0 else 1
-        # )
-        # percent_profit = (
-        #     amount := last_history.balance.as_generic_type()
-        #     - first_history.balance.as_generic_type()
-        # ) / divider
-
-        return {"percent_profit": percent_profit, "amount_profit": amount}
+        return (
+            history,
+            HistoryProfit(
+                percent_profit=percent_profit.to_float(),
+                amount_profit=amount_profit,
+            ),
+            HistoryMetadata(start_date=start_date, period=period),
+        )

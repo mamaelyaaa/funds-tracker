@@ -70,8 +70,12 @@ class Money(DomainValueObject[Decimal]):
 
 
 @dataclass(frozen=True)
-class Percent(DomainValueObject[int]):
+class Percent(DomainValueObject[Decimal]):
 
     def __post_init__(self):
+        value = Decimal(str(self._value))
+        value = value.quantize(exp=Decimal("1.00"))
+        object.__setattr__(self, "_value", value)
+
         if not 0 <= self._value <= 100:
             raise InvalidPercentException

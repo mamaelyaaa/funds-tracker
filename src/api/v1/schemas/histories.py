@@ -23,3 +23,8 @@ class HistoryMetadataSchema(BaseApiModel):
 class HistoryProfitSchema(BaseApiModel):
     percent_profit: float
     amount_profit: float
+
+
+class HistoryFullSchema(BaseApiModel):
+    profit: HistoryProfitSchema
+    history: list[HistoryDetailSchema]

@@ -12,6 +12,7 @@ from api.v1.schemas.histories import (
     GetHistorySchema,
     HistoryMetadataSchema,
     HistoryProfitSchema,
+    HistoryFullSchema,
 )
 from domain.histories.commands import GetAccountHistoryCommand
 from domain.histories.dto import HistoryDTO
@@ -31,9 +32,7 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=BaseResponseDetailSchema[
-        list[HistoryDetailSchema], HistoryMetadataSchema
-    ],
+    response_model=BaseResponseDetailSchema[HistoryFullSchema, HistoryMetadataSchema],
 )
 async def get_account_history(
     history_service: HistoryServiceDep,
@@ -42,7 +41,7 @@ async def get_account_history(
     user_id: str,
 ):
     """
-    Получение истории счёта
+    Получение истории и профита счёта
 
     Система группирует записи по периодам, для удобного отображения и экономии ресурсов.
 
@@ -63,7 +62,7 @@ async def get_account_history(
     - **All**: период "years"
     """
 
-    history, metadata = await history_service.get_account_history(
+    history, profit, metadata = await history_service.get_account_history(
         command=GetAccountHistoryCommand(
             account_id=account_id,
             user_id=user_id,
@@ -72,34 +71,13 @@ async def get_account_history(
     )
 
     return BaseResponseDetailSchema(
-        detail=[HistoryDTO.from_entity_to_dict(row) for row in history],
+        detail=HistoryFullSchema(
+            profit=HistoryProfitSchema(**asdict(profit)),
+            history=[
+                HistoryDetailSchema.model_validate(HistoryDTO.from_entity_to_dict(row))
+                for row in history
+            ],
+        ),
         message="История счёта успешно получена",
         metadata=HistoryMetadataSchema(**asdict(metadata)),
-    )
-
-
-@router.get(
-    "/profit",
-    response_model=BaseResponseDetailSchema[HistoryProfitSchema, HistoryMetadataSchema],
-    deprecated=True,
-)
-async def get_profit_by_time_interval(
-    history_service: HistoryServiceDep,
-    schema: Annotated[GetHistorySchema, Depends()],
-    account_id: str,
-    user_id: str,
-):
-    """Считает процентный доход счёта за определенный интервал времени"""
-
-    profit = await history_service.get_history_profit(
-        command=GetAccountHistoryCommand(
-            interval=schema.interval,
-            account_id=account_id,
-            user_id=user_id,
-        )
-    )
-    return BaseResponseDetailSchema(
-        message="Получен доход счёта",
-        detail=HistoryProfitSchema(**profit),
-        metadata=HistoryMetadataSchema(**history_service.metadata),
     )
