@@ -1,6 +1,7 @@
 import logging
 from dataclasses import dataclass
 from datetime import datetime
+from decimal import Decimal
 
 from core.settings import settings
 from domain.accounts.values import AccountId
@@ -89,16 +90,18 @@ class HistoryService:
             last_history.balance.to_float() - first_history.balance.to_float()
         )
 
-        percent_profit = Money(
+        percent_profit = (
             (last_history.balance.to_float() - first_history.balance.to_float())
-            / last_history.balance.to_float()
+            / first_history.balance.to_float()
             * 100
         )
+        percent_profit = Decimal(str(percent_profit))
+        percent_profit = percent_profit.quantize(exp=Decimal("1.00"))
 
         return (
             history,
             HistoryProfit(
-                percent_profit=percent_profit.to_float(),
+                percent_profit=float(percent_profit),
                 amount_profit=amount_profit,
             ),
             HistoryMetadata(start_date=start_date, period=period),
