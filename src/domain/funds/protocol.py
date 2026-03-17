@@ -1,27 +1,12 @@
 from decimal import Decimal
-from typing import Protocol, Any, Optional
+from typing import Protocol, Optional
 
-from core.domain import DomainEvent
 from domain.funds.entity import Fund, FundDistribution
 from domain.funds.values import FundReserveType
+from domain.protocol import SQLAlchemyRepositoryProtocol
 
 
-class FundRepositoryProtocol(Protocol):
-
-    async def save(self, fund: Fund) -> str: ...
-
-    async def update(
-        self,
-        user_id: str,
-        fund_id: str,
-        upd_data: dict[str, Any],
-    ) -> Optional[Fund]: ...
-
-    async def get_by_user_id(
-        self, user_id: str, *args, **filter_by
-    ) -> Optional[Fund]: ...
-
-    async def get_by_id(self, fund_id: str) -> Optional[Fund]: ...
+class FundRepositoryProtocol(SQLAlchemyRepositoryProtocol[Fund], Protocol):
 
     async def get_last_opened(self, user_id: str) -> Optional[Fund]: ...
 
@@ -32,13 +17,13 @@ class FundRepositoryProtocol(Protocol):
     async def get_count_by_user_id(self, user_id: str) -> int: ...
 
 
-class FundDistRepositoryProtocol(Protocol):
+class FundDistRepositoryProtocol(
+    SQLAlchemyRepositoryProtocol[FundDistribution], Protocol
+):
 
     async def save_all(
         self, fund_dists: list[FundDistribution], commit: bool
     ) -> None: ...
-
-    async def get_by_find_id(self, fund_id: str) -> list[FundDistribution]: ...
 
     async def update_reserve_with_accumulate(
         self,
@@ -47,9 +32,3 @@ class FundDistRepositoryProtocol(Protocol):
         reserve_id: str,
         balance: Decimal,
     ) -> None: ...
-
-
-class FundDistPublisherProtocol(Protocol):
-
-    async def publish(self, event: DomainEvent) -> None:
-        pass

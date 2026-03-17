@@ -6,10 +6,12 @@ from domain.accounts.events import (
     AccountCreatedEvent,
     BalanceUpdatedEvent,
 )
+from domain.funds.values import FundId
+from domain.histories.values import HistoryId
 from infra.tasks.accounts import save_account_history, create_or_update_user_fund_task
 from .base import BaseTaskiqPublisher
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("account.publisher")
 
 
 class AccountTaskiqPublisher(BaseTaskiqPublisher):
@@ -30,11 +32,22 @@ class AccountTaskiqPublisher(BaseTaskiqPublisher):
         history_task: AsyncTaskiqTask[str] = await save_account_history.kiq(event)
         history_id = await history_task.wait_result(timeout=5)
         logger.info(
-            f"Результат задачи #{history_task.task_id} получен: {history_id.return_value}"
+            "История успешно создана #%s",
+            HistoryId(history_id.return_value).short,
         )
-        await create_or_update_user_fund_task.kiq(
-            user_id=event.user_id,
-            account_id=event.account_id,
-            end_date=event.occurred_at,
-        )
+
+        if isinstance(event, AccountCreatedEvent) or (
+            isinstance(event, BalanceUpdatedEvent) and event.is_monthly_closing
+        ):
+            fund_task: AsyncTaskiqTask[str] = await create_or_update_user_fund_task.kiq(
+                user_id=event.user_id,
+                account_id=event.account_id,
+                end_date=event.occurred_at,
+            )
+            fund_id = await fund_task.wait_result(timeout=5)
+            logger.info(
+                "Остаток успешно обновлен #%s",
+                FundId(fund_id.return_value).short,
+            )
+
         return

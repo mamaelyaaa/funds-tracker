@@ -1,7 +1,7 @@
 from datetime import datetime
-from typing import Optional, Any
+from typing import Optional
 
-from sqlalchemy import select, desc, func, update, between
+from sqlalchemy import select, func, between
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from domain.histories.entities import History
@@ -10,24 +10,14 @@ from infra.repositories.base import SQLAlchemyBaseRepository
 from infra.repositories.dto.histories import HistoryOrmDTO
 
 
-class SQLAlchemyHistoryRepository(SQLAlchemyBaseRepository):
+class SQLAlchemyHistoryRepository(SQLAlchemyBaseRepository[HistoryModel, History]):
+    """Репозиторий для работы с историей счетов"""
+
+    model = HistoryModel
+    dto = HistoryOrmDTO
 
     def __init__(self, session: AsyncSession):
         super().__init__(session)
-
-    async def save(self, history: History, commit: bool = True) -> str:
-        history_model: HistoryModel = HistoryOrmDTO.from_entity_to_orm(history)
-        self.session.add(history_model)
-
-        if commit:
-            await self.session.commit()
-
-        return history_model.id
-
-    async def get_by_id(self, history_id: str) -> Optional[History]:
-        query = select(HistoryModel).filter_by(id=history_id)
-        history = await self.session.scalar(query)
-        return HistoryOrmDTO.from_orm_to_entity(history) if history else None
 
     async def get_last_history(self, account_id: str) -> Optional[History]:
         query = (
@@ -42,49 +32,14 @@ class SQLAlchemyHistoryRepository(SQLAlchemyBaseRepository):
     async def get_history_linked_to_period(
         self,
         account_id: str,
-        period: str,
-        start_date: datetime,
-        limit: Optional[int] = None,
-        asc: bool = True,
+        *specs,
     ) -> list[History]:
 
-        subq = (
-            select(
-                func.max(HistoryModel.created_at).label("last_date"),
-                func.date_trunc(period, HistoryModel.created_at).label("trunc_date"),
-            )
-            .group_by("trunc_date")
-            .order_by(desc("trunc_date"))
-            .subquery()
-        )
-
-        query = (
-            select(HistoryModel)
-            .filter_by(account_id=account_id)
-            .join(subq, HistoryModel.created_at == subq.c.last_date)
-            .where(HistoryModel.created_at >= start_date)
-            .order_by(
-                HistoryModel.created_at.desc() if not asc else HistoryModel.created_at
-            )
-        )
-        if limit:
-            query = query.limit(limit)
+        query = select(HistoryModel).filter_by(account_id=account_id)
+        query = self._apply_specs(query, specs)
 
         res = await self.session.execute(query)
         return [HistoryOrmDTO.from_orm_to_entity(row) for row in res.scalars().all()]
-
-    async def update(
-        self, history_id: str, upd_data: dict[str, Any]
-    ) -> Optional[History]:
-        stmt = (
-            update(HistoryModel)
-            .filter_by(id=history_id)
-            .values(**upd_data)
-            .returning(HistoryModel)
-        )
-        history = await self.session.scalar(stmt)
-        await self.session.commit()
-        return HistoryOrmDTO.from_orm_to_entity(history) if history else None
 
     async def get_sum_delta_in_period(
         self, user_id: str, start_date: datetime, end_date: datetime

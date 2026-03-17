@@ -1,10 +1,13 @@
-from datetime import timedelta
+from datetime import timedelta, datetime, UTC, timezone
 from pathlib import Path
 from typing import Literal
 
+from dateutil.relativedelta import relativedelta
 from dotenv import load_dotenv
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from domain.histories.values import HistoryInterval, HistoryPeriod
 
 load_dotenv()
 
@@ -36,11 +39,44 @@ class FilesConfig(BaseModel):
 
 class LogsConfig(BaseModel):
     level: Literal["DEBUG", "INFO", "WARNING"] = "INFO"
-    format: str = "[%(asctime)s] - %(name)-29s - %(levelname)-7s - %(message)s"
+    format: str = "[%(asctime)s] - %(name)-20s - %(levelname)-7s - %(message)s"
 
 
 class SQLAlchemyConfig(BaseModel):
     echo: bool = False
+
+    intervals: dict[HistoryInterval, tuple[datetime, HistoryPeriod]] = {
+        HistoryInterval.DAY: (
+            datetime.now(UTC) - relativedelta(days=1),
+            HistoryPeriod.MINUTES,
+        ),
+        HistoryInterval.WEEK1: (
+            datetime.now(timezone.utc) - relativedelta(weeks=1),
+            HistoryPeriod.HOURS,
+        ),
+        HistoryInterval.MONTH1: (
+            datetime.now(timezone.utc) - relativedelta(months=1),
+            HistoryPeriod.DAYS,
+        ),
+        HistoryInterval.MONTH6: (
+            datetime.now(timezone.utc) - relativedelta(months=6),
+            HistoryPeriod.WEEKS,
+        ),
+        HistoryInterval.YEAR: (
+            datetime.now(timezone.utc) - relativedelta(years=1),
+            HistoryPeriod.MONTHS,
+        ),
+        HistoryInterval.ALL_TIME: (
+            datetime(2000, 1, 1),
+            HistoryPeriod.YEARS,
+        ),
+    }
+
+    def start_date(self, interval: HistoryInterval) -> datetime:
+        return self.intervals[interval][0]
+
+    def period(self, interval: HistoryInterval) -> HistoryPeriod:
+        return self.intervals[interval][1]
 
 
 class DBConfig(BaseModel):

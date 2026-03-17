@@ -41,7 +41,7 @@ class TestFundService:
         )
         await asyncio.sleep(0.5)
 
-        fund = await test_fund_service._fund_repo.get_by_user_id(
+        fund = await test_fund_service.fund_repo.find_one(
             user_id=account.user_id.as_generic_type()
         )
 
@@ -69,9 +69,9 @@ class TestFundService:
             end_date=datetime(year=2026, month=3, day=2, tzinfo=timezone.utc),
         )
 
-        await test_fund_service._fund_repo.save(test_closed_fund)
+        await test_fund_service.fund_repo.save(test_closed_fund)
         assert (
-            await test_fund_service._fund_repo.get_last_unopened(
+            await test_fund_service.fund_repo.get_last_unopened(
                 user_id=test_closed_fund.user_id.as_generic_type()
             )
             is not None
@@ -89,12 +89,12 @@ class TestFundService:
         await asyncio.sleep(0.5)
 
         assert (
-            last_closed_fund := await test_fund_service._fund_repo.get_last_unopened(
+            last_closed_fund := await test_fund_service.fund_repo.get_last_unopened(
                 user_id=test_closed_fund.user_id.as_generic_type()
             )
         ) is not None
 
-        fund = await test_fund_service._fund_repo.get_last_opened(
+        fund = await test_fund_service.fund_repo.get_last_opened(
             user_id=account.user_id.as_generic_type()
         )
 
@@ -115,9 +115,9 @@ class TestFundService:
             start_date=datetime(year=2026, month=3, day=1, tzinfo=timezone.utc),
             end_date=datetime.now(timezone.utc) - timedelta(days=2),
         )
-        await test_fund_service._fund_repo.save(test_closed_fund)
+        await test_fund_service.fund_repo.save(test_closed_fund)
         assert (
-            await test_fund_service._fund_repo.get_last_unopened(
+            await test_fund_service.fund_repo.get_last_unopened(
                 user_id=saved_account.user_id.as_generic_type()
             )
             is not None
@@ -136,7 +136,7 @@ class TestFundService:
         )
         await asyncio.sleep(0.5)
 
-        new_fund = await test_fund_service._fund_repo.get_last_opened(
+        new_fund = await test_fund_service.fund_repo.get_last_opened(
             user_id=saved_account.user_id.as_generic_type()
         )
         assert new_fund is not None

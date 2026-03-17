@@ -142,9 +142,9 @@ class TestAccountApi:
 
         assert response.status_code == 200
 
-        exists_account = await test_account_service.repository.get_by_id(
+        exists_account = await test_account_service.repository.find_one(
             user_id=saved_account.user_id.as_generic_type(),
-            account_id=saved_account.id.as_generic_type(),
+            id=saved_account.id.as_generic_type(),
         )
 
         assert exists_account.balance == Money(new_balance)

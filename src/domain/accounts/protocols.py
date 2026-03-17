@@ -1,25 +1,10 @@
-from typing import Protocol, Optional, Any
+from typing import Protocol
 
-from core.domain import DomainEvent
-from infra.database.specification import SpecificationProtocol
+from domain.protocol import SQLAlchemyRepositoryProtocol, EventPublisherProtocol
 from .entity import Account
 
 
-class AccountRepositoryProtocol(Protocol):
-
-    async def save(self, account: Account) -> str:
-        pass
-
-    async def get_by_id(self, user_id: str, account_id: str) -> Optional[Account]:
-        pass
-
-    async def get_by_user_id(
-        self, user_id: str, *specs: SpecificationProtocol
-    ) -> list[Account]:
-        pass
-
-    async def delete(self, user_id: str, account_id: str) -> Optional[str]:
-        pass
+class AccountRepositoryProtocol(SQLAlchemyRepositoryProtocol[Account], Protocol):
 
     async def count_by_user_id(self, user_id: str) -> int:
         pass
@@ -27,15 +12,8 @@ class AccountRepositoryProtocol(Protocol):
     async def is_name_taken(self, user_id: str, name: str) -> bool:
         pass
 
-    async def update(
-        self, user_id: str, account_id: str, upd_data: dict[str, Any]
-    ) -> Optional[Account]:
-        pass
-
     async def check_exists_by_id(self, user_id: str, account_id: str) -> bool: ...
 
 
-class AccountEventPublisherProtocol(Protocol):
-
-    async def publish(self, event: DomainEvent) -> None:
-        pass
+class AccountEventPublisherProtocol(EventPublisherProtocol, Protocol):
+    pass

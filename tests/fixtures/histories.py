@@ -1,6 +1,7 @@
 import pytest
 from faker.proxy import Faker
 
+from api.v1.dependencies.histories import get_history_service
 from domain.histories.entities import History
 from domain.histories.protocols import HistoryRepositoryProtocol
 from domain.histories.service import HistoryService
@@ -22,5 +23,5 @@ def test_history_repo(test_session) -> HistoryRepositoryProtocol:
 
 
 @pytest.fixture
-def test_history_service(test_history_repo) -> HistoryService:
-    return HistoryService(history_repo=test_history_repo)
+def test_history_service(test_session) -> HistoryService:
+    return get_history_service(test_session)

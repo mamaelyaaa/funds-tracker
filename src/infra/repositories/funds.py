@@ -1,62 +1,33 @@
-from typing import Any, Optional
+from typing import Optional
 
-from sqlalchemy import select, update, or_, func
+from sqlalchemy import select, or_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from domain.funds.entity import Fund
 from domain.funds.values import FundStatus
+from infra.database.specification import OrderBySpecification, PaginationSpecification
 from infra.models import FundModel
 from infra.repositories.base import SQLAlchemyBaseRepository
 from infra.repositories.dto.funds import FundOrmDTO
 
 
-class SQLAlchemyFundRepository(SQLAlchemyBaseRepository):
+class SQLAlchemyFundRepository(SQLAlchemyBaseRepository[FundModel, Fund]):
+    """Репозиторий для работы с остатками"""
+
+    model = FundModel
+    dto = FundOrmDTO
 
     def __init__(self, session: AsyncSession):
         super().__init__(session)
 
-    async def save(self, fund: Fund) -> str:
-        fund_model = FundOrmDTO.from_entity_to_orm(fund)
-        self.session.add(fund_model)
-        await self.session.commit()
-        return fund_model.id
-
-    async def update(
-        self, user_id: str, fund_id: str, upd_data: dict[str, Any], commit: bool = True
-    ) -> Optional[Fund]:
-        stmt = (
-            update(FundModel)
-            .filter_by(user_id=user_id, id=fund_id)
-            .values(**upd_data)
-            .returning(FundModel)
-        )
-        fund = await self.session.scalar(stmt)
-        if commit:
-            await self.session.commit()
-        else:
-            await self.session.flush()
-
-        return FundOrmDTO.from_orm_to_entity(fund) if fund else None
-
-    async def get_by_user_id(self, user_id: str, *args, **filter_by) -> Optional[Fund]:
-        query = select(FundModel).filter_by(user_id=user_id, **filter_by)
-        fund = await self.session.scalar(query)
-        return FundOrmDTO.from_orm_to_entity(fund) if fund else None
-
-    async def get_by_id(self, fund_id: str) -> Optional[Fund]:
-        query = select(FundModel).filter_by(id=fund_id)
-        fund = await self.session.scalar(query)
-        return FundOrmDTO.from_orm_to_entity(fund) if fund else None
-
     async def get_last_opened(self, user_id: str) -> Optional[Fund]:
-        query = (
-            select(FundModel)
-            .filter_by(user_id=user_id, status=FundStatus.OPEN)
-            .order_by(FundModel.created_at.desc())
-            .limit(1)
+        res = await self.find_one(
+            OrderBySpecification(direction="desc", field="created_at"),
+            PaginationSpecification(limit=1, offset=0),
+            user_id=user_id,
+            status=FundStatus.OPEN,
         )
-        last_fund = await self.session.scalar(query)
-        return FundOrmDTO.from_orm_to_entity(last_fund) if last_fund else None
+        return res
 
     async def get_last_unopened(self, user_id: str) -> Optional[Fund]:
         query = (

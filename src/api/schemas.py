@@ -1,3 +1,4 @@
+import logging
 import math
 from typing import Annotated
 
@@ -12,6 +13,8 @@ from pydantic import (
 from pydantic.alias_generators import to_camel
 
 from domain.exceptions import UnknownPageException
+
+logger = logging.getLogger("api.schemas")
 
 
 class BaseApiModel(BaseModel):
@@ -81,5 +84,6 @@ class PaginationMetaSchema(PaginationUseSchema):
     @model_validator(mode="after")
     def unknown_page(self):
         if self.page > self.total_pages:
+            logger.error("Страница не найдена")
             raise UnknownPageException
         return self

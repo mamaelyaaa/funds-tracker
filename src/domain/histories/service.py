@@ -1,52 +1,49 @@
 import logging
-from datetime import datetime, UTC
-from typing import Optional, Any
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Any
 
-from dateutil.relativedelta import relativedelta
-
+from core.settings import settings
 from domain.accounts.values import AccountId
 from domain.values import Money
+from infra.database.specification import (
+    PaginationSpecification,
+    OrderBySpecification,
+    DateRangeSpecification,
+    TimeTruncSpecification,
+)
+from infra.models import HistoryModel
 from .commands import (
     SaveHistoryCommand,
     GetAccountHistoryCommand,
 )
 from .entities import History
-from .exceptions import HistoryNotExistsException
 from .protocols import HistoryRepositoryProtocol
-from .values import HistoryInterval, HistoryPeriod, HistoryId
+from .values import HistoryId
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("history.service")
 
 
-INTERVALS: dict[HistoryInterval, datetime] = {
-    HistoryInterval.DAY: datetime.now(UTC) - relativedelta(days=1),
-    HistoryInterval.WEEK1: datetime.now(UTC) - relativedelta(weeks=1),
-    HistoryInterval.MONTH1: datetime.now(UTC) - relativedelta(months=1),
-    HistoryInterval.MONTH6: datetime.now(UTC) - relativedelta(months=6),
-    HistoryInterval.YEAR: datetime.now(UTC) - relativedelta(years=1),
-    HistoryInterval.ALL_TIME: datetime(2000, 1, 1),
-}
-
-PERIOD: dict[HistoryInterval, HistoryPeriod] = {
-    HistoryInterval.DAY: HistoryPeriod.MINUTES,
-    HistoryInterval.WEEK1: HistoryPeriod.HOURS,
-    HistoryInterval.MONTH1: HistoryPeriod.DAYS,
-    HistoryInterval.MONTH6: HistoryPeriod.WEEKS,
-    HistoryInterval.YEAR: HistoryPeriod.MONTHS,
-    HistoryInterval.ALL_TIME: HistoryPeriod.YEARS,
-}
+@dataclass(frozen=True)
+class HistoryMetadata:
+    start_date: datetime
+    period: str
 
 
 class HistoryService:
 
     def __init__(self, history_repo: HistoryRepositoryProtocol):
-        self._repository = history_repo
-        self.metadata: Optional[dict] = None
+        self._history_repo = history_repo
 
     async def save_account_history(self, command: SaveHistoryCommand) -> str:
         """Сохраняем историю счёта"""
 
-        last_history = await self._repository.get_last_history(command.account_id)
+        last_history = await self._history_repo.find_one(
+            PaginationSpecification(limit=1, offset=0),
+            OrderBySpecification(field="created_at", direction="desc"),
+            account_id=command.account_id,
+        )
+
         if last_history:
             delta = command.balance - last_history.balance.to_float()
         else:
@@ -60,67 +57,58 @@ class HistoryService:
             created_at=command.created_at,
         )
 
-        history_id = await self._repository.save(new_history)
-        logger.info(f"Создана новая история #{HistoryId(history_id).short}")
+        history_id = await self._history_repo.save(new_history)
+        logger.info(f"Создана новая история #%s", HistoryId(history_id).short)
 
         return history_id
 
     async def get_account_history(
         self, command: GetAccountHistoryCommand
-    ) -> list[History]:
+    ) -> tuple[list[History], HistoryMetadata]:
         """Получение истории счета по периодам"""
 
-        period, start_date = self.set_metadata(command)
+        period = settings.db.sqla.period(command.interval)
+        start_date = settings.db.sqla.start_date(command.interval)
 
-        history = await self._repository.get_history_linked_to_period(
+        history = await self._history_repo.find_all(
+            DateRangeSpecification(model=HistoryModel, start=start_date),
+            TimeTruncSpecification(model=HistoryModel, period=period),
+            OrderBySpecification(field="created_at", direction="asc"),
             account_id=command.account_id,
-            period=period,
-            start_date=start_date,
         )
-        return history
+        return history, HistoryMetadata(start_date=start_date, period=period)
 
     async def get_history_profit(
         self, command: GetAccountHistoryCommand
     ) -> dict[str, Any]:
         """Получение дохода по истории"""
 
-        period, start_date = self.set_metadata(command)
+        # first_history, *_ = await self._repository.get_history_linked_to_period(
+        #     command.account_id,
+        #     period,
+        #     start_date,
+        #     PaginationSpecification(offset=0, limit=1),
+        #     OrderBySpecification(field="created_at", direction=False),
+        # )
+        # if not first_history:
+        #     raise HistoryNotExistsException
+        #
+        # last_history, *_ = await self._repository.get_history_linked_to_period(
+        #     command.account_id,
+        #     period,
+        #     start_date,
+        #     PaginationSpecification(offset=0, limit=1),
+        #     OrderBySpecification(field="created_at", direction=False),
+        # )
+        # if not last_history:
+        #     raise HistoryNotExistsException
 
-        first_history, *_ = await self._repository.get_history_linked_to_period(
-            account_id=command.account_id,
-            start_date=start_date,
-            period=period,
-            limit=1,
-            asc=True,
-        )
-        if not first_history:
-            raise HistoryNotExistsException
-
-        last_history, *_ = await self._repository.get_history_linked_to_period(
-            account_id=command.account_id,
-            start_date=start_date,
-            period=period,
-            limit=1,
-            asc=False,
-        )
-        if not last_history:
-            raise HistoryNotExistsException
-
-        divider = (
-            first_history.balance.as_generic_type() if first_history.balance != 0 else 1
-        )
-        percent_profit = (
-            amount := last_history.balance.as_generic_type()
-            - first_history.balance.as_generic_type()
-        ) / divider
+        # divider = (
+        #     first_history.balance.as_generic_type() if first_history.balance != 0 else 1
+        # )
+        # percent_profit = (
+        #     amount := last_history.balance.as_generic_type()
+        #     - first_history.balance.as_generic_type()
+        # ) / divider
 
         return {"percent_profit": percent_profit, "amount_profit": amount}
-
-    def set_metadata(self, command) -> tuple[str, datetime]:
-        start_date: datetime = INTERVALS[command.interval]
-        period: str = PERIOD[command.interval]
-        self.metadata = {
-            "start_date": start_date,
-            "period": period,
-        }
-        return period, start_date

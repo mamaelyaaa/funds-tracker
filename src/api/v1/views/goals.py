@@ -9,9 +9,13 @@ from api.schemas import (
 from api.v1.dependencies.goals import GoalServiceDep
 from api.v1.dependencies.users import get_user
 from api.v1.schemas.goals import CreateGoalSchema, GoalDetailSchema, UpdateGoalSchema
-from api.v1.views.accounts import AccountServiceDep
 from domain.commands import PaginationCommand
-from domain.goals.command import CreateGoalCommand, UpdateGoalPartiallyCommand
+from domain.goals.command import (
+    CreateGoalCommand,
+    UpdateGoalPartiallyCommand,
+    GetGoalCommand,
+    GetGoalsCommand,
+)
 from domain.goals.dto import GoalDTO
 
 router = APIRouter(
@@ -32,36 +36,22 @@ router = APIRouter(
         },
         status.HTTP_404_NOT_FOUND: {
             "model": BaseExceptionSchema,
-            "description": "'Не найден пользователь' ИЛИ "
-            "'Не найден счёт пользователя' при попытке связать с целью",
+            "description": "'Не найден пользователь' ИЛИ 'Не найден счёт пользователя'",
         },
     },
 )
 async def create_goal(
-    account_service: AccountServiceDep,
     goals_service: GoalServiceDep,
     schema: CreateGoalSchema,
     user_id: str,
 ):
     """
     Создание цели пользователя
-
-    1. Если к счёту будет привязан аккаунт, то текущая сумма цели будет равна балансу аккаунта
-    2. Если id счёта будет некорректен - 404 ошибка
-    3. Если будет привязан несуществующий счёт пользователя - 404 ошибка
     """
-
-    # if schema.account_id:
-    #     account = await account_service.find_account_by_id(
-    #         command=GetAccountCommand(user_id=user_id, account_id=schema.account_id)
-    #     )
-    # else:
-    #     account = None
 
     goal = await goals_service.create_goal(
         command=CreateGoalCommand(
             user_id=user_id,
-            # account=account,
             **schema.model_dump(exclude={"user_id"}),
         )
     )
@@ -85,8 +75,10 @@ async def get_user_goals(
 ):
     """Получение всех целей пользователя"""
     goals, pagination_meta = await goals_service.get_user_goals(
-        user_id=user_id,
-        pagination=PaginationCommand(**pagination.model_dump()),
+        command=GetGoalsCommand(
+            user_id=user_id,
+            pagination=PaginationCommand(**pagination.model_dump()),
+        )
     )
 
     return BaseResponseDetailSchema(
@@ -112,7 +104,11 @@ async def get_user_goal(
     user_id: str,
     goal_id: str,
 ):
-    goal = await goals_service.get_user_goal(goal_id=goal_id, user_id=user_id)
+    """Получение конкретной цели пользователя"""
+
+    goal = await goals_service.get_user_goal(
+        command=GetGoalCommand(goal_id=goal_id, user_id=user_id)
+    )
     return BaseResponseDetailSchema(
         detail=GoalDTO.from_entity_to_dict(goal),
         message="Цель получена",
@@ -137,16 +133,11 @@ async def get_user_goal(
 )
 async def update_user_goal(
     goals_service: GoalServiceDep,
-    account_service: AccountServiceDep,
     schema: UpdateGoalSchema,
     user_id: str,
     goal_id: str,
 ):
-    # account = None
-    # if schema.account_id:
-    #     account = await account_service.find_account_by_id(
-    #         command=GetAccountCommand(user_id=user_id, account_id=schema.account_id)
-    #     )
+    """Обновление цели пользователя"""
 
     upd_goal = await goals_service.update_goal_partially(
         command=UpdateGoalPartiallyCommand(
@@ -178,5 +169,9 @@ async def get_user_goal(
     user_id: str,
     goal_id: str,
 ):
-    await goals_service.delete_goal(goal_id=goal_id, user_id=user_id)
+    """Удаление цели пользователя"""
+
+    await goals_service.delete_goal(
+        command=GetGoalCommand(goal_id=goal_id, user_id=user_id)
+    )
     return

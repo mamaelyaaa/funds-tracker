@@ -1,36 +1,13 @@
 from datetime import datetime
-from typing import Protocol, Optional, Any
+from typing import Protocol, Optional
 
 from domain.histories.entities import History
+from domain.protocol import SQLAlchemyRepositoryProtocol
 
 
-class HistoryRepositoryProtocol(Protocol):
-
-    async def save(self, history: History, commit: bool = True) -> str:
-        pass
-
-    async def get_by_id(self, history_id: str) -> Optional[History]:
-        pass
-
-    async def get_last_history(self, account_id: str) -> Optional[History]:
-        pass
+class HistoryRepositoryProtocol(SQLAlchemyRepositoryProtocol[History], Protocol):
 
     async def get_first_history_date_by_user(self, user_id: str) -> Optional[datetime]:
-        pass
-
-    async def get_history_linked_to_period(
-        self,
-        account_id: str,
-        period: str,
-        start_date: datetime,
-        limit: Optional[int] = None,
-        asc: bool = True,
-    ) -> list[History]:
-        pass
-
-    async def update(
-        self, history_id: str, upd_data: dict[str, Any]
-    ) -> Optional[History]:
         pass
 
     async def get_sum_delta_in_period(

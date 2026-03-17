@@ -22,7 +22,7 @@ from .exceptions import (
 from .protocols import AccountRepositoryProtocol, AccountEventPublisherProtocol
 from .values import AccountId
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("account.service")
 
 
 class AccountCRUDService:
@@ -49,7 +49,11 @@ class AccountCRUDService:
         )
         if check:
             logger.warning(
-                f"Ошибка создания нового счёта для пользователя #{command.user_id[:8]}"
+                "Попытка создания дубликата счета: имя '%s' уже занято",
+                command.name,
+                extra={
+                    "user_id": UserId(command.user_id).short,
+                },
             )
             raise AccountAlreadyCreatedException
 
@@ -57,7 +61,10 @@ class AccountCRUDService:
         count = await self.repository.count_by_user_id(command.user_id)
         if count >= User.MAX_ACCOUNTS:
             logger.warning(
-                f"Пользователь #%s превысил лимит активных счётов", command.user_id[:8]
+                f"Превышен лимит активных счётов: %d из %d",
+                count,
+                User.MAX_ACCOUNTS,
+                extra={"user_id": UserId(command.user_id).short},
             )
             raise TooManyAccountsForUserException
 
@@ -71,7 +78,11 @@ class AccountCRUDService:
         acc_id = await self.repository.save(new_account)
         await self._publish(account=new_account)
 
-        logger.info("Новый счёт #%s создан", AccountId(acc_id).short)
+        logger.info(
+            "Новый счёт #%s создан",
+            AccountId(acc_id).short,
+            extra={"user_id": UserId(command.user_id).short},
+        )
         return new_account
 
     async def find_account_by_id(self, command: GetAccountCommand) -> Account:
@@ -81,9 +92,8 @@ class AccountCRUDService:
         """
 
         if not (
-            account := await self.repository.get_by_id(
-                account_id=command.account_id,
-                user_id=command.user_id,
+            account := await self.repository.find_one(
+                id=command.account_id, user_id=command.user_id
             )
         ):
             logger.warning("Счёт #%s не найден", AccountId(command.account_id).short)
@@ -101,14 +111,14 @@ class AccountCRUDService:
         """
 
         accounts, account_count = await asyncio.gather(
-            self.repository.get_by_user_id(
-                command.user_id,
+            self.repository.find_all(
                 PaginationSpecification.from_pagination_command(command.pagination),
+                user_id=command.user_id,
             ),
             self.repository.count_by_user_id(user_id=command.user_id),
         )
 
-        logger.info(f"Счёта пользователя #{UserId(command.user_id).short} получены")
+        logger.info("Счёта пользователя #%s получены", UserId(command.user_id).short)
 
         return accounts, PaginationMetaSchema(
             page=command.pagination.page,
@@ -120,8 +130,8 @@ class AccountCRUDService:
         """Удаление счёта по id"""
 
         account = await self.find_account_by_id(command=command)
-        await self.repository.delete(
-            account_id=account.id.as_generic_type(),
+        await self.repository.delete_one(
+            id=account.id.as_generic_type(),
             user_id=account.user_id.as_generic_type(),
         )
         logger.info("Счёт #%s был удален", account.id.short)
@@ -136,7 +146,12 @@ class AccountCRUDService:
                 await self.publisher.publish(event)
                 published.append(event)
             except Exception as e:
-                logger.error(str(e))
+                logger.exception(
+                    "Не удалось опубликовать событие типа %s для счета %s",
+                    type(event).__name__,
+                    account.id.short,
+                    extra={"account_id": account.id.short},
+                )
                 raise
 
         for event in published:
@@ -172,7 +187,7 @@ class AccountService(AccountCRUDService):
         )
 
         await self.repository.update(
-            account_id=command.account_id,
+            id=command.account_id,
             user_id=command.user_id,
             upd_data=AccountDTO.from_entity_to_dict(
                 account, excludes=["id", "user_id"]

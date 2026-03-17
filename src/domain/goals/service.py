@@ -2,30 +2,32 @@ import asyncio
 from dataclasses import asdict
 
 from api.schemas import PaginationMetaSchema
-from domain.commands import PaginationCommand
 from domain.users.values import UserId
 from domain.values import Money, Title
 from infra.database.specification import PaginationSpecification
-from .command import CreateGoalCommand, UpdateGoalPartiallyCommand
+from .command import (
+    CreateGoalCommand,
+    UpdateGoalPartiallyCommand,
+    GetGoalsCommand,
+    GetGoalCommand,
+)
 from .dto import GoalDTO
 from .entities import Goal
-from .exceptions import (
-    GoalTitleAlreadyTakenException,
-    GoalNotFoundException,
-)
+from .exceptions import GoalTitleAlreadyTakenException, GoalNotFoundException
 from .protocols import GoalRepositoryProtocol
 
 
 class GoalService:
+    """Сервис для работы с целями пользователей"""
 
     def __init__(self, goals_repo: GoalRepositoryProtocol):
-        self._goals_repo = goals_repo
+        self.goal_repo = goals_repo
 
     async def create_goal(self, command: CreateGoalCommand) -> Goal:
         """Создание цели"""
 
         # Если название цели для текущего пользователя уже существует, то ошибка
-        exists = await self._goals_repo.is_title_taken(
+        exists = await self.goal_repo.is_title_taken(
             title=command.title,
             user_id=command.user_id,
         )
@@ -39,33 +41,36 @@ class GoalService:
             "current_amount": Money(command.current_amount),
             "deadline": command.deadline,
         }
-
         goal = Goal.create(**acc_data)
 
-        await self._goals_repo.save(goal)
+        await self.goal_repo.save(goal)
         return goal
 
     async def get_user_goals(
-        self, user_id: str, pagination: PaginationCommand
+        self, command: GetGoalsCommand
     ) -> tuple[list[Goal], PaginationMetaSchema]:
         """Получение всех целей пользователя"""
 
         goals, goals_count = await asyncio.gather(
-            self._goals_repo.get_by_user_id(
-                user_id, PaginationSpecification.from_pagination_command(pagination)
+            self.goal_repo.find_all(
+                PaginationSpecification.from_pagination_command(command.pagination),
+                user_id=command.user_id,
             ),
-            self._goals_repo.count_by_user_id(user_id),
+            self.goal_repo.count_by_user_id(command.user_id),
         )
 
         return goals, PaginationMetaSchema(
             total_found=goals_count,
-            **asdict(pagination),
+            **asdict(command.pagination),
         )
 
-    async def get_user_goal(self, user_id: str, goal_id: str) -> Goal:
+    async def get_user_goal(self, command: GetGoalCommand) -> Goal:
         """Получение конкретной цели пользователя"""
 
-        goal = await self._goals_repo.get_by_id(user_id=user_id, goal_id=goal_id)
+        goal = await self.goal_repo.find_one(
+            id=command.goal_id,
+            user_id=command.user_id,
+        )
         if not goal:
             raise GoalNotFoundException
         return goal
@@ -74,7 +79,7 @@ class GoalService:
         """Обновление цели пользователя по полям"""
 
         goal = await self.get_user_goal(
-            goal_id=command.goal_id, user_id=command.user_id
+            GetGoalCommand(goal_id=command.goal_id, user_id=command.user_id)
         )
 
         if command.current_amount:
@@ -89,7 +94,7 @@ class GoalService:
         if command.title:
             goal.title = Title(command.title)
 
-        await self._goals_repo.update(
+        await self.goal_repo.update(
             goal_id=command.goal_id,
             user_id=command.user_id,
             upd_data=GoalDTO.from_entity_to_dict(goal, excludes=["id", "user_id"]),
@@ -98,9 +103,12 @@ class GoalService:
 
         return goal
 
-    async def delete_goal(self, goal_id: str, user_id: str) -> None:
+    async def delete_goal(self, command: GetGoalCommand) -> None:
         """Удаление цели пользователя"""
 
-        goal = await self.get_user_goal(goal_id=goal_id, user_id=user_id)
-        await self._goals_repo.delete(goal=goal)
+        goal = await self.get_user_goal(command)
+        await self.goal_repo.delete_one(
+            id=goal.id.as_generic_type(),
+            user_id=goal.user_id.as_generic_type(),
+        )
         return

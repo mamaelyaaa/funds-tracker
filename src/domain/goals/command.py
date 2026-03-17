@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
 
+from domain.commands import PaginationCommand
+
 
 @dataclass(frozen=True)
 class CreateGoalCommand:
@@ -15,11 +17,19 @@ class CreateGoalCommand:
 
 
 @dataclass(frozen=True)
-class GetUserGoalsCommand:
+class GetGoalCommand:
+    """Команда на получение цели пользователя"""
+
+    user_id: str
+    goal_id: str
+
+
+@dataclass(frozen=True)
+class GetGoalsCommand:
     """Команда на получение целей пользователя"""
 
     user_id: str
-    deadline: Optional[datetime] = None
+    pagination: PaginationCommand
 
 
 @dataclass(frozen=True)

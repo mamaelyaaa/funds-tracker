@@ -1,15 +1,16 @@
+from dataclasses import asdict
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, status
 
 from api.schemas import BaseResponseDetailSchema, BaseExceptionSchema
 from api.v1.dependencies.accounts import get_account
-from api.v1.dependencies.users import get_user
 from api.v1.dependencies.histories import HistoryServiceDep
+from api.v1.dependencies.users import get_user
 from api.v1.schemas.histories import (
     HistoryDetailSchema,
     GetHistorySchema,
-    HistoryMetadata,
+    HistoryMetadataSchema,
     HistoryProfitSchema,
 )
 from domain.histories.commands import GetAccountHistoryCommand
@@ -30,7 +31,9 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=BaseResponseDetailSchema[list[HistoryDetailSchema], HistoryMetadata],
+    response_model=BaseResponseDetailSchema[
+        list[HistoryDetailSchema], HistoryMetadataSchema
+    ],
 )
 async def get_account_history(
     history_service: HistoryServiceDep,
@@ -60,7 +63,7 @@ async def get_account_history(
     - **All**: период "years"
     """
 
-    history = await history_service.get_account_history(
+    history, metadata = await history_service.get_account_history(
         command=GetAccountHistoryCommand(
             account_id=account_id,
             user_id=user_id,
@@ -71,13 +74,14 @@ async def get_account_history(
     return BaseResponseDetailSchema(
         detail=[HistoryDTO.from_entity_to_dict(row) for row in history],
         message="История счёта успешно получена",
-        metadata=HistoryMetadata(**history_service.metadata),
+        metadata=HistoryMetadataSchema(**asdict(metadata)),
     )
 
 
 @router.get(
     "/profit",
-    response_model=BaseResponseDetailSchema[HistoryProfitSchema, HistoryMetadata],
+    response_model=BaseResponseDetailSchema[HistoryProfitSchema, HistoryMetadataSchema],
+    deprecated=True,
 )
 async def get_profit_by_time_interval(
     history_service: HistoryServiceDep,
@@ -97,5 +101,5 @@ async def get_profit_by_time_interval(
     return BaseResponseDetailSchema(
         message="Получен доход счёта",
         detail=HistoryProfitSchema(**profit),
-        metadata=HistoryMetadata(**history_service.metadata),
+        metadata=HistoryMetadataSchema(**history_service.metadata),
     )

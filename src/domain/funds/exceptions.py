@@ -14,11 +14,20 @@ class InvalidPercentException(AppException):
 
 class FundNotFoundException(AppException):
     status_code: int = status.HTTP_404_NOT_FOUND
-    suggestion: str = "Обновите счёт с меткой 'закрывающий месяц'"
+    suggestion: str = "Обновите счёт с меткой 'Закрывающий месяц'"
 
     @property
     def message(self) -> str:
         return "Накопленный остаток отсутствует"
+
+
+class FundAlreadyDistributedTodayException(AppException):
+    status_code: int = status.HTTP_400_BAD_REQUEST
+    suggestion: str = "Обновите счёт завтра с меткой 'Закрывающий месяц'"
+
+    @property
+    def message(self) -> str:
+        return "Накопленный остаток уже был распределен сегодня"
 
 
 class ReserveNotImplementedException(AppException):

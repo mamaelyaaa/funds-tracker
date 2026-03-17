@@ -11,12 +11,20 @@ from infra.repositories.base import SQLAlchemyBaseRepository
 from infra.repositories.dto.fund_distribution import FundDistOrmDTO
 
 
-class SQLAlchemyFundDistRepository(SQLAlchemyBaseRepository):
+class SQLAlchemyFundDistRepository(
+    SQLAlchemyBaseRepository[FundDistribution, FundDistributionModel]
+):
+    """Репозиторий для работы с распределением остатков"""
+
+    model = FundDistributionModel
+    dto = FundDistOrmDTO
 
     def __init__(self, session: AsyncSession):
         super().__init__(session)
 
-    async def save_all(self, fund_dists: list[FundDistribution], commit: bool) -> None:
+    async def save_all(
+        self, fund_dists: list[FundDistribution], commit: bool = True
+    ) -> None:
         fund_dists_models = [
             FundDistOrmDTO.from_entity_to_orm(fund_dist) for fund_dist in fund_dists
         ]
@@ -25,8 +33,6 @@ class SQLAlchemyFundDistRepository(SQLAlchemyBaseRepository):
 
         if commit:
             await self.session.commit()
-        else:
-            await self.session.flush()
 
         return
 

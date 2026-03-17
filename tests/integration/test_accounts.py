@@ -30,9 +30,9 @@ class TestAccountService:
             )
         )
 
-        exists_acc = await test_account_service.repository.get_by_id(
+        exists_acc = await test_account_service.repository.find_one(
             user_id=account.user_id.as_generic_type(),
-            account_id=account.id.as_generic_type(),
+            id=account.id.as_generic_type(),
         )
 
         assert account.id == exists_acc.id
@@ -79,9 +79,9 @@ class TestAccountService:
 
         assert test_account_service.publisher.publish.await_count == 1
 
-        exists_account = await test_account_service.repository.get_by_id(
+        exists_account = await test_account_service.repository.find_one(
             user_id=saved_account.user_id.as_generic_type(),
-            account_id=saved_account.id.as_generic_type(),
+            id=saved_account.id.as_generic_type(),
         )
 
         assert exists_account.balance == new_balance
@@ -99,9 +99,9 @@ class TestAccountService:
 
         test_account_service.publisher.publish.assert_not_awaited()
 
-        exists_account = await test_account_service.repository.get_by_id(
+        exists_account = await test_account_service.repository.find_one(
             user_id=saved_account.user_id.as_generic_type(),
-            account_id=saved_account.id.as_generic_type(),
+            id=saved_account.id.as_generic_type(),
         )
 
         assert exists_account.balance == saved_account.balance

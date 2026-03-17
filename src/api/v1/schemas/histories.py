@@ -11,11 +11,11 @@ class GetHistorySchema(BaseApiModel):
 class HistoryDetailSchema(BaseApiModel):
     # id: str
     balance: float
-    is_monthly_closing: bool
+    # is_monthly_closing: bool
     created_at: datetime
 
 
-class HistoryMetadata(BaseApiModel):
+class HistoryMetadataSchema(BaseApiModel):
     start_date: datetime
     period: str
 

@@ -27,7 +27,7 @@ class TestHistoryService:
             )
         )
 
-        history_model = await test_history_repo.get_by_id(history_id)
+        history_model = await test_history_repo.find_one(id=history_id)
         assert test_history.balance == history_model.balance
         assert test_history.account_id == history_model.account_id
         assert test_history.balance == Money(history_model.delta)
@@ -51,9 +51,9 @@ class TestHistoryService:
             )
         )
 
-        exists_acc = await test_account_service.repository.get_by_id(
+        exists_acc = await test_account_service.repository.find_one(
+            id=test_history.account_id.as_generic_type(),
             user_id=saved_account.user_id.as_generic_type(),
-            account_id=test_history.account_id.as_generic_type(),
         )
         # assert len(exists_acc.events) > 1
 

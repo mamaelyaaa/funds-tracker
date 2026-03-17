@@ -2,8 +2,7 @@ import uuid
 from datetime import datetime
 
 from api.schemas import BaseApiModel
-from domain.funds.commands import ReserveCreateCommand
-from domain.funds.values import FundStatus
+from domain.funds.values import FundStatus, FundReserveType
 
 
 class FundDetailSchema(BaseApiModel):
@@ -15,5 +14,11 @@ class FundDetailSchema(BaseApiModel):
     created_at: datetime
 
 
+class ReserveSchema(BaseApiModel):
+    reserve_id: uuid.UUID
+    reserve_type: FundReserveType
+    percent: int
+
+
 class FundCloseSchema(BaseApiModel):
-    reserves: list[ReserveCreateCommand]
+    reserves: list[ReserveSchema]
