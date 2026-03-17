@@ -17,13 +17,20 @@ logger = logging.getLogger(__name__)
 
 
 class SQLADatabaseHelper:
+    """Хелпер для работы с БД с помощью SQLAlchemy"""
 
-    def __init__(self, url: str, echo: bool):
+    def __init__(
+        self,
+        url: str,
+        echo: bool,
+        pool_size: int = 20,
+        max_overflow: int = 30,
+    ):
         self._engine = create_async_engine(
             url=url,
             echo=echo,
-            pool_size=20,
-            max_overflow=30,
+            pool_size=pool_size,
+            max_overflow=max_overflow,
         )
         self._session_factory = async_sessionmaker(
             bind=self._engine, expire_on_commit=False
@@ -60,5 +67,7 @@ db_helper = SQLADatabaseHelper(
         else settings.db.AIOSQLITE_TEST_DSN
     ),
     echo=settings.db.sqla.echo,
+    pool_size=settings.db.sqla.pool_size,
+    max_overflow=settings.db.sqla.max_overflow,
 )
 SessionDep = Annotated[AsyncSession, Depends(db_helper.session_getter)]

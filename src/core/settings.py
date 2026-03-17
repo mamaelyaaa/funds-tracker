@@ -44,6 +44,8 @@ class LogsConfig(BaseModel):
 
 class SQLAlchemyConfig(BaseModel):
     echo: bool = False
+    pool_size: int = 20
+    max_overflow: int = 30
 
     intervals: dict[HistoryInterval, tuple[datetime, HistoryPeriod]] = {
         HistoryInterval.DAY: (

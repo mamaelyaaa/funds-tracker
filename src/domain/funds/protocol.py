@@ -7,6 +7,7 @@ from domain.protocol import SQLAlchemyRepositoryProtocol
 
 
 class FundRepositoryProtocol(SQLAlchemyRepositoryProtocol[Fund], Protocol):
+    """Протокол репозитория для работы с остатком"""
 
     async def get_last_opened(self, user_id: str) -> Optional[Fund]: ...
 
@@ -20,15 +21,8 @@ class FundRepositoryProtocol(SQLAlchemyRepositoryProtocol[Fund], Protocol):
 class FundDistRepositoryProtocol(
     SQLAlchemyRepositoryProtocol[FundDistribution], Protocol
 ):
+    """Протокол репозитория для работы с распределением остатка"""
 
     async def save_all(
         self, fund_dists: list[FundDistribution], commit: bool
-    ) -> None: ...
-
-    async def update_reserve_with_accumulate(
-        self,
-        reserve_type: FundReserveType,
-        user_id: str,
-        reserve_id: str,
-        balance: Decimal,
     ) -> None: ...

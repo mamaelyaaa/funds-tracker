@@ -5,4 +5,6 @@ from .entity import User
 
 
 class UserRepositoryProtocol(SQLAlchemyRepositoryProtocol[User], Protocol):
+    """Протокол репозитория для работы с пользователями"""
+
     pass

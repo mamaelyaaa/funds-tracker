@@ -14,7 +14,7 @@ from infra.database.specification import (
 from infra.models import HistoryModel
 from .commands import (
     SaveHistoryCommand,
-    GetAccountHistoryCommand,
+    GetHistoryCommand,
 )
 from .entities import History
 from .protocols import HistoryRepositoryProtocol
@@ -67,7 +67,7 @@ class HistoryService:
 
         return history_id
 
-    async def get_account_history(self, command: GetAccountHistoryCommand) -> tuple[
+    async def get_account_history(self, command: GetHistoryCommand) -> tuple[
         list[History],
         HistoryProfit,
         HistoryMetadata,

@@ -6,6 +6,8 @@ from domain.histories.values import HistoryInterval
 
 @dataclass(frozen=True)
 class SaveHistoryCommand:
+    """Сохранить историю"""
+
     user_id: str
     account_id: str
     balance: float
@@ -14,7 +16,9 @@ class SaveHistoryCommand:
 
 
 @dataclass(frozen=True)
-class GetAccountHistoryCommand:
+class GetHistoryCommand:
+    """Получить историю"""
+
     user_id: str
     account_id: str
     interval: HistoryInterval

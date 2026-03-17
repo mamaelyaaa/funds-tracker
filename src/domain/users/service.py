@@ -9,6 +9,7 @@ logger = logging.getLogger("user.service")
 
 
 class UserService:
+    """Сервис для работы с пользователями"""
 
     def __init__(self, user_repo: UserRepositoryProtocol):
         self._repository = user_repo

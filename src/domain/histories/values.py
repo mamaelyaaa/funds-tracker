@@ -21,6 +21,8 @@ class HistoryInterval(str, Enum):
 
 
 class HistoryPeriod(str, Enum):
+    """Периоды для группировки дат"""
+
     MINUTES = "minutes"
     HOURS = "hours"
     DAYS = "days"

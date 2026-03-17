@@ -17,6 +17,8 @@ class BalanceUpdatedEvent(DomainEvent):
 
 @dataclass(kw_only=True, frozen=True)
 class AccountCreatedEvent(DomainEvent):
+    """Счет создан"""
+
     user_id: str
     account_id: str
     new_balance: Decimal

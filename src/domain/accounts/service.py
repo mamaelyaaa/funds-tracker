@@ -103,8 +103,7 @@ class AccountCRUDService:
         return account
 
     async def find_accounts_by_user_id(
-        self,
-        command: GetAccountsCommand,
+        self, command: GetAccountsCommand
     ) -> tuple[list[Account], PaginationMetaSchema]:
         """
         Поиск всех счетов пользователя по его уникальному id с пагинацией

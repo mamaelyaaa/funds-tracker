@@ -5,6 +5,7 @@ from .entity import Account
 
 
 class AccountRepositoryProtocol(SQLAlchemyRepositoryProtocol[Account], Protocol):
+    """Протокол репозитория для работы со счетом"""
 
     async def count_by_user_id(self, user_id: str) -> int:
         pass
@@ -16,4 +17,6 @@ class AccountRepositoryProtocol(SQLAlchemyRepositoryProtocol[Account], Protocol)
 
 
 class AccountEventPublisherProtocol(EventPublisherProtocol, Protocol):
+    """Протокол паблишера для работы со счетом"""
+
     pass

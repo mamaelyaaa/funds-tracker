@@ -10,6 +10,8 @@ class GoalId(DomainIdValueObject):
 
 
 class GoalStatus(str, Enum):
+    """Статус цели"""
+
     ACTIVE = "ACTIVE"
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"

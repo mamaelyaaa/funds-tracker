@@ -6,6 +6,7 @@ from domain.protocol import SQLAlchemyRepositoryProtocol
 
 
 class HistoryRepositoryProtocol(SQLAlchemyRepositoryProtocol[History], Protocol):
+    """Протокол репозитория для работы с историей счета"""
 
     async def get_first_history_date_by_user(self, user_id: str) -> Optional[datetime]:
         pass

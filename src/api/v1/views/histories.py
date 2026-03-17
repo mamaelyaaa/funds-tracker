@@ -14,7 +14,7 @@ from api.v1.schemas.histories import (
     HistoryProfitSchema,
     HistoryFullSchema,
 )
-from domain.histories.commands import GetAccountHistoryCommand
+from domain.histories.commands import GetHistoryCommand
 from domain.histories.dto import HistoryDTO
 
 router = APIRouter(
@@ -63,7 +63,7 @@ async def get_account_history(
     """
 
     history, profit, metadata = await history_service.get_account_history(
-        command=GetAccountHistoryCommand(
+        command=GetHistoryCommand(
             account_id=account_id,
             user_id=user_id,
             interval=schema.interval,
