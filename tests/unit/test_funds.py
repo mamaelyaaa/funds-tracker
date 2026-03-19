@@ -26,7 +26,7 @@ class TestFundDomain:
         )
 
         assert fund.status == FundStatus.OPEN
-        assert fund.total_amount.value() >= 0
+        assert fund.total_amount >= 0
         assert fund.start_date <= fund.end_date
 
     def test_invalid_data(self, faker: Faker):

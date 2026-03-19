@@ -14,7 +14,7 @@ class TestAccountApi:
 
     async def test_create_success(self, client, saved_user):
         response = await client.post(
-            url=f"/api/v1/users/{saved_user.id.value()}/accounts",
+            url=f"/api/v1/users/{saved_user.id}/accounts",
             json={
                 "name": "Новый счет",
                 "initial_balance": 1000.3999,
@@ -37,7 +37,7 @@ class TestAccountApi:
     @pytest.mark.parametrize("account_name", [("%^%&$^#(%", "  ", "")])
     async def test_invalid_account_name(self, client, saved_user, account_name):
         response = await client.post(
-            url=f"/api/v1/users/{saved_user.id.value()}/accounts",
+            url=f"/api/v1/users/{saved_user.id}/accounts",
             json={
                 "name": account_name,
                 "initial_balance": 1000,
@@ -51,16 +51,16 @@ class TestAccountApi:
         self, client, saved_user, test_account_service
     ):
         account = Account(
-            user_id=UserId(saved_user.id.value()),
+            user_id=UserId(saved_user.id),
             name=Title("Новый счет"),
-            balance=Money("2000"),
+            balance=Money(2000),
             currency=AccountCurrency.RUB,
             type=AccountType.CARD,
         )
         await test_account_service.repository.save(account)
 
         response = await client.post(
-            url=f"/api/v1/users/{saved_user.id.value()}/accounts",
+            url=f"/api/v1/users/{saved_user.id}/accounts",
             json={
                 "name": "Новый счет",
                 "initialBalance": 1000,
@@ -80,7 +80,7 @@ class TestAccountApi:
 
         for i in range(5):
             new_acc = Account(
-                user_id=UserId(saved_user.id.value()),
+                user_id=UserId(saved_user.id),
                 name=Title(faker.word()),
                 type=AccountType.CARD,
                 balance=Money(faker.pyfloat(positive=True)),
@@ -88,37 +88,33 @@ class TestAccountApi:
             )
             await test_account_service.repository.save(new_acc)
 
-        response = await client.get(
-            url=f"/api/v1/users/{saved_user.id.value()}/accounts"
-        )
+        response = await client.get(url=f"/api/v1/users/{saved_user.id}/accounts")
 
         assert response.status_code == 200
         assert len(response.json()["detail"]) == 5
 
     async def test_get_accounts_empty(self, client, saved_user):
-        response = await client.get(
-            url=f"/api/v1/users/{saved_user.id.value()}/accounts"
-        )
+        response = await client.get(url=f"/api/v1/users/{saved_user.id}/accounts")
 
         assert response.status_code == 200
         assert len(response.json()["detail"]) == 0
 
     async def test_get_account_by_id_success(self, client, saved_user, saved_account):
         response = await client.get(
-            url=f"/api/v1/users/{saved_user.id.value()}/accounts/{saved_account.id.value()}"
+            url=f"/api/v1/users/{saved_user.id}/accounts/{saved_account.id}"
         )
 
         assert response.status_code == 200
         detail: dict = response.json()["detail"]
 
-        assert detail["id"] == saved_account.id.value()
+        assert detail["id"] == saved_account.id
         assert Money(detail["balance"]) == saved_account.balance
-        assert detail["name"] == saved_account.name.value()
+        assert detail["name"] == saved_account.name
         assert "createdAt" in detail
 
     async def test_get_account_by_id_not_found(self, client, saved_user):
         response = await client.get(
-            url=f"/api/v1/users/{saved_user.id.value()}/accounts/rand-acc-id"
+            url=f"/api/v1/users/{saved_user.id}/accounts/rand-acc-id"
         )
 
         assert response.status_code == 404
@@ -129,11 +125,11 @@ class TestAccountApi:
     ):
         new_balance = faker.pyfloat(positive=True)
 
-        assert new_balance != saved_account.balance.value()
+        assert new_balance != saved_account.balance
 
         response = await client.put(
-            url=f"/api/v1/users/{saved_user.id.value()}/accounts"
-            f"/{saved_account.id.value()}/balance",
+            url=f"/api/v1/users/{saved_user.id}/accounts"
+            f"/{saved_account.id}/balance",
             json={
                 "actualBalance": new_balance,
                 "isMonthlyClosing": False,
@@ -143,8 +139,8 @@ class TestAccountApi:
         assert response.status_code == 200
 
         exists_account = await test_account_service.repository.find_one(
-            user_id=saved_account.user_id.value(),
-            id=saved_account.id.value(),
+            user_id=saved_account.user_id,
+            id=saved_account.id,
         )
 
         assert exists_account.balance == Money(new_balance)
@@ -156,8 +152,8 @@ class TestAccountApi:
         assert new_balance != saved_account.balance
 
         response = await client.put(
-            url=f"/api/v1/users/{saved_user.id.value()}/accounts"
-            f"/{saved_account.id.value()}/balance",
+            url=f"/api/v1/users/{saved_user.id}/accounts"
+            f"/{saved_account.id}/balance",
             json={
                 "actualBalance": new_balance,
                 "isMonthlyClosing": False,

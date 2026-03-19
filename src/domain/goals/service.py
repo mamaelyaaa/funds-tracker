@@ -41,14 +41,15 @@ class GoalService:
             "current_amount": Money(command.current_amount),
             "deadline": command.deadline,
         }
-        goal = Goal.create(**acc_data)
+        goal = Goal(**acc_data)
 
         await self.goal_repo.save(goal)
         return goal
 
-    async def get_user_goals(
-        self, command: GetGoalsCommand
-    ) -> tuple[list[Goal], PaginationMetaSchema]:
+    async def get_user_goals(self, command: GetGoalsCommand) -> tuple[
+        list[Goal],
+        PaginationMetaSchema,
+    ]:
         """Получение всех целей пользователя"""
 
         goals, goals_count = await asyncio.gather(
@@ -95,10 +96,9 @@ class GoalService:
             goal.title = Title(command.title)
 
         await self.goal_repo.update(
-            goal_id=command.goal_id,
+            id=command.goal_id,
             user_id=command.user_id,
             upd_data=GoalDTO.from_entity_to_dict(goal, excludes=["id", "user_id"]),
-            commit=True,
         )
 
         return goal

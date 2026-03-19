@@ -39,14 +39,14 @@ class TestGoalApi:
         """Тест успешное создание цели"""
 
         response = await client.post(
-            url=f"/api/v1/users/{saved_user.id.value()}/goals", json=json
+            url=f"/api/v1/users/{saved_user.id}/goals", json=json
         )
 
         assert response.status_code == 201
         assert "успешно создана" in response.json()["message"]
 
         detail: dict = response.json()["detail"]
-        assert detail.get("userId") == saved_user.id.value()
+        assert detail.get("userId") == saved_user.id
         assert "createdAt" in detail
 
     @pytest.mark.parametrize(
@@ -103,7 +103,7 @@ class TestGoalApi:
         json.update(test_field)
 
         response = await client.post(
-            url=f"/api/v1/users/{saved_account.user_id.value()}/goals",
+            url=f"/api/v1/users/{saved_account.user_id}/goals",
             json=json,
         )
 
@@ -113,12 +113,10 @@ class TestGoalApi:
         """Тест получение всех целей пользователя"""
 
         goal_id = await test_goal_repo.save(test_goal)
-        exists_goal = await test_goal_repo.get_by_id(
-            user_id=saved_user.id.value(), goal_id=goal_id
-        )
+        exists_goal = await test_goal_repo.find_one(user_id=saved_user.id, id=goal_id)
 
         response = await client.get(
-            url=f"/api/v1/users/{saved_user.id.value()}/goals",
+            url=f"/api/v1/users/{saved_user.id}/goals",
         )
 
         print(response.json())
@@ -128,15 +126,15 @@ class TestGoalApi:
 
         goal: dict = detail[0]
         assert goal.get("id") == goal_id
-        assert goal.get("currentAmount") == exists_goal.current_amount.value()
-        assert goal.get("title") == exists_goal.title.value()
+        assert goal.get("currentAmount") == exists_goal.current_amount
+        assert goal.get("title") == exists_goal.title
         assert "createdAt" in goal
 
     async def test_get_goal_success(self, client, saved_user, saved_goal):
         """Тест цель найдена"""
 
         response = await client.get(
-            url=f"/api/v1/users/{saved_user.id.value()}/goals/{saved_goal.id.value()}"
+            url=f"/api/v1/users/{saved_user.id}/goals/{saved_goal.id}"
         )
 
         print(response.json())
@@ -144,15 +142,15 @@ class TestGoalApi:
         assert response.status_code == 200
         detail: dict = response.json()["detail"]
 
-        assert detail["id"] == saved_goal.id.value()
-        assert detail["title"] == saved_goal.title.value()
+        assert detail["id"] == saved_goal.id
+        assert detail["title"] == saved_goal.title
         assert "createdAt" in detail
 
     async def test_get_goal_by_id_not_found(self, client, saved_user):
         """Тест цель не найдена"""
 
         response = await client.get(
-            url=f"/api/v1/users/{saved_user.id.value()}/goals/unknown-goal-id"
+            url=f"/api/v1/users/{saved_user.id}/goals/unknown-goal-id"
         )
         assert response.status_code == 404
         assert "не найден" in response.json()["message"]
@@ -160,6 +158,6 @@ class TestGoalApi:
     async def test_delete_success(self, client, saved_user, saved_goal):
         """Тест удаление цели"""
         response = await client.delete(
-            url=f"/api/v1/users/{saved_user.id.value()}/goals/{saved_goal.id.value()}"
+            url=f"/api/v1/users/{saved_user.id}/goals/{saved_goal.id}"
         )
         assert response.status_code == 204

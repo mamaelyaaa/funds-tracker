@@ -34,22 +34,12 @@ class Title(str):
 
         return super().__new__(cls, value)
 
-    # def __post_init__(self):
-    #     self.validate_length()
-    #     self.validate_letters()
-    #
-    # def validate_length(self) -> None:
-    #     if len(self.value) > self.MAX_LEN:
-    #         raise TooLargeTitleException
-    #
-    # def validate_letters(self) -> None:
-
 
 class Money(Decimal):
 
     def __new__(cls, value: Optional[Decimal | float | int] = None):
-        val = Decimal(str(value)).quantize(Decimal("1.00")) or 0
-        if val <= 0:
+        val = Decimal(str(value)).quantize(Decimal("1.00")) or Decimal("0")
+        if val < 0:
             raise InvalidBalanceException
 
         return super().__new__(cls, val)

@@ -5,13 +5,14 @@ from api.v1.dependencies.goals import get_goal_service
 from domain.goals.entities import Goal
 from domain.goals.protocols import GoalRepositoryProtocol
 from domain.goals.service import GoalService
+from domain.users.values import UserId
 from domain.values import Title, Money
 
 
 @pytest.fixture
 def test_goal(test_user, faker: Faker) -> Goal:
-    return Goal.create(
-        user_id=test_user.id,
+    return Goal(
+        user_id=UserId(test_user.id),
         title=Title(faker.word()),
         target_amount=Money(faker.pyfloat(positive=True)),
     )

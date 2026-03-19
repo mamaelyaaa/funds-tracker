@@ -24,26 +24,22 @@ class TestFundService:
         # закрытые остатки)
 
         assert (
-            await test_account_service.repository.count_by_user_id(
-                test_account.user_id.value()
-            )
+            await test_account_service.repository.count_by_user_id(test_account.user_id)
             == 0
         )
 
         account = await test_account_service.create_account(
             command=CreateAccountCommand(
-                user_id=test_account.user_id.value(),
+                user_id=test_account.user_id,
                 balance=(new_balance := faker.pyfloat(positive=True)),
-                name=test_account.name.value(),
+                name=test_account.name,
                 account_type=test_account.type,
                 currency=test_account.currency,
             )
         )
         await asyncio.sleep(0.5)
 
-        fund = await test_fund_service.fund_repo.find_one(
-            user_id=account.user_id.value()
-        )
+        fund = await test_fund_service.fund_repo.find_one(user_id=account.user_id)
 
         assert fund.user_id == account.user_id
         assert fund.total_amount == Money(new_balance)
@@ -72,16 +68,16 @@ class TestFundService:
         await test_fund_service.fund_repo.save(test_closed_fund)
         assert (
             await test_fund_service.fund_repo.get_last_unopened(
-                user_id=test_closed_fund.user_id.value()
+                user_id=test_closed_fund.user_id
             )
             is not None
         )
 
         account = await test_account_service.create_account(
             command=CreateAccountCommand(
-                user_id=test_account.user_id.value(),
+                user_id=test_account.user_id,
                 balance=200,
-                name=test_account.name.value(),
+                name=test_account.name,
                 account_type=test_account.type,
                 currency=test_account.currency,
             )
@@ -90,12 +86,12 @@ class TestFundService:
 
         assert (
             last_closed_fund := await test_fund_service.fund_repo.get_last_unopened(
-                user_id=test_closed_fund.user_id.value()
+                user_id=test_closed_fund.user_id
             )
         ) is not None
 
         fund = await test_fund_service.fund_repo.get_last_opened(
-            user_id=account.user_id.value()
+            user_id=account.user_id
         )
 
         assert fund.user_id == account.user_id
@@ -118,7 +114,7 @@ class TestFundService:
         await test_fund_service.fund_repo.save(test_closed_fund)
         assert (
             await test_fund_service.fund_repo.get_last_unopened(
-                user_id=saved_account.user_id.value()
+                user_id=saved_account.user_id
             )
             is not None
         )
@@ -128,8 +124,8 @@ class TestFundService:
 
         await test_account_service.update_balance(
             command=UpdateAccountBalanceCommand(
-                user_id=saved_account.user_id.value(),
-                account_id=saved_account.id.value(),
+                user_id=saved_account.user_id,
+                account_id=saved_account.id,
                 new_balance=new_balance,
                 is_monthly_closing=True,
             )
@@ -137,7 +133,7 @@ class TestFundService:
         await asyncio.sleep(0.5)
 
         new_fund = await test_fund_service.fund_repo.get_last_opened(
-            user_id=saved_account.user_id.value()
+            user_id=saved_account.user_id
         )
         assert new_fund is not None
 
