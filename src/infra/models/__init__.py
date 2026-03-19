@@ -9,6 +9,7 @@ __all__ = (
     "FundModel",
     "FundStatus",
     "FundDistributionModel",
+    "UserSessionModel",
 )
 
 from .accounts import AccountModel, AccountCurrency
@@ -17,3 +18,4 @@ from .funds import FundModel, FundStatus, FundDistributionModel
 from .goals import GoalStatus, GoalModel
 from .histories import HistoryModel
 from .users import UserModel
+from .user_sessions import UserSessionModel

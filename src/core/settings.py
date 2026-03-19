@@ -2,6 +2,8 @@ from datetime import timedelta, datetime, UTC, timezone
 from pathlib import Path
 from typing import Literal
 
+from authx.types import AlgorithmType
+
 from dateutil.relativedelta import relativedelta
 from dotenv import load_dotenv
 from pydantic import BaseModel
@@ -124,10 +126,16 @@ class CacheConfig(BaseModel):
         return f"redis://{self.host}:{self.port}/{db_index}"
 
 
+class JWTConfig(BaseModel):
+    algorithm: AlgorithmType = "HS256"
+    secret: str = "jwt-secret"
+
+
 class Settings(BaseSettings):
     db: DBConfig
     broker: BrokerConfig
     cache: CacheConfig
+    jwt: JWTConfig
 
     run: RunConfig = RunConfig()
     app: AppConfig = AppConfig()

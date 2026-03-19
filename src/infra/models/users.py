@@ -4,11 +4,7 @@ from sqlalchemy import String
 from sqlalchemy.orm import Mapped, relationship, mapped_column
 
 if TYPE_CHECKING:
-    from . import (
-        AccountModel,
-        GoalModel,
-        FundModel,
-    )
+    from . import AccountModel, GoalModel, FundModel, UserSessionModel
 
 from .base import Base
 from .mixin import TimeStampMixin
@@ -28,5 +24,8 @@ class UserModel(Base, TimeStampMixin):
         back_populates="user", cascade="all, delete-orphan"
     )
     funds: Mapped[list["FundModel"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
+    sessions: Mapped[list["UserSessionModel"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
