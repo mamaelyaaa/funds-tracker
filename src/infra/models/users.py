@@ -1,6 +1,9 @@
 from typing import TYPE_CHECKING
 
-from sqlalchemy.orm import Mapped, relationship
+from sqlalchemy import String
+from sqlalchemy.orm import Mapped, relationship, mapped_column
+
+from domain.users.entity import User
 
 if TYPE_CHECKING:
     from . import (
@@ -10,13 +13,14 @@ if TYPE_CHECKING:
     )
 
 from .base import Base
-from .mixin import CreatedAtMixin
+from .mixin import TimeStampMixin
 
 
-class UserModel(Base, CreatedAtMixin):
+class UserModel(Base, TimeStampMixin):
     __tablename__ = "users"
 
-    name: Mapped[str]
+    username: Mapped[str] = mapped_column(String(31))
+    password: Mapped[str]
 
     # Отношения
     accounts: Mapped[list["AccountModel"]] = relationship(
