@@ -19,9 +19,9 @@ class TestHistoryService:
 
         history_id = await test_history_service.save_account_history(
             command=SaveHistoryCommand(
-                user_id=test_user.id.value(),
-                balance=float(test_history.balance.value()),
-                account_id=test_history.account_id.value(),
+                user_id=test_user.id,
+                balance=float(test_history.balance),
+                account_id=test_history.account_id,
                 is_monthly_closing=test_history.is_monthly_closing,
                 created_at=test_history.created_at,
             )
@@ -45,15 +45,15 @@ class TestHistoryService:
 
         await test_account_service.update_balance(
             command=UpdateAccountBalanceCommand(
-                account_id=saved_account.id.value(),
-                user_id=saved_account.user_id.value(),
-                new_balance=float(saved_account.balance.value()) + 100.25,
+                account_id=saved_account.id,
+                user_id=saved_account.user_id,
+                new_balance=float(saved_account.balance) + 100.25,
             )
         )
 
         exists_acc = await test_account_service.repository.find_one(
-            id=test_history.account_id.value(),
-            user_id=saved_account.user_id.value(),
+            id=test_history.account_id,
+            user_id=saved_account.user_id,
         )
         # assert len(exists_acc.events) > 1
 

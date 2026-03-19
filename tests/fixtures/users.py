@@ -2,12 +2,11 @@ import pytest
 
 from domain.users.entity import User
 from domain.users.protocols import UserRepositoryProtocol
-from domain.users.values import Username
 
 
 @pytest.fixture
 async def test_user() -> User:
-    return User(username=Username("user-123"), password="secret_pwd")
+    return User(name="user-123")
 
 
 @pytest.fixture

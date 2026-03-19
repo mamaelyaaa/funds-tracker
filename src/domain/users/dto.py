@@ -23,7 +23,7 @@ class UserDTO(BaseDTO):
             excludes = []
 
         data = {
-            "id": model.id.as_generic_type(),
+            "id": model.id,
             "name": model.name,
             "created_at": model.created_at,
         }

@@ -22,17 +22,17 @@ class TestAccountService:
 
         account = await test_account_service.create_account(
             command=CreateAccountCommand(
-                user_id=test_account.user_id.value(),
-                name=test_account.name.value(),
-                balance=float(test_account.balance.value()),
+                user_id=test_account.user_id,
+                name=test_account.name,
+                balance=float(test_account.balance),
                 account_type=test_account.type,
                 currency=test_account.currency,
             )
         )
 
         exists_acc = await test_account_service.repository.find_one(
-            user_id=account.user_id.value(),
-            id=account.id.value(),
+            user_id=account.user_id,
+            id=account.id,
         )
 
         assert account.id == exists_acc.id
@@ -55,9 +55,9 @@ class TestAccountService:
         with pytest.raises(AccountAlreadyCreatedException):
             await test_account_service.create_account(
                 command=CreateAccountCommand(
-                    user_id=new_account.user_id.value(),
+                    user_id=new_account.user_id,
                     name="Новый счет",
-                    balance=float(new_account.balance.value()),
+                    balance=float(new_account.balance),
                     account_type=new_account.type,
                     currency=new_account.currency,
                 )
@@ -66,22 +66,22 @@ class TestAccountService:
     async def test_update(self, faker: Faker, saved_account, test_account_service):
         test_account_service.publisher.publish = AsyncMock()
 
-        balance = float(saved_account.balance.value())
+        balance = float(saved_account.balance)
         new_balance = Money(balance + faker.pyfloat(min_value=balance))
 
         await test_account_service.update_balance(
             command=UpdateAccountBalanceCommand(
-                user_id=saved_account.user_id.value(),
-                account_id=saved_account.id.value(),
-                new_balance=float(new_balance.value()),
+                user_id=saved_account.user_id,
+                account_id=saved_account.id,
+                new_balance=float(new_balance),
             )
         )
 
         assert test_account_service.publisher.publish.await_count == 1
 
         exists_account = await test_account_service.repository.find_one(
-            user_id=saved_account.user_id.value(),
-            id=saved_account.id.value(),
+            user_id=saved_account.user_id,
+            id=saved_account.id,
         )
 
         assert exists_account.balance == new_balance
@@ -91,17 +91,17 @@ class TestAccountService:
 
         await test_account_service.update_balance(
             command=UpdateAccountBalanceCommand(
-                user_id=saved_account.user_id.value(),
-                account_id=saved_account.id.value(),
-                new_balance=float(saved_account.balance.value()),
+                user_id=saved_account.user_id,
+                account_id=saved_account.id,
+                new_balance=float(saved_account.balance),
             )
         )
 
         test_account_service.publisher.publish.assert_not_awaited()
 
         exists_account = await test_account_service.repository.find_one(
-            user_id=saved_account.user_id.value(),
-            id=saved_account.id.value(),
+            id=saved_account.id,
+            user_id=saved_account.user_id,
         )
 
         assert exists_account.balance == saved_account.balance

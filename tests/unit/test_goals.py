@@ -33,5 +33,5 @@ class TestGoalDomain:
     def test_progress_percentage(self, test_goal):
         assert (
             test_goal.progress_percent
-            == test_goal.current_amount.value() / test_goal.target_amount.value()
+            == test_goal.current_amount / test_goal.target_amount
         )
