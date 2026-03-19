@@ -42,10 +42,7 @@ class AuthService:
 
         await self.user_repo.save(user)
 
-        access_token = self.jwt_service.create_access_token(
-            uid=user.id.value(),
-            scope=[...],
-        )
+        access_token = self.jwt_service.create_access_token(uid=user.id, scope=[...])
 
         return BearerToken(access_token=access_token, refresh_token="")
 
