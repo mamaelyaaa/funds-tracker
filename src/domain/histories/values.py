@@ -1,12 +1,9 @@
-from dataclasses import dataclass
 from enum import Enum
 
-from core.domain import DomainIdValueObject
+from core.domain import DomainId
 
 
-@dataclass(frozen=True)
-class HistoryId(DomainIdValueObject):
-    pass
+class HistoryId(DomainId): ...
 
 
 class HistoryInterval(str, Enum):

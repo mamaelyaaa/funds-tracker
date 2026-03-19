@@ -10,3 +10,12 @@ class UserNotFoundException(AppException):
     @property
     def message(self) -> str:
         return f"Пользователь не найден"
+
+
+class TooLargeUsernameException(AppException):
+    status_code: int = status.HTTP_400_BAD_REQUEST
+    suggestion: str = "Сократите юзернейм до 31 символа"
+
+    @property
+    def message(self) -> str:
+        return f"Слишком длинный юзернейм"

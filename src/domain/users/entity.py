@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 
-from core.domain import CreatedAtDomainMixin
+from core.mixins import CreatedAtDomainMixin
+
 from .values import UserId
 
 
@@ -10,5 +11,5 @@ class User(CreatedAtDomainMixin):
 
     MAX_ACCOUNTS: int = 10
 
-    id: UserId = field(default_factory=UserId.generate)
+    id: UserId = field(default_factory=UserId)
     name: str

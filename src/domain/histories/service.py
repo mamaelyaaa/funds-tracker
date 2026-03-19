@@ -51,7 +51,7 @@ class HistoryService:
         )
 
         if last_history:
-            delta = command.balance - last_history.balance.to_float()
+            delta = command.balance - float(last_history.balance)
         else:
             delta = command.balance
 
@@ -86,14 +86,10 @@ class HistoryService:
         )
 
         last_history, first_history = history[-1], history[0]
-        amount_profit = (
-            last_history.balance.to_float() - first_history.balance.to_float()
-        )
+        amount_profit = last_history.balance - first_history.balance
 
         percent_profit = (
-            (last_history.balance.to_float() - first_history.balance.to_float())
-            / first_history.balance.to_float()
-            * 100
+            (last_history.balance - first_history.balance) / first_history.balance * 100
         )
         percent_profit = Decimal(str(percent_profit))
         percent_profit = percent_profit.quantize(exp=Decimal("1.00"))
@@ -102,7 +98,7 @@ class HistoryService:
             history,
             HistoryProfit(
                 percent_profit=float(percent_profit),
-                amount_profit=amount_profit,
+                amount_profit=float(amount_profit),
             ),
             HistoryMetadata(start_date=start_date, period=period),
         )

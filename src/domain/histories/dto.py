@@ -18,9 +18,9 @@ class HistoryDTO(BaseDTO):
             excludes = []
 
         data = {
-            "id": entity.id.as_generic_type(),
-            "account_id": entity.account_id.as_generic_type(),
-            "balance": entity.balance.as_generic_type(),
+            "id": entity.id,
+            "account_id": entity.account_id,
+            "balance": entity.balance,
             "is_monthly_closing": entity.is_monthly_closing,
             "delta": entity.delta,
             "created_at": entity.created_at,

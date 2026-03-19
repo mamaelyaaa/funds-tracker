@@ -107,8 +107,5 @@ class GoalService:
         """Удаление цели пользователя"""
 
         goal = await self.get_user_goal(command)
-        await self.goal_repo.delete_one(
-            id=goal.id.as_generic_type(),
-            user_id=goal.user_id.as_generic_type(),
-        )
+        await self.goal_repo.delete_one(id=goal.id, user_id=goal.user_id)
         return

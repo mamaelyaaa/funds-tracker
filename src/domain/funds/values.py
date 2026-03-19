@@ -1,12 +1,13 @@
 from dataclasses import dataclass
 from enum import Enum
 
-from core.domain import DomainIdValueObject
+from core.domain import DomainId
 
 
-@dataclass(frozen=True)
-class FundId(DomainIdValueObject):
-    pass
+class FundId(DomainId): ...
+
+
+class FundDistributionId(DomainId): ...
 
 
 class FundReserveType(str, Enum):
@@ -14,11 +15,6 @@ class FundReserveType(str, Enum):
 
     GOAL = "Goal"
     ACCOUNT = "Account"
-
-
-@dataclass(frozen=True)
-class FundDistributionId(DomainIdValueObject):
-    pass
 
 
 class FundStatus(str, Enum):

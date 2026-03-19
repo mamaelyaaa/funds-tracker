@@ -13,7 +13,7 @@ from domain.funds.values import FundReserveType, FundStatus
 from domain.goals.command import UpdateGoalPartiallyCommand
 from domain.goals.service import GoalService
 from domain.goals.values import GoalId
-from domain.values import Money, Percent
+from domain.values import Money, Percentage
 
 
 class FundDistUseCase:
@@ -43,7 +43,7 @@ class FundDistUseCase:
         last_open_fund.close()
         await self.fund_service.fund_repo.update(
             user_id=command.user_id,
-            fund_id=last_open_fund.id.as_generic_type(),
+            fund_id=last_open_fund.id,
             upd_data=FundDTO.from_entity_to_dict(
                 last_open_fund, excludes=["id", "user_id"]
             ),
@@ -51,7 +51,7 @@ class FundDistUseCase:
         )
 
         await self._distribute_user_fund(
-            user_id=command.user_id, fund_id=last_open_fund.id.as_generic_type()
+            user_id=command.user_id, fund_id=last_open_fund.id
         )
 
     async def _create_fund_distributions(
@@ -60,7 +60,7 @@ class FundDistUseCase:
         all_fund_dists = []
 
         for reserve in reserves:
-            amount = last_open_fund.total_amount.to_float() * (reserve.percent / 100)
+            amount = last_open_fund.total_amount * (reserve.percent / 100)
 
             fund_dists = FundDistribution(
                 fund_id=last_open_fund.id,
@@ -70,7 +70,7 @@ class FundDistUseCase:
                     else GoalId(reserve.reserve_id)
                 ),
                 reserve_type=reserve.reserve_type,
-                percent_applied=Percent(reserve.percent),
+                percent_applied=Percentage.from_percent(reserve.percent),
                 amount=Money(amount),
             )
             all_fund_dists.append(fund_dists)
@@ -84,13 +84,13 @@ class FundDistUseCase:
 
             if fund_dist.reserve_type == FundReserveType.ACCOUNT:
                 account = await self.account_service.repository.find_one(
-                    user_id=user_id, id=fund_dist.reserve_id.as_generic_type()
+                    user_id=user_id, id=fund_dist.reserve_id
                 )
-                new_balance = account.balance.to_float() + fund_dist.amount.to_float()
+                new_balance = account.balance + fund_dist.amount
                 await self.account_service.update_balance(
                     command=UpdateAccountBalanceCommand(
                         user_id=user_id,
-                        account_id=fund_dist.reserve_id.as_generic_type(),
+                        account_id=fund_dist.reserve_id,
                         new_balance=new_balance,
                         is_monthly_closing=False,
                     )
@@ -98,15 +98,13 @@ class FundDistUseCase:
 
             elif fund_dist.reserve_type == FundReserveType.GOAL:
                 goal = await self.goal_service.goal_repo.find_one(
-                    user_id=user_id, id=fund_dist.reserve_id.as_generic_type()
+                    user_id=user_id, id=fund_dist.reserve_id
                 )
-                new_balance = (
-                    goal.current_amount.to_float() + fund_dist.amount.to_float()
-                )
+                new_balance = goal.current_amount + fund_dist.amount
                 await self.goal_service.update_goal_partially(
                     command=UpdateGoalPartiallyCommand(
                         user_id=user_id,
-                        goal_id=fund_dist.reserve_id.as_generic_type(),
+                        goal_id=fund_dist.reserve_id,
                         current_amount=new_balance,
                     )
                 )

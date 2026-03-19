@@ -3,7 +3,7 @@ from domain.funds.dto import FundDistDTO
 from domain.funds.entity import FundDistribution
 from domain.funds.values import FundId, FundDistributionId, FundReserveType
 from domain.goals.values import GoalId
-from domain.values import Money, Percent
+from domain.values import Money, Percentage
 from infra.models.funds import FundDistributionModel
 
 
@@ -21,7 +21,7 @@ class FundDistOrmDTO(FundDistDTO):
             ),
             reserve_type=model.reserve_type,
             amount=Money(model.amount),
-            percent_applied=Percent(model.percent_applied),
+            percent_applied=Percentage(model.percent_applied),
             created_at=FundDistDTO.ensure_utc(model.created_at),
         )
 

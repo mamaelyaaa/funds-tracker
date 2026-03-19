@@ -30,14 +30,14 @@ class TestGoalsService:
 
         goal = await test_goal_service.create_goal(
             command=CreateGoalCommand(
-                title=test_goal.title.as_generic_type(),
-                target_amount=float(test_goal.target_amount.as_generic_type()),
-                user_id=test_goal.user_id.as_generic_type(),
+                title=test_goal.title.value(),
+                target_amount=float(test_goal.target_amount.value()),
+                user_id=test_goal.user_id.value(),
             )
         )
 
         saved_goal = await test_goal_repo.get_by_id(
-            goal_id=goal.id.as_generic_type(), user_id=goal.user_id.as_generic_type()
+            goal_id=goal.id.value(), user_id=goal.user_id.value()
         )
         assert goal == saved_goal
 
@@ -54,9 +54,9 @@ class TestGoalsService:
         with pytest.raises(GoalTitleAlreadyTakenException):
             await test_goal_service.create_goal(
                 command=CreateGoalCommand(
-                    user_id=test_goal.user_id.as_generic_type(),
-                    title=test_goal.title.as_generic_type(),
-                    target_amount=float(test_goal.target_amount.as_generic_type()),
+                    user_id=test_goal.user_id.value(),
+                    title=test_goal.title.value(),
+                    target_amount=float(test_goal.target_amount.value()),
                 )
             )
 
@@ -73,8 +73,8 @@ class TestGoalsService:
         await test_goal_repo.save(test_goal)
 
         saved_goal = await test_goal_service.get_user_goal(
-            goal_id=test_goal.id.as_generic_type(),
-            user_id=test_goal.user_id.as_generic_type(),
+            goal_id=test_goal.id.value(),
+            user_id=test_goal.user_id.value(),
         )
         assert saved_goal == test_goal
 
@@ -90,8 +90,8 @@ class TestGoalsService:
 
         with pytest.raises(GoalNotFoundException):
             await test_goal_service.get_user_goal(
-                goal_id=test_goal.id.as_generic_type(),
-                user_id=test_goal.user_id.as_generic_type(),
+                goal_id=test_goal.id.value(),
+                user_id=test_goal.user_id.value(),
             )
 
     async def test_user_goals_success(
@@ -160,15 +160,15 @@ class TestGoalsService:
 
         upd_goal = await test_goal_service.update_goal_partially(
             command=UpdateGoalPartiallyCommand(
-                goal_id=test_goal.id.as_generic_type(),
-                user_id=test_goal.user_id.as_generic_type(),
+                goal_id=test_goal.id.value(),
+                user_id=test_goal.user_id.value(),
                 **fields_to_update,
             )
         )
 
         saved_goal = await test_goal_repo.get_by_id(
-            goal_id=upd_goal.id.as_generic_type(),
-            user_id=upd_goal.user_id.as_generic_type(),
+            goal_id=upd_goal.id.value(),
+            user_id=upd_goal.user_id.value(),
         )
         assert saved_goal == upd_goal
 
@@ -204,8 +204,8 @@ class TestGoalsService:
         with pytest.raises(expected_error):
             await test_goal_service.update_goal_partially(
                 command=UpdateGoalPartiallyCommand(
-                    goal_id=test_goal.id.as_generic_type(),
-                    user_id=test_goal.user_id.as_generic_type(),
+                    goal_id=test_goal.id.value(),
+                    user_id=test_goal.user_id.value(),
                     **fields_to_update,
                 )
             )
@@ -220,8 +220,8 @@ class TestGoalsService:
         assert await test_goal_repo.count() == 1
 
         await test_goal_service.delete_goal(
-            goal_id=test_goal.id.as_generic_type(),
-            user_id=test_goal.user_id.as_generic_type(),
+            goal_id=test_goal.id.value(),
+            user_id=test_goal.user_id.value(),
         )
 
         assert await test_goal_repo.count() == 0

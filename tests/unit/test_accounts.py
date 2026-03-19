@@ -22,7 +22,7 @@ class TestAccountDomain:
         """Тест создания счёта"""
 
         assert test_account.created_at.date() == datetime.now().date()
-        assert test_account.balance.as_generic_type() > 0
+        assert test_account.balance > 0
         assert test_account.type == "Card"
         assert test_account.currency == "RUB"
 

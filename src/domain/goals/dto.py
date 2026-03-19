@@ -15,12 +15,12 @@ class GoalDTO(BaseDTO):
             excludes = []
 
         data = {
-            "id": model.id.as_generic_type(),
-            "user_id": model.user_id.as_generic_type(),
-            "title": model.title.as_generic_type(),
+            "id": model.id,
+            "user_id": model.user_id,
+            "title": model.title,
             "status": model.status,
-            "target_amount": model.target_amount.as_generic_type(),
-            "current_amount": model.current_amount.as_generic_type(),
+            "target_amount": model.target_amount,
+            "current_amount": model.current_amount,
             "deadline": model.deadline if model.deadline else None,
             "created_at": model.created_at,
         }

@@ -1,11 +1,11 @@
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
-from core.domain import CreatedAtDomainMixin, EventDomainMixin
+from core.mixins import DomainEventMixin, CreatedAtDomainMixin
 from domain.accounts.values import AccountId
 from domain.goals.values import GoalId
 from domain.users.values import UserId
-from domain.values import Money, Percent
+from domain.values import Money, Percentage
 from .exceptions import InvalidFundDateException
 from .values import (
     FundId,
@@ -16,10 +16,10 @@ from .values import (
 
 
 @dataclass(kw_only=True)
-class Fund(CreatedAtDomainMixin, EventDomainMixin):
+class Fund(CreatedAtDomainMixin, DomainEventMixin):
     """Доменная модель фиксированных остатков за период"""
 
-    id: FundId = field(default_factory=FundId.generate)
+    id: FundId = field(default_factory=FundId)
     user_id: UserId
     total_amount: Money
     status: FundStatus = field(default=FundStatus.OPEN)
@@ -39,9 +39,9 @@ class Fund(CreatedAtDomainMixin, EventDomainMixin):
 class FundDistribution(CreatedAtDomainMixin):
     """Доменная модель остатка с историей"""
 
-    id: FundDistributionId = field(default_factory=FundDistributionId.generate)
+    id: FundDistributionId = field(default_factory=FundDistributionId)
     fund_id: FundId
     reserve_id: AccountId | GoalId
     reserve_type: FundReserveType
     amount: Money
-    percent_applied: Percent
+    percent_applied: Percentage

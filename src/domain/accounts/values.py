@@ -1,7 +1,9 @@
-from dataclasses import dataclass
 from enum import Enum
 
-from core.domain import DomainIdValueObject
+from core.domain import DomainId
+
+
+class AccountId(DomainId): ...
 
 
 class AccountType(str, Enum):
@@ -17,8 +19,3 @@ class AccountCurrency(str, Enum):
 
     RUB = "RUB"
     USD = "USD"
-
-
-@dataclass(frozen=True)
-class AccountId(DomainIdValueObject):
-    pass
