@@ -12,10 +12,10 @@ class UserService:
     """Сервис для работы с пользователями"""
 
     def __init__(self, user_repo: UserRepositoryProtocol):
-        self.user_repo = user_repo
+        self._repository = user_repo
 
     async def get_user_by_user_id(self, user_id: str) -> User:
-        user = await self.user_repo.find_one(id=user_id)
+        user = await self._repository.find_one(id=user_id)
         if not user:
             logger.warning("Пользователь #%s не найден", UserId(user_id).short)
             raise UserNotFoundException

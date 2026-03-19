@@ -1,14 +1,13 @@
 import string
-from dataclasses import dataclass
 from decimal import Decimal
+from typing import Optional
 
-from core.domain import DomainValueObject
 from domain.exceptions import (
     TooLargeTitleException,
     InvalidLettersTitleException,
     InvalidBalanceException,
+    InvalidPercentException,
 )
-from domain.funds.exceptions import InvalidPercentException
 
 alphabet = (
     string.ascii_letters
@@ -20,58 +19,76 @@ alphabet = (
 )
 
 
-@dataclass(frozen=True)
-class Title(DomainValueObject[str]):
+class Title(str):
     """Value-object заголовка счёта (названия)"""
 
     MAX_LEN: int = 63
 
-    def __post_init__(self):
-        self.validate_length()
-        self.validate_letters()
-
-    def validate_length(self) -> None:
-        if len(self._value) > self.MAX_LEN:
+    def __new__(cls, value: str):
+        if len(value) > cls.MAX_LEN:
             raise TooLargeTitleException
 
-    def validate_letters(self) -> None:
-        for char in self._value:
+        for char in value:
             if char not in alphabet:
                 raise InvalidLettersTitleException
 
+        return super().__new__(cls, value)
 
-@dataclass(frozen=True)
-class Money(DomainValueObject[Decimal]):
-    ROUND_DIGITS = 2
+    # def __post_init__(self):
+    #     self.validate_length()
+    #     self.validate_letters()
+    #
+    # def validate_length(self) -> None:
+    #     if len(self.value) > self.MAX_LEN:
+    #         raise TooLargeTitleException
+    #
+    # def validate_letters(self) -> None:
+
+
+class Money(Decimal):
+
+    def __new__(cls, value: Optional[Decimal | float | int] = None):
+        val = Decimal(str(value)).quantize(Decimal("1.00")) or 0
+        if val <= 0:
+            raise InvalidBalanceException
+
+        return super().__new__(cls, val)
 
     def __sub__(self, other: "Money") -> "Money":
         """Операция вычитания"""
 
-        return Money(
-            _value=(self._value - other._value).quantize(
-                exp=Decimal("1." + self.ROUND_DIGITS * "0")
-            )
-        )
+        return Money(super().__sub__(other))
 
-    def __post_init__(self):
-        value = Decimal(str(self._value))
-        value = value.quantize(exp=Decimal("1." + self.ROUND_DIGITS * "0"))
-        object.__setattr__(self, "_value", value)
+    # def __post_init__(self):
+    # value = Decimal(str(self._value))
+    # value = value.quantize(exp=Decimal("1." + self.ROUND_DIGITS * "0"))
+    # object.__setattr__(self, "_value", value)
 
-        if self._value < 0:
-            raise InvalidBalanceException
+    # if self._value < 0:
+    #     raise InvalidBalanceException
+
+    # @classmethod
+    # def zero(cls) -> "Money":
+    #     return cls(value=Decimal("0"))
+    #
+    # def to_float(self) -> float:
+    #     return float(self)
+
+
+class Percentage(Decimal):
+
+    def __new__(cls, value: Optional[Decimal | float] = None):
+        val: Decimal = Decimal(str(value)).quantize(Decimal("1.00")) or 0
+
+        if not 0 <= value <= 100:
+            raise InvalidPercentException
+
+        return super().__new__(cls, val)
 
     @classmethod
-    def zero(cls) -> "Money":
-        return cls(_value=Decimal("0"))
+    def from_percent(cls, value: float):
+        return cls(value / 100)
 
-    def to_float(self) -> float:
-        return float(self.as_generic_type())
-
-
-@dataclass(frozen=True)
-class Percent(DomainValueObject[Decimal]):
-
-    def __post_init__(self):
-        if not 0 <= self._value <= 100:
-            raise InvalidPercentException
+    # def __post_init__(self):
+    #     if not 0 <= self.value <= 100:
+    #         raise InvalidPercentException

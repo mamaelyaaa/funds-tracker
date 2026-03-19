@@ -1,12 +1,10 @@
 from dataclasses import dataclass
 from enum import Enum
 
-from core.domain import DomainIdValueObject
+from core.domain import DomainId
 
 
-@dataclass(frozen=True)
-class GoalId(DomainIdValueObject):
-    pass
+class GoalId(DomainId): ...
 
 
 class GoalStatus(str, Enum):

@@ -160,7 +160,7 @@ class FundService(FundDistService):
         """Обновляет существующий остаток"""
 
         new_total = await self.history_repo.get_sum_delta_in_period(
-            user_id=fund.user_id.as_generic_type(),
+            user_id=fund.user_id,
             end_date=end_date,
             start_date=fund.start_date,
         )
@@ -168,11 +168,11 @@ class FundService(FundDistService):
         data = {"total_amount": new_total, "end_date": end_date}
 
         await self.fund_repo.update(
-            fund_id=fund.id.as_generic_type(),
-            user_id=fund.user_id.as_generic_type(),
+            fund_id=fund.id,
+            user_id=fund.user_id,
             upd_data=data,
         )
-        return fund.id.as_generic_type()
+        return fund.id
 
     async def get_last_opened_fund(self, user_id: str) -> Fund:
         """Получение крайней нераспределенной записи об остатках"""

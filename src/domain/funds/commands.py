@@ -25,7 +25,7 @@ class CreateOrUpdateFundCommand:
 class CreateReserveCommand:
     reserve_id: str
     reserve_type: FundReserveType
-    percent: int
+    percent: float
 
 
 @dataclass(frozen=True)

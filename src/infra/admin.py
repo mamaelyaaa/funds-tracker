@@ -22,13 +22,14 @@ class BaseAppModelView(ModelView):
 class UserView(BaseAppModelView):
     fields = [
         "id",
-        "name",
+        "username",
         "created_at",
+        "updated_at",
         "accounts",
         "goals",
     ]
 
-    sortable_fields = ["name", "created_at"]
+    sortable_fields = ["username", "created_at"]
     exclude_fields_from_create = ["created_at", "accounts", "goals", "funds"]
 
 

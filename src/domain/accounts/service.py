@@ -130,8 +130,8 @@ class AccountCRUDService:
 
         account = await self.find_account_by_id(command=command)
         await self.repository.delete_one(
-            id=account.id.as_generic_type(),
-            user_id=account.user_id.as_generic_type(),
+            id=account.id,
+            user_id=account.user_id,
         )
         logger.info("Счёт #%s был удален", account.id.short)
         return

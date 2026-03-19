@@ -17,12 +17,12 @@ class AccountDTO(BaseDTO):
             excludes = []
 
         data = {
-            "id": model.id.as_generic_type(),
-            "user_id": model.user_id.as_generic_type(),
-            "name": model.name.as_generic_type(),
+            "id": model.id,
+            "user_id": model.user_id,
+            "name": model.name,
             "type": model.type,
             "currency": model.currency,
-            "balance": model.balance.as_generic_type(),
+            "balance": model.balance,
             "created_at": model.created_at,
             "updated_at": model.updated_at,
         }

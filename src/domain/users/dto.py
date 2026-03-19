@@ -11,10 +11,8 @@ class UserDTO(BaseDTO):
     def from_dict_to_entity(data: dict[str, Any]) -> User:
         user = User(
             id=UserId(data.get("id")),
-            username=data.get("username"),
-            password=data.get("password"),
+            name=data.get("name"),
             created_at=data.get("created_at"),
-            updated_at=data.get("updated_at"),
         )
         # user.events.clear()
         return user
@@ -26,10 +24,8 @@ class UserDTO(BaseDTO):
 
         data = {
             "id": model.id,
-            "username": model.username,
-            "password": model.password,
+            "name": model.name,
             "created_at": model.created_at,
-            "updated_at": model.updated_at,
         }
         for excluded in excludes:
             data.pop(excluded)

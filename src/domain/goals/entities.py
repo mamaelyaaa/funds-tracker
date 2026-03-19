@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Optional
 
-from core.domain import CreatedAtDomainMixin, EventDomainMixin
+from core.mixins import DomainEventMixin, CreatedAtDomainMixin
 from domain.users.values import UserId
 from domain.values import Title, Money
 from .events import GoalAlreadyReachedEvent
@@ -12,14 +12,14 @@ from .values import GoalId, GoalStatus
 
 
 @dataclass(kw_only=True)
-class Goal(CreatedAtDomainMixin, EventDomainMixin):
+class Goal(CreatedAtDomainMixin, DomainEventMixin):
     """Доменная модель целей пользователей"""
 
-    id: GoalId = field(default_factory=GoalId.generate)
+    id: GoalId = field(default_factory=GoalId)
     user_id: UserId
     title: Title
     target_amount: Money
-    current_amount: Money = field(default=Money.zero)
+    current_amount: Money = field(default=Money)
     status: GoalStatus = field(default=GoalStatus.ACTIVE)
     deadline: Optional[datetime] = field(default=None)
 
@@ -32,7 +32,7 @@ class Goal(CreatedAtDomainMixin, EventDomainMixin):
         user_id: UserId,
         title: Title,
         target_amount: Money,
-        current_amount: Money = Money(0),
+        current_amount: Money,
         deadline: Optional[datetime] = None,
     ):
         if deadline and deadline.isoformat() < datetime.now().isoformat():
@@ -53,17 +53,15 @@ class Goal(CreatedAtDomainMixin, EventDomainMixin):
         self.deadline = new_date
 
     def change_current_amount(self, new_current: Money) -> None:
-        if new_current.as_generic_type() > self.target_amount.as_generic_type():
+        if new_current > self.target_amount:
             self._events.append(
                 GoalAlreadyReachedEvent(
-                    goal_id=self.id.as_generic_type(),
-                    user_id=self.user_id.as_generic_type(),
+                    goal_id=self.id,
+                    user_id=self.user_id,
                 )
             )
         self.current_amount = new_current
 
     @property
     def progress_percent(self) -> Decimal:
-        return (
-            self.current_amount.as_generic_type() / self.target_amount.as_generic_type()
-        )
+        return self.current_amount / self.target_amount

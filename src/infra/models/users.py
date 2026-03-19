@@ -3,8 +3,6 @@ from typing import TYPE_CHECKING
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, relationship, mapped_column
 
-from domain.users.entity import User
-
 if TYPE_CHECKING:
     from . import (
         AccountModel,
