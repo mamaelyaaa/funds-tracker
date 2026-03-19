@@ -19,33 +19,16 @@ class Goal(CreatedAtDomainMixin, DomainEventMixin):
     user_id: UserId
     title: Title
     target_amount: Money
-    current_amount: Money = field(default=Money)
+    current_amount: Money = field(default=Money(0))
     status: GoalStatus = field(default=GoalStatus.ACTIVE)
     deadline: Optional[datetime] = field(default=None)
 
     # TODO Подключить Minio S3
     # img_url: FileUrl
 
-    @classmethod
-    def create(
-        cls,
-        user_id: UserId,
-        title: Title,
-        target_amount: Money,
-        current_amount: Money,
-        deadline: Optional[datetime] = None,
-    ):
-        if deadline and deadline.isoformat() < datetime.now().isoformat():
+    def __post_init__(self):
+        if self.deadline and self.deadline.isoformat() < datetime.now().isoformat():
             raise InvalidGoalDeadlineException
-
-        return cls(
-            user_id=user_id,
-            title=title,
-            current_amount=current_amount,
-            target_amount=target_amount,
-            status=GoalStatus.ACTIVE,
-            deadline=deadline,
-        )
 
     def change_deadline(self, new_date: datetime) -> None:
         if new_date < datetime.now(timezone.utc):

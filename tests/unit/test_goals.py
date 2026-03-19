@@ -15,7 +15,7 @@ class TestGoalDomain:
         assert test_goal.deadline is None
 
     def test_goal_already_reached(self, faker: Faker):
-        goal = Goal.create(
+        goal = Goal(
             user_id=UserId("u-123"),
             title=Title(faker.word()),
             target_amount=Money(2000),
