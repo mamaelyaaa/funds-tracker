@@ -10,17 +10,17 @@ class RegisterUserSchema(BaseApiModel):
     username: str
     password: SecretStr
     password_repeat: SecretStr
+    fingerprint: str
+
+
+class TokenTypeMeta(BaseApiModel):
+    token_type: str = "Bearer"
 
 
 class LoginUserSchema(BaseApiModel):
     username: str
     password: SecretStr
-
-
-class BearerTokenSchema(BaseApiModel):
-    access_token: str
-    refresh_token: str
-    token_type: str = "Bearer"
+    fingerprint: str
 
 
 class UserDetailSchema(BaseApiModel):

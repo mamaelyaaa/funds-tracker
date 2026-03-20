@@ -19,6 +19,7 @@ class UserSessionDTO(BaseDTO):
             "user_id": model.user_id,
             "refresh_jti": model.refresh_jti,
             "expires_in": model.expires_in,
+            "fingerprint": model.fingerprint,
             "created_at": model.created_at,
             "updated_at": model.updated_at,
         }
@@ -33,6 +34,7 @@ class UserSessionDTO(BaseDTO):
             id=UserSessionId(data.get("id")),
             user_id=UserId(data.get("user_id")),
             refresh_jti=data.get("refresh_jti"),
+            fingerprint=data.get("fingerprint"),
             expires_in=data.get("expires_in"),
             created_at=data.get("created_at"),
             updated_at=data.get("updated_at"),

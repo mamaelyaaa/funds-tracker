@@ -38,6 +38,8 @@ class FilesConfig(BaseModel):
 
     test_db: Path = base / "tests" / "test.db"
 
+    log_file: Path = base / "app.log"
+
 
 class LogsConfig(BaseModel):
     level: Literal["DEBUG", "INFO", "WARNING"] = "INFO"
@@ -129,6 +131,20 @@ class CacheConfig(BaseModel):
 class JWTConfig(BaseModel):
     algorithm: AlgorithmType = "HS256"
     secret: str = "jwt-secret"
+
+    # Токен доступа
+    access_expires_in: timedelta = timedelta(minutes=20)
+    refresh_expires_in: timedelta = timedelta(days=20)
+
+    # Куки
+    refresh_cookie_name: str = "refresh_token_cookie"
+    refresh_cookie_path: str = "/"
+
+    cookie_secure: bool = True
+    cookie_session: bool = False
+    cookie_domain: str = ".localhost"
+    cookie_http_only: bool = True
+    cookie_max_age: int = int(refresh_expires_in.total_seconds())
 
 
 class Settings(BaseSettings):

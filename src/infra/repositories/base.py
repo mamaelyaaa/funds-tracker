@@ -79,8 +79,18 @@ class SQLAlchemyBaseRepository[Model: type[Base], Entity]:
         self, commit: bool = True, *args, **filter_by
     ) -> Optional[str]:
         """Удаляет одну запись из БД"""
+
         stmt = delete(self.model).filter_by(**filter_by).returning(self.model.id)
         id = await self.session.scalar(stmt)
         if commit:
             await self.session.commit()
         return id
+
+    async def delete_all(self, commit: bool = True, *args, **filter_by) -> None:
+        """Удаляет несколько записей из БД"""
+
+        stmt = delete(self.model).filter_by(**filter_by)
+        await self.session.execute(stmt)
+        if commit:
+            await self.session.commit()
+        return

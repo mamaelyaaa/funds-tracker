@@ -11,6 +11,11 @@ services:
     volumes:
       - .:/app
       - /app/.venv
+    logging:
+      driver: "local"
+      options:
+        max-size: "10m"
+        max-file: "3"
     depends_on:
       database:
         condition: service_healthy

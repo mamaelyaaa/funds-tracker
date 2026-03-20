@@ -88,9 +88,11 @@ class HistoryService:
         last_history, first_history = history[-1], history[0]
         amount_profit = last_history.balance - first_history.balance
 
-        percent_profit = (
-            (last_history.balance - first_history.balance) / first_history.balance * 100
-        )
+        if first_history.balance == 0:
+            percent_profit = amount_profit / 100
+        else:
+            percent_profit = amount_profit / first_history.balance * 100
+
         percent_profit = Decimal(str(percent_profit))
         percent_profit = percent_profit.quantize(exp=Decimal("1.00"))
 

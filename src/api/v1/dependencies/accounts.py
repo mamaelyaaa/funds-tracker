@@ -2,6 +2,7 @@ from typing import Annotated
 
 from fastapi import Depends, Path
 
+from api.v1.dependencies.auth import AccessTokenDep
 from domain.accounts.commands import GetAccountCommand
 from domain.accounts.entity import Account
 from domain.accounts.service import AccountService
@@ -21,7 +22,9 @@ AccountServiceDep = Annotated[AccountService, Depends(get_account_service)]
 
 
 async def get_account(
-    account_service: AccountServiceDep, account_id: str = Path(), user_id: str = Path()
+    account_service: AccountServiceDep,
+    user_id: AccessTokenDep,
+    account_id: str = Path(),
 ) -> Account:
     account = await account_service.find_account_by_id(
         command=GetAccountCommand(

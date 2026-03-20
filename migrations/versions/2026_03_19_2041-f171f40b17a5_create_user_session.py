@@ -38,7 +38,7 @@ def upgrade() -> None:
             server_default=sa.text("now()"),
             nullable=False,
         ),
-        sa.CheckConstraint("created_at > expires_in", name="session_date_constraint"),
+        sa.CheckConstraint("created_at <= expires_in", name="session_date_constraint"),
         sa.ForeignKeyConstraint(
             ["user_id"], ["users.id"], name="fk_us_user_id", ondelete="CASCADE"
         ),

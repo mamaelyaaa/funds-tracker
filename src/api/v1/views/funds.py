@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Path
+from fastapi import APIRouter, Depends
 from starlette import status
 
 from api.schemas import (
@@ -8,17 +8,27 @@ from api.schemas import (
     PaginationDep,
     BaseExceptionSchema,
 )
+from api.v1.dependencies.auth import http_bearer, AccessTokenDep
 from api.v1.dependencies.funds import FundServiceDep, FundDistUseCaseDep
-from api.v1.dependencies.users import get_user
 from api.v1.schemas.funds import FundDetailSchema, FundCloseSchema
 from domain.commands import PaginationCommand
-from domain.funds.commands import CreateReserveCommand, GetFundsCommand
+from domain.funds.commands import (
+    CreateReserveCommand,
+    GetFundsCommand,
+    CreateReservesCommand,
+)
 from domain.funds.dto import FundDTO
 
 router = APIRouter(
-    prefix="/users/{user_id}/funds",
+    prefix="/funds",
     tags=["Накопительный остаток 🫰"],
-    dependencies=[Depends(get_user)],
+    dependencies=[Depends(http_bearer)],
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {
+            "model": BaseExceptionSchema,
+            "description": "Пользователь не авторизован",
+        },
+    },
 )
 
 
@@ -30,7 +40,7 @@ router = APIRouter(
 )
 async def get_user_distributed_funds(
     fund_service: FundServiceDep,
-    user_id: str,
+    user_id: AccessTokenDep,
     pagination: PaginationDep,
 ):
     """Получение всех накопительных остатков пользователя"""
@@ -62,7 +72,7 @@ async def get_user_distributed_funds(
         },
     },
 )
-async def get_last_open_fund(fund_service: FundServiceDep, user_id: str):
+async def get_last_open_fund(fund_service: FundServiceDep, user_id: AccessTokenDep):
     """Получение крайнего накопительного остатка пользователя"""
 
     fund = await fund_service.get_last_opened_fund(user_id)
@@ -77,14 +87,17 @@ async def get_last_open_fund(fund_service: FundServiceDep, user_id: str):
 async def close_current_fund(
     fund_dist_use_case: FundDistUseCaseDep,
     schema: FundCloseSchema,
-    user_id: str = Path(),
+    user_id: AccessTokenDep,
 ):
     """Распределение текущего накопленного остатка по резервам (счетам и целям)"""
 
     await fund_dist_use_case.close_head_fund(
-        user_id=user_id,
-        reserves=[
-            CreateReserveCommand(**reserve.model_dump()) for reserve in schema.reserves
-        ],
+        command=CreateReservesCommand(
+            user_id=user_id,
+            reserves=[
+                CreateReserveCommand(**reserve.model_dump())
+                for reserve in schema.reserves
+            ],
+        )
     )
     return BaseResponseSchema(message="Распределение остатка прошло успешно!")

@@ -8,6 +8,7 @@ from infra.models import (
     GoalModel,
     FundModel,
     FundDistributionModel,
+    UserSessionModel,
 )
 
 admin = Admin(engine=db_helper.engine)
@@ -29,8 +30,23 @@ class UserView(BaseAppModelView):
         "goals",
     ]
 
-    sortable_fields = ["username", "created_at"]
+    sortable_fields = ["username", "created_at", "updated_at"]
     exclude_fields_from_create = ["created_at", "accounts", "goals", "funds"]
+
+
+class UserSessionView(BaseAppModelView):
+    fields = [
+        "id",
+        "user",
+        "refresh_jti",
+        "fingerprint",
+        "expires_in",
+        "created_at",
+        "updated_at",
+    ]
+
+    sortable_fields = ["expires_in", "created_at", "updated_at"]
+    exclude_fields_from_create = ["created_at", "updated_at"]
 
 
 class AccountView(BaseAppModelView):
@@ -101,6 +117,7 @@ class FundDistView(BaseAppModelView):
 
 
 admin.add_view(UserView(UserModel))
+admin.add_view(UserSessionView(UserSessionModel))
 admin.add_view(AccountView(AccountModel))
 admin.add_view(HistoryView(HistoryModel))
 admin.add_view(GoalView(GoalModel))

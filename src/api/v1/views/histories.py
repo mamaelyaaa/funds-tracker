@@ -5,8 +5,8 @@ from fastapi import APIRouter, Depends, status
 
 from api.schemas import BaseResponseDetailSchema, BaseExceptionSchema
 from api.v1.dependencies.accounts import get_account
+from api.v1.dependencies.auth import http_bearer, AccessTokenDep
 from api.v1.dependencies.histories import HistoryServiceDep
-from api.v1.dependencies.users import get_user
 from api.v1.schemas.histories import (
     HistoryDetailSchema,
     GetHistorySchema,
@@ -18,14 +18,18 @@ from domain.histories.commands import GetHistoryCommand
 from domain.histories.dto import HistoryDTO
 
 router = APIRouter(
-    prefix="/users/{user_id}/accounts/{account_id}/history",
+    prefix="/accounts/{account_id}/history",
     tags=["История счетов⌚"],
-    dependencies=[Depends(get_user), Depends(get_account)],
+    dependencies=[Depends(get_account), Depends(http_bearer)],
     responses={
         status.HTTP_404_NOT_FOUND: {
             "model": BaseExceptionSchema,
             "description": "Не найден пользователь ИЛИ не найден счёт пользователя",
-        }
+        },
+        status.HTTP_401_UNAUTHORIZED: {
+            "model": BaseExceptionSchema,
+            "description": "Пользователь не авторизован",
+        },
     },
 )
 
@@ -38,7 +42,7 @@ async def get_account_history(
     history_service: HistoryServiceDep,
     schema: Annotated[GetHistorySchema, Depends()],
     account_id: str,
-    user_id: str,
+    user_id: AccessTokenDep,
 ):
     """
     Получение истории и профита счёта

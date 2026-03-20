@@ -8,7 +8,7 @@ from api.schemas import (
     PaginationDep,
 )
 from api.v1.dependencies.accounts import AccountServiceDep
-from api.v1.dependencies.users import get_user
+from api.v1.dependencies.auth import AccessTokenDep, http_bearer
 from api.v1.schemas.accounts import (
     CreateAccountSchema,
     AccountDetailSchema,
@@ -24,9 +24,15 @@ from domain.accounts.dto import AccountDTO
 from domain.commands import PaginationCommand
 
 router = APIRouter(
-    prefix="/users/{user_id}/accounts",
+    prefix="/accounts",
     tags=["Счета🏦"],
-    dependencies=[Depends(get_user)],
+    dependencies=[Depends(http_bearer)],
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {
+            "model": BaseExceptionSchema,
+            "description": "Пользователь не авторизован",
+        },
+    },
 )
 
 
@@ -52,7 +58,7 @@ router = APIRouter(
 async def create_account(
     account_service: AccountServiceDep,
     schema: CreateAccountSchema,
-    user_id: str,
+    user_id: AccessTokenDep,
 ):
     """Создание нового счёта"""
 
@@ -81,7 +87,7 @@ async def create_account(
 )
 async def get_accounts(
     account_service: AccountServiceDep,
-    user_id: str,
+    user_id: AccessTokenDep,
     pagination: PaginationDep,
 ):
     """Получение счетов пользователя"""
@@ -113,7 +119,7 @@ async def get_accounts(
 async def get_account_by_id(
     account_service: AccountServiceDep,
     account_id: str,
-    user_id: str,
+    user_id: AccessTokenDep,
 ):
     """Получение счета пользователя по уникальному id"""
 
@@ -146,7 +152,7 @@ async def update_account_balance(
     account_service: AccountServiceDep,
     schema: UpdateAccountSchema,
     account_id: str,
-    user_id: str,
+    user_id: AccessTokenDep,
 ):
     """
     Обновление баланса счёта и фоновое обновление полного капитала пользователя
@@ -179,7 +185,7 @@ async def update_account_balance(
 async def delete_balance(
     account_service: AccountServiceDep,
     account_id: str,
-    user_id: str,
+    user_id: AccessTokenDep,
 ):
     """Удаляет счёт"""
 

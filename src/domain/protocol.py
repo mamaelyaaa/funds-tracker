@@ -20,6 +20,8 @@ class SQLAlchemyRepositoryProtocol[E](Protocol):
         self, commit: bool = True, *args, **filter_by
     ) -> Optional[str]: ...
 
+    async def delete_all(self, commit: bool = True, *args, **filter_by) -> None: ...
+
 
 class EventPublisherProtocol(Protocol):
     """Протокол паблишера событий"""

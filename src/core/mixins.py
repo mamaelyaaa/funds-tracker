@@ -22,7 +22,7 @@ class CreatedAtDomainMixin:
 class UpdatedAtDomainMixin:
     updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
-    def _touch(self) -> None:
+    def touch(self) -> None:
         """Обновление updated_at"""
         self.updated_at = datetime.now(timezone.utc)
 

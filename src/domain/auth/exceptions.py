@@ -1,10 +1,10 @@
-from starlette import status
+from fastapi import status
 
 from core.exceptions import AppException
 
 
 class UserAlreadyExistsException(AppException):
-    status_code: int = status.HTTP_400_BAD_REQUEST
+    status_code: int = status.HTTP_409_CONFLICT
     suggestion: str = "Попробуйте другой юзернейм"
 
     @property

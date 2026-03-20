@@ -44,4 +44,4 @@ class Account(DomainEventMixin, TimestampDomainMixin):
                 is_monthly_closing=is_monthly_closing,
             ),
         )
-        self._touch()
+        self.touch()

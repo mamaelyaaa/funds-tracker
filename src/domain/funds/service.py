@@ -1,4 +1,3 @@
-import asyncio
 import logging
 from datetime import datetime, timedelta, timezone
 
@@ -191,13 +190,12 @@ class FundService(FundDistService):
     ) -> tuple[list[Fund], PaginationMetaSchema]:
         """Получение распределенных остатков"""
 
-        funds, funds_count = await asyncio.gather(
-            self.fund_repo.get_unopened(
-                command.user_id,
-                PaginationSpecification.from_pagination_command(command.pagination),
-            ),
-            self.fund_repo.get_count_by_user_id(command.user_id),
+        funds = await self.fund_repo.get_unopened(
+            command.user_id,
+            PaginationSpecification.from_pagination_command(command.pagination),
         )
+
+        funds_count = await self.fund_repo.get_count_by_user_id(command.user_id)
 
         return funds, PaginationMetaSchema(
             page=command.pagination.page,

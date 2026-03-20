@@ -1,4 +1,6 @@
-from sqlalchemy import delete, al
+from datetime import datetime
+
+from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from domain.auth.entity import UserSession
@@ -18,13 +20,14 @@ class SQLAlchemyUserSessionRepository(
     def __init__(self, session: AsyncSession):
         super().__init__(session)
 
-    async def delete_many(
-        self, sessions_ids: list[str], commit: bool, *specs, **filter_by
+    async def delete_expired_by_user(
+        self, user_id: str, expired_before: datetime, commit: bool
     ) -> None:
-        stmt = delete(self.model).where(self.model.id.in_(sessions_ids))
+        stmt = delete(UserSessionModel).where(
+            UserSessionModel.user_id == user_id,
+            UserSessionModel.expires_in < expired_before,
+        )
         await self.session.execute(stmt)
-
         if commit:
             await self.session.commit()
-
         return

@@ -14,6 +14,7 @@ class UserSessionOrmDTO(BaseOrmDTO, UserSessionDTO):
             id=UserSessionId(model.id),
             user_id=UserId(model.user_id),
             refresh_jti=model.refresh_jti,
+            fingerprint=model.fingerprint,
             expires_in=UserSessionDTO.ensure_utc(model.expires_in),
             created_at=UserDTO.ensure_utc(model.created_at),
             updated_at=UserDTO.ensure_utc(model.updated_at),

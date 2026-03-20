@@ -1,6 +1,6 @@
-import logging
 from contextlib import asynccontextmanager
 
+import structlog
 import uvicorn
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
@@ -19,15 +19,14 @@ from core.settings import settings
 from infra import admin, broker, db_helper
 from infra.cache.redis import get_redis_client
 
-logger = logging.getLogger(__name__)
 setup_logger()
+logger = structlog.get_logger()
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI, redis: Redis = get_redis_client()):
     if not broker.is_worker_process:
         await broker.startup()
-
     yield
 
     if not broker.is_worker_process:

@@ -6,8 +6,8 @@ from api.schemas import (
     PaginationMetaSchema,
     PaginationDep,
 )
+from api.v1.dependencies.auth import http_bearer, AccessTokenDep
 from api.v1.dependencies.goals import GoalServiceDep
-from api.v1.dependencies.users import get_user
 from api.v1.schemas.goals import CreateGoalSchema, GoalDetailSchema, UpdateGoalSchema
 from domain.commands import PaginationCommand
 from domain.goals.command import (
@@ -19,9 +19,15 @@ from domain.goals.command import (
 from domain.goals.dto import GoalDTO
 
 router = APIRouter(
-    prefix="/users/{user_id}/goals",
+    prefix="/goals",
     tags=["Цели🎯"],
-    dependencies=[Depends(get_user)],
+    dependencies=[Depends(http_bearer)],
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {
+            "model": BaseExceptionSchema,
+            "description": "Пользователь не авторизован",
+        },
+    },
 )
 
 
@@ -43,7 +49,7 @@ router = APIRouter(
 async def create_goal(
     goals_service: GoalServiceDep,
     schema: CreateGoalSchema,
-    user_id: str,
+    user_id: AccessTokenDep,
 ):
     """
     Создание цели пользователя
@@ -70,7 +76,7 @@ async def create_goal(
 )
 async def get_user_goals(
     goals_service: GoalServiceDep,
-    user_id: str,
+    user_id: AccessTokenDep,
     pagination: PaginationDep,
 ):
     """Получение всех целей пользователя"""
@@ -101,7 +107,7 @@ async def get_user_goals(
 )
 async def get_user_goal(
     goals_service: GoalServiceDep,
-    user_id: str,
+    user_id: AccessTokenDep,
     goal_id: str,
 ):
     """Получение конкретной цели пользователя"""
@@ -134,7 +140,7 @@ async def get_user_goal(
 async def update_user_goal(
     goals_service: GoalServiceDep,
     schema: UpdateGoalSchema,
-    user_id: str,
+    user_id: AccessTokenDep,
     goal_id: str,
 ):
     """Обновление цели пользователя"""
@@ -166,7 +172,7 @@ async def update_user_goal(
 )
 async def get_user_goal(
     goals_service: GoalServiceDep,
-    user_id: str,
+    user_id: AccessTokenDep,
     goal_id: str,
 ):
     """Удаление цели пользователя"""

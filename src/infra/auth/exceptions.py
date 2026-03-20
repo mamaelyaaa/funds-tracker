@@ -12,7 +12,7 @@ class InvalidTokenException(AppException):
         return f"Невалидный токен доступа"
 
 
-class MissingTokenException(AppException):
+class MissingAccessTokenException(AppException):
     status_code: int = status.HTTP_401_UNAUTHORIZED
     suggestion: str = (
         "Добавьте в заголовок запроса токен доступа: Authorization: Bearer <>"
@@ -23,6 +23,15 @@ class MissingTokenException(AppException):
         return f"Отсутствует токен доступа"
 
 
+class MissingRefreshTokenException(AppException):
+    status_code: int = status.HTTP_401_UNAUTHORIZED
+    suggestion: str = "Авторизуйтесь заново"
+
+    @property
+    def message(self) -> str:
+        return f"Отсутствует токен обновления"
+
+
 class TokenExpiredException(AppException):
     status_code: int = status.HTTP_401_UNAUTHORIZED
     suggestion: str = "Обновите токен доступа с помощью токена обновления"
@@ -30,3 +39,12 @@ class TokenExpiredException(AppException):
     @property
     def message(self) -> str:
         return f"Токен доступа больше не валиден"
+
+
+class RefreshNotFoundException(AppException):
+    status_code: int = status.HTTP_401_UNAUTHORIZED
+    suggestion: str = "Убедитесь что fingerprint корректен, или авторизуйтесь заново"
+
+    @property
+    def message(self) -> str:
+        return f"Токен обновления не найден"

@@ -6,9 +6,11 @@ class RegisterUserCommand:
     username: str
     password: str
     password_repeat: str
+    fingerprint: str
 
 
 @dataclass(frozen=True)
 class LoginUserCommand:
     username: str
     password: str
+    fingerprint: str

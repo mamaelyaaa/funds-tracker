@@ -52,13 +52,11 @@ class GoalService:
     ]:
         """Получение всех целей пользователя"""
 
-        goals, goals_count = await asyncio.gather(
-            self.goal_repo.find_all(
-                PaginationSpecification.from_pagination_command(command.pagination),
-                user_id=command.user_id,
-            ),
-            self.goal_repo.count_by_user_id(command.user_id),
+        goals = await self.goal_repo.find_all(
+            PaginationSpecification.from_pagination_command(command.pagination),
+            user_id=command.user_id,
         )
+        goals_count = await self.goal_repo.count_by_user_id(command.user_id)
 
         return goals, PaginationMetaSchema(
             total_found=goals_count,

@@ -1,5 +1,4 @@
-import asyncio
-import logging
+import structlog
 
 from api.schemas import PaginationMetaSchema
 from domain.users.entity import User
@@ -22,7 +21,7 @@ from .exceptions import (
 from .protocols import AccountRepositoryProtocol, AccountEventPublisherProtocol
 from .values import AccountId
 
-logger = logging.getLogger("account.service")
+logger = structlog.get_logger()
 
 
 class AccountCRUDService:
@@ -49,11 +48,8 @@ class AccountCRUDService:
         )
         if check:
             logger.warning(
-                "Попытка создания дубликата счета: имя '%s' уже занято",
-                command.name,
-                extra={
-                    "user_id": UserId(command.user_id).short,
-                },
+                "Попытка создания дубликата счета: имя уже занято",
+                user_id=UserId(command.user_id).short,
             )
             raise AccountAlreadyCreatedException
 
@@ -61,10 +57,10 @@ class AccountCRUDService:
         count = await self.repository.count_by_user_id(command.user_id)
         if count >= User.MAX_ACCOUNTS:
             logger.warning(
-                f"Превышен лимит активных счётов: %d из %d",
+                "Превышен лимит активных счётов: %d из %d",
                 count,
                 User.MAX_ACCOUNTS,
-                extra={"user_id": UserId(command.user_id).short},
+                user_id=UserId(command.user_id).short,
             )
             raise TooManyAccountsForUserException
 
@@ -79,9 +75,9 @@ class AccountCRUDService:
         await self._publish(account=new_account)
 
         logger.info(
-            "Новый счёт #%s создан",
-            AccountId(acc_id).short,
-            extra={"user_id": UserId(command.user_id).short},
+            "Новый счёт создан",
+            account_id=AccountId(acc_id).short,
+            user_id=UserId(command.user_id).short,
         )
         return new_account
 
@@ -96,10 +92,14 @@ class AccountCRUDService:
                 id=command.account_id, user_id=command.user_id
             )
         ):
-            logger.warning("Счёт #%s не найден", AccountId(command.account_id).short)
+            logger.warning(
+                "Счёт не найден",
+                account_id=AccountId(command.account_id).short,
+                user_id=UserId(command.user_id).short,
+            )
             raise AccountNotFoundException
 
-        logger.info(f"Счёт #{AccountId(command.account_id).short} получен")
+        logger.info(f"Счёт получен", account_id=AccountId(command.account_id).short)
         return account
 
     async def find_accounts_by_user_id(
@@ -109,15 +109,16 @@ class AccountCRUDService:
         Поиск всех счетов пользователя по его уникальному id с пагинацией
         """
 
-        accounts, account_count = await asyncio.gather(
-            self.repository.find_all(
-                PaginationSpecification.from_pagination_command(command.pagination),
-                user_id=command.user_id,
-            ),
-            self.repository.count_by_user_id(user_id=command.user_id),
+        accounts = await self.repository.find_all(
+            PaginationSpecification.from_pagination_command(command.pagination),
+            user_id=command.user_id,
         )
 
-        logger.info("Счёта пользователя #%s получены", UserId(command.user_id).short)
+        account_count = await self.repository.count_by_user_id(user_id=command.user_id)
+
+        logger.info(
+            "Счёта пользователя получены", user_id=UserId(command.user_id).short
+        )
 
         return accounts, PaginationMetaSchema(
             page=command.pagination.page,
@@ -133,7 +134,11 @@ class AccountCRUDService:
             id=account.id,
             user_id=account.user_id,
         )
-        logger.info("Счёт #%s был удален", account.id.short)
+        logger.info(
+            "Счёт был удален",
+            account_id=account.id.short,
+            user_id=account.user_id.short,
+        )
         return
 
     async def _publish(self, account: Account):
@@ -177,7 +182,7 @@ class AccountService(AccountCRUDService):
         )
 
         if account.balance == Money(command.new_balance):
-            logger.info("Баланс счёта #%s не изменен", account.id.short)
+            logger.info("Баланс счёта не изменен", account_id=account.id.short)
             return
 
         account.update_balance(
@@ -193,4 +198,4 @@ class AccountService(AccountCRUDService):
             ),
         )
         await self._publish(account=account)
-        logger.info("Баланс счета #%s обновлен", account.id.short)
+        logger.info("Баланс счета обновлен", account_id=account.id.short)

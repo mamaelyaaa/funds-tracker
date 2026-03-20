@@ -13,7 +13,16 @@ class UserSessionId(DomainId): ...
 class UserSession(TimestampDomainMixin):
     """Доменная модель сессий пользователя"""
 
+    MAX_AUTHORIZED: int = 5
+
     id: UserSessionId = field(default_factory=UserSessionId)
     user_id: UserId
     refresh_jti: str
+    fingerprint: str
     expires_in: datetime
+
+    def __post_init__(self):
+        if self.created_at > self.expires_in:
+            print(self.created_at)
+            print(self.expires_in)
+            raise ValueError("Чето не то")
