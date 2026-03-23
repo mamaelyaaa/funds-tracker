@@ -49,21 +49,6 @@ class Money(Decimal):
 
         return Money(super().__sub__(other))
 
-    # def __post_init__(self):
-    # value = Decimal(str(self._value))
-    # value = value.quantize(exp=Decimal("1." + self.ROUND_DIGITS * "0"))
-    # object.__setattr__(self, "_value", value)
-
-    # if self._value < 0:
-    #     raise InvalidBalanceException
-
-    # @classmethod
-    # def zero(cls) -> "Money":
-    #     return cls(value=Decimal("0"))
-    #
-    # def to_float(self) -> float:
-    #     return float(self)
-
 
 class Percentage(Decimal):
 
@@ -78,7 +63,3 @@ class Percentage(Decimal):
     @classmethod
     def from_percent(cls, value: float):
         return cls(value / 100)
-
-    # def __post_init__(self):
-    #     if not 0 <= self.value <= 100:
-    #         raise InvalidPercentException

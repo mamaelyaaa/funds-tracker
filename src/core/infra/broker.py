@@ -1,13 +1,12 @@
-import logging
-
+import structlog
 import taskiq_fastapi
 from taskiq import InMemoryBroker, AsyncBroker, SmartRetryMiddleware
 from taskiq_aio_pika import AioPikaBroker
 from taskiq_redis import RedisAsyncResultBackend
 
-from core.settings import settings
+from core.config import settings
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger()
 
 
 def setup_broker() -> AsyncBroker:

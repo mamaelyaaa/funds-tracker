@@ -1,12 +1,12 @@
 import asyncio
-import logging
 from typing import Callable
 
+import structlog
 from taskiq import AsyncTaskiqTask
 
 from core.domain import DomainEvent
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger()
 
 
 class BaseTaskiqPublisher:

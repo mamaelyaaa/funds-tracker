@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi import Depends
 from redis.asyncio import Redis
 
-from core.settings import settings
+from core.config import settings
 
 
 @lru_cache

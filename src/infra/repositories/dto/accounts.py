@@ -1,6 +1,5 @@
 from domain.accounts.dto import AccountDTO
-from domain.accounts.entity import Account
-from domain.accounts.values import AccountId
+from domain.accounts.entities import Account, AccountId
 from domain.users.values import UserId
 from domain.values import Title, Money
 from infra.models import AccountModel

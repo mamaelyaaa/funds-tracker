@@ -1,5 +1,7 @@
 from dataclasses import dataclass, field
+from enum import Enum
 
+from core.domain import DomainId
 from core.mixins import DomainEventMixin, TimestampDomainMixin
 from domain.users.values import UserId
 from domain.values import Title, Money
@@ -7,7 +9,27 @@ from .events import (
     AccountCreatedEvent,
     BalanceUpdatedEvent,
 )
-from .values import AccountType, AccountCurrency, AccountId
+
+
+class AccountId(DomainId):
+    """Уникальный ID счета"""
+
+    pass
+
+
+class AccountType(str, Enum):
+    """Тип счёта"""
+
+    CARD = "Card"
+    INVESTMENT = "Investment"
+    CASH = "Cash"
+
+
+class AccountCurrency(str, Enum):
+    """Валюта счёта"""
+
+    RUB = "RUB"
+    USD = "USD"
 
 
 @dataclass(kw_only=True)

@@ -4,9 +4,8 @@ import pytest
 from faker.proxy import Faker
 
 from domain.accounts.commands import CreateAccountCommand, UpdateAccountBalanceCommand
-from domain.accounts.entity import Account
+from domain.accounts.entities import Account, AccountType, AccountCurrency
 from domain.accounts.exceptions import AccountAlreadyCreatedException
-from domain.accounts.values import AccountCurrency, AccountType
 from domain.values import Title, Money
 
 

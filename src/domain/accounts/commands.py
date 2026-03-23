@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from domain.commands import PaginationCommand
-from .values import AccountType, AccountCurrency
+from .entities import AccountType, AccountCurrency
 
 
 @dataclass(frozen=True)

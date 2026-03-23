@@ -1,12 +1,9 @@
-from unittest.mock import AsyncMock
-
 import pytest
 from faker import Faker
 
 from api.v1.dependencies.accounts import get_account_service
-from domain.accounts.entity import Account
+from domain.accounts.entities import Account, AccountType, AccountCurrency
 from domain.accounts.service import AccountService
-from domain.accounts.values import AccountCurrency, AccountType
 from domain.values import Money, Title
 
 

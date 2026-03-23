@@ -1,6 +1,6 @@
 from typing import Any
 
-from domain.accounts.values import AccountId
+from domain.accounts.entities import AccountId
 from domain.dto import BaseDTO
 from domain.funds.entity import Fund, FundDistribution
 from domain.funds.values import FundId, FundDistributionId, FundReserveType

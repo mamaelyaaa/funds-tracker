@@ -8,11 +8,11 @@ from fastapi.security import HTTPBearer
 from starlette import status
 from starlette.requests import Request
 
-from core.settings import settings
+from core.config import settings
 from domain.auth.service import AuthService
 from domain.users.values import UserId
 from infra import SessionDep
-from infra.auth.authx import auth
+from core.infra.authx import auth
 from infra.auth.exceptions import (
     MissingAccessTokenException,
     TokenExpiredException,

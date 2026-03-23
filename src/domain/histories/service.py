@@ -1,10 +1,11 @@
-import logging
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
 
-from core.settings import settings
-from domain.accounts.values import AccountId
+import structlog
+
+from core.config import settings
+from ..accounts.entities import AccountId
 from domain.values import Money
 from infra.database.specification import (
     PaginationSpecification,
@@ -21,7 +22,7 @@ from .entities import History
 from .protocols import HistoryRepositoryProtocol
 from .values import HistoryId
 
-logger = logging.getLogger("history.service")
+logger = structlog.get_logger()
 
 
 @dataclass(frozen=True)

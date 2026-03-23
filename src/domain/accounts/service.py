@@ -12,14 +12,13 @@ from .commands import (
     GetAccountsCommand,
 )
 from .dto import AccountDTO
-from .entity import Account
+from .entities import Account, AccountId
 from .exceptions import (
     AccountNotFoundException,
     TooManyAccountsForUserException,
     AccountAlreadyCreatedException,
 )
 from .protocols import AccountRepositoryProtocol, AccountEventPublisherProtocol
-from .values import AccountId
 
 logger = structlog.get_logger()
 
@@ -149,6 +148,7 @@ class AccountCRUDService:
             try:
                 await self.publisher.publish(event)
                 published.append(event)
+
             except Exception as e:
                 logger.exception(
                     "Не удалось опубликовать событие типа %s для счета %s",

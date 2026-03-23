@@ -25,4 +25,6 @@ class DomainId(str, DomainValueObject[str]):
 
 @dataclass(frozen=True)
 class DomainEvent:
+    """Базовое событие"""
+
     occurred_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))

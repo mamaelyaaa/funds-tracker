@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
 from core.mixins import DomainEventMixin, CreatedAtDomainMixin
-from domain.accounts.values import AccountId
+from ..accounts.entities import AccountId
 from domain.goals.values import GoalId
 from domain.users.values import UserId
 from domain.values import Money, Percentage

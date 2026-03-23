@@ -3,8 +3,7 @@ from datetime import datetime
 import pytest
 from faker import Faker
 
-from domain.accounts.entity import Account
-from domain.accounts.values import AccountType, AccountCurrency
+from domain.accounts.entities import Account, AccountType, AccountCurrency
 from domain.exceptions import (
     InvalidBalanceException,
     TooLargeTitleException,

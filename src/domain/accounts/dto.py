@@ -3,8 +3,7 @@ from typing import Any
 from domain.dto import BaseDTO
 from domain.users.values import UserId
 from domain.values import Title, Money
-from .entity import Account
-from .values import AccountId
+from .entities import Account, AccountId
 
 
 class AccountDTO(BaseDTO):

@@ -3,7 +3,7 @@ from dataclasses import dataclass
 import structlog
 from fastapi.responses import Response
 
-from core.settings import settings
+from core.config import settings
 from domain.users.entity import User
 from domain.users.exceptions import UserNotFoundException
 from domain.users.protocols import UserRepositoryProtocol

@@ -1,23 +1,23 @@
-import logging
 from datetime import datetime
 from typing import Annotated
 
+import structlog
 from taskiq import TaskiqDepends
 
 from api.v1.dependencies.funds import get_fund_service
 from api.v1.dependencies.histories import get_history_service
 from domain.accounts.events import AccountCreatedEvent, BalanceUpdatedEvent
-from domain.accounts.values import AccountId
+from domain.accounts.entities import AccountId
 from domain.funds.commands import CreateOrUpdateFundCommand
 from domain.funds.service import FundService
 from domain.histories.commands import SaveHistoryCommand
 from domain.histories.service import HistoryService
 from infra import broker
 
-logger = logging.getLogger("accounts.tasks")
+logger = structlog.get_logger()
 
 
-@broker.task(retry_on_error=True, max_retries=10)
+@broker.task(retry_on_error=True, max_retries=3)
 async def save_account_history(
     event: AccountCreatedEvent | BalanceUpdatedEvent,
     history_service: Annotated[HistoryService, TaskiqDepends(get_history_service)],
@@ -40,7 +40,7 @@ async def save_account_history(
     return history_id
 
 
-@broker.task(retry_on_error=True, max_retries=5)
+@broker.task(retry_on_error=True, max_retries=3)
 async def create_or_update_user_fund_task(
     user_id: str,
     account_id: str,

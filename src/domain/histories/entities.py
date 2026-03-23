@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 
 from core.mixins import CreatedAtDomainMixin
-from domain.accounts.values import AccountId
+from ..accounts.entities import AccountId
 from domain.values import Money
 from .values import HistoryId
 

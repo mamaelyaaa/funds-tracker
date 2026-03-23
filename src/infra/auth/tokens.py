@@ -5,11 +5,11 @@ from authx import TokenPayload
 from black import timezone
 from fastapi.responses import Response
 
-from core.settings import settings
+from core.config import settings
 from domain.auth.entity import UserSession
 from domain.auth.protocols import UserSessionRepositoryProtocol
 from domain.users.values import UserId
-from infra.auth.authx import auth
+from core.infra.authx import auth
 from infra.auth.exceptions import RefreshNotFoundException
 from infra.database.specification import OrderBySpecification, DateRangeSpecification
 from infra.models import UserSessionModel

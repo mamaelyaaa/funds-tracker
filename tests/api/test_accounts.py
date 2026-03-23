@@ -1,8 +1,7 @@
 import pytest
 from faker.proxy import Faker
 
-from domain.accounts.entity import Account
-from domain.accounts.values import AccountCurrency, AccountType
+from domain.accounts.entities import Account, AccountType, AccountCurrency
 from domain.users.values import UserId
 from domain.values import Money, Title
 

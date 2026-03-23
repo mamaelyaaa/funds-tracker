@@ -4,7 +4,7 @@ from datetime import datetime
 from pydantic import Field
 
 from api.schemas import BaseApiModel
-from domain.accounts.entity import AccountType, AccountCurrency
+from domain.accounts.entities import AccountType, AccountCurrency
 
 
 class CreateAccountSchema(BaseApiModel):

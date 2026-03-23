@@ -1,7 +1,7 @@
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from domain.accounts.entity import Account
+from domain.accounts.entities import Account
 from infra.models import AccountModel
 from .base import SQLAlchemyBaseRepository
 from .dto.accounts import AccountOrmDTO

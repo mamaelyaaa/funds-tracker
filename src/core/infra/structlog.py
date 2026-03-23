@@ -1,10 +1,4 @@
-import logging
-import sys
-from logging import StreamHandler
-
 import structlog
-
-from core.settings import settings
 
 
 def setup_logger():

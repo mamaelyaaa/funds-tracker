@@ -1,6 +1,7 @@
 services:
   app:
-    build: .
+    build:
+      context: .
     container_name: funds-app
     env_file:
       - .env
@@ -69,7 +70,8 @@ services:
       start_period: 10s
 
   workers:
-    build: .
+    build:
+      context: .
     container_name: funds-taskiq-workers
     env_file:
       - .env

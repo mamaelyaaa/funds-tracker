@@ -1,6 +1,6 @@
-import logging
 from typing import Annotated
 
+import structlog
 from asyncpg import ConnectionDoesNotExistError
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import (
@@ -10,10 +10,10 @@ from sqlalchemy.ext.asyncio import (
     AsyncEngine,
 )
 
-from core.settings import settings
+from core.config import settings
 from infra.exceptions import UnavailableDBException
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger()
 
 
 class SQLADatabaseHelper:

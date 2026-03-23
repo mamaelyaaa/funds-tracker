@@ -4,7 +4,7 @@ import pytest
 from black import timezone
 from faker.proxy import Faker
 
-from domain.accounts.values import AccountId
+from domain.accounts.entities import AccountId
 from domain.histories.entities import History
 from domain.values import Money
 

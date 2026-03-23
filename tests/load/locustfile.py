@@ -1,6 +1,6 @@
 from locust import HttpUser, task, between
 
-from src.core.settings import settings
+from src.core.config import settings
 
 
 class AccountUser(HttpUser):

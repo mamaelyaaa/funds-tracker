@@ -1,8 +1,6 @@
-import logging
 import math
-from typing import Annotated
 
-from fastapi import Depends
+import structlog
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -14,7 +12,7 @@ from pydantic.alias_generators import to_camel
 
 from domain.exceptions import UnknownPageException
 
-logger = logging.getLogger("api.schemas")
+logger = structlog.get_logger()
 
 
 class BaseApiModel(BaseModel):
@@ -64,9 +62,6 @@ class PaginationUseSchema(BaseApiModel):
 
     page: int = Field(default=1, ge=1)
     limit: int = Field(default=5, ge=1, le=100)
-
-
-PaginationDep = Annotated[PaginationUseSchema, Depends()]
 
 
 class PaginationMetaSchema(PaginationUseSchema):

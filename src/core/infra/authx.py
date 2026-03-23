@@ -1,6 +1,6 @@
 from authx import AuthXConfig, AuthX
 
-from core.settings import settings
+from core.config import settings
 
 config = AuthXConfig(
     JWT_ALGORITHM=settings.jwt.algorithm,

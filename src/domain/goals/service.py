@@ -1,4 +1,3 @@
-import asyncio
 from dataclasses import asdict
 
 from api.schemas import PaginationMetaSchema

@@ -1,5 +1,6 @@
-import logging
 from datetime import datetime, timedelta, timezone
+
+import structlog
 
 from api.schemas import PaginationMetaSchema
 from domain.accounts.exceptions import AccountNotFoundException
@@ -27,7 +28,7 @@ from .exceptions import (
 from .protocol import FundRepositoryProtocol, FundDistRepositoryProtocol
 from .values import FundReserveType
 
-logger = logging.getLogger("fund.service")
+logger = structlog.get_logger()
 
 
 class FundDistService:
@@ -167,7 +168,7 @@ class FundService(FundDistService):
         data = {"total_amount": new_total, "end_date": end_date}
 
         await self.fund_repo.update(
-            fund_id=fund.id,
+            id=fund.id,
             user_id=fund.user_id,
             upd_data=data,
         )

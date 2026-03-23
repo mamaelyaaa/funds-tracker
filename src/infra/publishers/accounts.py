@@ -1,5 +1,4 @@
-import logging
-
+import structlog
 from taskiq import AsyncTaskiqTask
 
 from domain.accounts.events import (
@@ -11,7 +10,7 @@ from domain.histories.values import HistoryId
 from infra.tasks.accounts import save_account_history, create_or_update_user_fund_task
 from .base import BaseTaskiqPublisher
 
-logger = logging.getLogger("account.publisher")
+logger = structlog.get_logger()
 
 
 class AccountTaskiqPublisher(BaseTaskiqPublisher):
@@ -32,8 +31,8 @@ class AccountTaskiqPublisher(BaseTaskiqPublisher):
         history_task: AsyncTaskiqTask[str] = await save_account_history.kiq(event)
         history_id = await history_task.wait_result(timeout=5)
         logger.info(
-            "История успешно создана #%s",
-            HistoryId(history_id.return_value).short,
+            "История успешно создана",
+            history_id=HistoryId(history_id.return_value).short,
         )
 
         if isinstance(event, AccountCreatedEvent) or (
@@ -46,8 +45,8 @@ class AccountTaskiqPublisher(BaseTaskiqPublisher):
             )
             fund_id = await fund_task.wait_result(timeout=5)
             logger.info(
-                "Остаток успешно обновлен #%s",
-                FundId(fund_id.return_value).short,
+                "Остаток успешно обновлен",
+                fund_id=FundId(fund_id.return_value).short,
             )
 
         return

@@ -1,11 +1,11 @@
-import logging
+import structlog
 
 from .entity import User
 from .exceptions import UserNotFoundException
 from .protocols import UserRepositoryProtocol
 from .values import UserId
 
-logger = logging.getLogger("user.service")
+logger = structlog.get_logger()
 
 
 class UserService:

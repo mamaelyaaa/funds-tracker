@@ -5,8 +5,8 @@ from api.schemas import (
     BaseResponseDetailSchema,
     BaseExceptionSchema,
     PaginationMetaSchema,
-    PaginationDep,
 )
+from api.dependencies import PaginationDep
 from api.v1.dependencies.accounts import AccountServiceDep
 from api.v1.dependencies.auth import AccessTokenDep, http_bearer
 from api.v1.schemas.accounts import (

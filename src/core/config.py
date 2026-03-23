@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import Literal
 
 from authx.types import AlgorithmType
-
 from dateutil.relativedelta import relativedelta
 from dotenv import load_dotenv
 from pydantic import BaseModel

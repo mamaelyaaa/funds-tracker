@@ -1,6 +1,6 @@
 from domain.accounts.commands import UpdateAccountBalanceCommand
 from domain.accounts.service import AccountService
-from domain.accounts.values import AccountId
+from domain.accounts.entities import AccountId
 from domain.funds.commands import (
     CreateReserveCommand,
     CreateReservesCommand,

@@ -5,9 +5,9 @@ from api.schemas import (
     BaseResponseDetailSchema,
     BaseResponseSchema,
     PaginationMetaSchema,
-    PaginationDep,
     BaseExceptionSchema,
 )
+from api.dependencies import PaginationDep
 from api.v1.dependencies.auth import http_bearer, AccessTokenDep
 from api.v1.dependencies.funds import FundServiceDep, FundDistUseCaseDep
 from api.v1.schemas.funds import FundDetailSchema, FundCloseSchema

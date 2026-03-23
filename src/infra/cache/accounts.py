@@ -5,10 +5,9 @@ from typing import Optional, Annotated, Any
 from fastapi import Depends
 from redis.asyncio import Redis
 
-from domain.accounts.cache import AccountCacheProtocol
-from domain.accounts.entity import Account
-from domain.accounts.values import AccountId
-from infra.cache.redis import RedisDep
+from domain.accounts.protocols import AccountCacheProtocol
+from domain.accounts.entities import Account, AccountId
+from core.infra.redis import RedisDep
 
 
 class InMemoryAccountCache:

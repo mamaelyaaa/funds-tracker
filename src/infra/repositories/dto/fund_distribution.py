@@ -1,4 +1,4 @@
-from domain.accounts.values import AccountId
+from domain.accounts.entities import AccountId
 from domain.funds.dto import FundDistDTO
 from domain.funds.entity import FundDistribution
 from domain.funds.values import FundId, FundDistributionId, FundReserveType

@@ -1,6 +1,6 @@
 import pytest
 
-from core.settings import settings
+from core.config import settings
 from infra import db_helper
 from infra.models import Base
 from .fixtures import *  # noqa

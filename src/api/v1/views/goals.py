@@ -4,8 +4,8 @@ from api.schemas import (
     BaseResponseDetailSchema,
     BaseExceptionSchema,
     PaginationMetaSchema,
-    PaginationDep,
 )
+from api.dependencies import PaginationDep
 from api.v1.dependencies.auth import http_bearer, AccessTokenDep
 from api.v1.dependencies.goals import GoalServiceDep
 from api.v1.schemas.goals import CreateGoalSchema, GoalDetailSchema, UpdateGoalSchema

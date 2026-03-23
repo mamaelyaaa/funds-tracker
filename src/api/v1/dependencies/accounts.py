@@ -4,7 +4,7 @@ from fastapi import Depends, Path
 
 from api.v1.dependencies.auth import AccessTokenDep
 from domain.accounts.commands import GetAccountCommand
-from domain.accounts.entity import Account
+from domain.accounts.entities import Account
 from domain.accounts.service import AccountService
 from infra import SessionDep
 from infra.publishers.accounts import AccountTaskiqPublisher

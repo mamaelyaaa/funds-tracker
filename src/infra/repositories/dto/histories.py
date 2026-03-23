@@ -1,4 +1,4 @@
-from domain.accounts.values import AccountId
+from domain.accounts.entities import AccountId
 from domain.histories.dto import HistoryDTO
 from domain.histories.entities import History
 from domain.histories.values import HistoryId
