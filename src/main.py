@@ -7,6 +7,7 @@ from fastapi.responses import ORJSONResponse
 from redis.asyncio import Redis
 
 from api import router as main_router
+from api.v1.views.auth import router as auth_router
 from api.schemas import (
     BaseExceptionSchema,
     ValidationExceptionSchema,
@@ -48,6 +49,7 @@ app = FastAPI(
     },
 )
 
+app.include_router(auth_router)
 app.include_router(main_router)
 admin.mount_to(app)
 

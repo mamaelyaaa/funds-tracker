@@ -2,7 +2,7 @@ from typing import Any
 
 from domain.dto import BaseDTO
 from domain.users.entity import User
-from domain.users.values import UserId
+from domain.users.values import UserId, Username
 
 
 class UserDTO(BaseDTO):
@@ -11,7 +11,7 @@ class UserDTO(BaseDTO):
     def from_dict_to_entity(data: dict[str, Any]) -> User:
         user = User(
             id=UserId(data.get("id")),
-            username=data.get("username"),
+            username=Username(data.get("username")),
             password=data.get("password"),
             created_at=data.get("created_at"),
             updated_at=data.get("updated_at"),

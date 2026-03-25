@@ -11,7 +11,7 @@ from .views import (
 
 router = APIRouter(prefix="/v1")
 
-router.include_router(router=auth.router)
+# router.include_router(router=auth.router)
 router.include_router(router=users.router)
 router.include_router(router=accounts.router)
 router.include_router(router=histories.router)
